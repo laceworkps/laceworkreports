@@ -1,4 +1,4 @@
-name: release
+name: PyPi Build/Scan/Push
 
 on:
   release:
