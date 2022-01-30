@@ -1,11 +1,11 @@
 # Poetry pyproject.toml: https://python-poetry.org/docs/pyproject/
 [build-system]
-requires = ["poetry_core>=1.0.0"]
+requires = ["poetry_core=1.1.12"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "laceworkreports"
-version = "0.1.11"
+version = "0.1.12"
 description = "laceworkreports is a Python cli/package for creating reports from Lacework data."
 readme = "README.md"
 authors = ["Lacework Inc. <jamie.mcmurray@lacework.net>"]
