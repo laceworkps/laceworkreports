@@ -8,7 +8,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     env:
-      LW_ACCESS_TOKEN: ${{ secrets.LW_ACCESS_TOKEN }}
+      LW_API_KEY: ${{ secrets.LW_API_KEY }}
+      LW_API_SECRET: ${{ secrets.LW_API_SECRET }}
       LW_ACCOUNT_NAME: ${{ secrets.LW_ACCOUNT_NAME }}
       LW_SCANNER_SAVE_RESULTS: true
       LW_SCANNER_SCAN_LIBRARY_PACKAGES: true
