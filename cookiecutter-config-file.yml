@@ -1,0 +1,13 @@
+# This file contains values from Cookiecutter
+
+default_context:
+  project_name: "laceworkreports"
+  project_description: "laceworkreports is a Python cli/package for creating reports from Lacework data."
+  organization: "Lacework Inc."
+  license: "BSD-3"
+  minimal_python_version: 3.7
+  github_name: "laceworkps"
+  email: "jamie.mcmurray@lacework.net"
+  version: "0.1.0"
+  line_length: "88"
+  create_example_template: "cli"
