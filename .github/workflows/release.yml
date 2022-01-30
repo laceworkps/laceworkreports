@@ -23,26 +23,13 @@ jobs:
           path: .venv
           key: venv-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('poetry.lock') }}
       
-      - name: Install dependencies
+      - name: Build
         run: |
-          poetry config virtualenvs.in-project true
-          poetry install
-
-      - name: Run style checks
-        run: |
-          make check-codestyle
-
-      - name: Run tests
-        run: |
-          make test
-
-      - name: Run safety checks
-        run: |
-          make check-safety
+          poetry build
           
       - name: Publish
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: |
           poetry config pypi-token.pypi $PYPI_TOKEN
-          poetry publish -n
+          poetry publish
