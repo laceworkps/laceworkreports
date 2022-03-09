@@ -1,0 +1,16 @@
+LW_Custom_AWS_CTA_Route53ResourceRecordSetsChanged {
+    source {
+        CloudTrailRawEvents
+    }
+    filter {
+        EVENT_SOURCE = 'route53.amazonaws.com'
+        and EVENT_NAME = 'ChangeResourceRecordSets'
+        and ERROR_CODE is null
+    }
+    return distinct {
+        INSERT_ID,
+        INSERT_TIME,
+        EVENT_TIME,
+        EVENT
+    }
+}

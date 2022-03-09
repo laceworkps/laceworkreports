@@ -5,9 +5,9 @@ default_context:
   project_description: "laceworkreports is a Python cli/package for creating reports from Lacework data."
   organization: "Lacework Inc."
   license: "BSD-3"
-  minimal_python_version: 3.7
+  minimal_python_version: 3.8
   github_name: "laceworkps"
   email: "jamie.mcmurray@lacework.net"
-  version: "0.1.0"
+  version: "1.0.0"
   line_length: "88"
   create_example_template: "cli"
