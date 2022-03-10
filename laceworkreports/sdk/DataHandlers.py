@@ -338,7 +338,14 @@ class QueryHandler:
             q["dataset"] = self.dataset.value
 
         # create reference to search object
-        obj = getattr(getattr(self.client, f"{self.type}"), f"{self.object}")
+        if common.ObjectTypes.has_value(self.object) and common.ActionTypes.has_value(
+            self.type
+        ):
+            # special case handing where there is only type and no object
+            self.type = self.object
+            obj = getattr(self.client, f"{self.type}")
+        else:
+            obj = getattr(getattr(self.client, f"{self.type}"), f"{self.object}")
 
         # handle lql style queries - limited to LQL_PAGINATION_MAX results
         if common.ObjectTypes.has_value(self.type) and common.QueriesTypes.has_value(
