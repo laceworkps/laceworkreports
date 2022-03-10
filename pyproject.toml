@@ -5,7 +5,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "laceworkreports"
-version = "1.1.0"
+version = "1.2.0"
 description = "laceworkreports is a Python cli/package for creating reports from Lacework data."
 readme = "README.md"
 authors = ["Lacework Inc. <jamie.mcmurray@lacework.net>"]
