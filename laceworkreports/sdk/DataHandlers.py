@@ -13,7 +13,7 @@ from pathlib import Path
 import pandas as pd
 import sqlalchemy
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy_utils.functions import create_database, database_exists
 
 from laceworkreports import common
@@ -137,7 +137,9 @@ class DataHandler:
 
             # if we are replacing drop the table first
             if self.db_if_exists == common.DBInsertTypes.Replace:
-                self.conn.execute(f"DROP TABLE IF EXISTS {self.db_table}")
+                self.conn.execute(
+                    text("DROP TABLE IF EXISTS :table"), table=self.db_table
+                )
             elif (
                 self.db_if_exists == common.DBInsertTypes.Fail
                 and self.db_engine.has_table(self.db_table)
@@ -146,7 +148,7 @@ class DataHandler:
                 raise Exception("Table already exists and db_if_exists=fail")
 
             # run a test query
-            self.conn.execute("SELECT 1 as conn_test")
+            self.conn.execute(text("SELECT 1 as conn_test"))
 
     def __close(self):
         if self.format in [DataHandlerTypes.CSV, DataHandlerCliTypes.CSV]:
@@ -213,20 +215,28 @@ class DataHandler:
                 logging.error(e)
                 # ensure that any additional columns are added as needed
                 for column in df.columns:
-                    sql_query = "SELECT column_name FROM information_schema.columns WHERE table_name='{}' and column_name='{}';".format(
-                        self.db_table, column
-                    )
-                    rows = self.conn.execute(sql_query).fetchall()
+                    rows = self.conn.execute(
+                        text(
+                            "SELECT column_name FROM information_schema.columns WHERE table_name=:table_name and column_name=:column_name"
+                        ),
+                        table_name=self.db_table,
+                        column_name=column,
+                    ).fetchall()
+
                     if len(rows) == 0:
                         logging.debug(
                             f"Unable to find column during insert: {column}; Updating table..."
                         )
-                        sql_query = 'ALTER TABLE "{}" ADD COLUMN "{}" {};'.format(
-                            self.db_table,
-                            column,
-                            DataHelpers.dataframe_sql_columns(df, column_name=column),
+                        self.conn.execute(
+                            text(
+                                "ALTER TABLE :table_name ADD COLUMN :column_name :column_type"
+                            ),
+                            table_name=self.db_table,
+                            column_name=column,
+                            column_type=DataHelpers.dataframe_sql_columns(
+                                df, column_name=column
+                            ),
                         )
-                        self.conn.execute(sql_query)
 
                 # retry insert with missing columns added
                 df.to_sql(
