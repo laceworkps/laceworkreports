@@ -272,6 +272,7 @@ class QueryHandler:
         filters=None,
         returns=None,
         lql_query=None,
+        dataset=None,
     ):
         # attempt to get context from config
         if client is None:
@@ -298,6 +299,9 @@ class QueryHandler:
         if lql_query is None:
             lql_query = common.config.lql_query
 
+        if dataset is None:
+            dataset = common.config.dataset
+
         # context if not passed or in config
         if start_time is None:
             start_time = datetime.utcnow() + timedelta(days=-1)
@@ -316,6 +320,7 @@ class QueryHandler:
         self.filters = filters
         self.returns = returns
         self.lql_query = lql_query
+        self.dataset = dataset
 
     def execute(self):
         # build query string
@@ -327,6 +332,10 @@ class QueryHandler:
             "filters": self.filters,
             "returns": self.returns,
         }
+
+        # handle compliance_evalutations dataset field
+        if self.dataset is not None:
+            q["dataset"] = self.dataset.value
 
         # create reference to search object
         obj = getattr(getattr(self.client, f"{self.type}"), f"{self.object}")
