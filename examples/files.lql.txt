@@ -1,0 +1,34 @@
+Custom_HE_Files_1 {
+    SOURCE {
+        LW_HE_FILES
+    }
+    FILTER {
+        MID=1061
+    }
+    RETURN DISTINCT {
+        BATCH_START_TIME,
+        BATCH_END_TIME,
+        RECORD_CREATED_TIME,
+        MID,
+        PATH,
+        FILE_NAME,
+        INODE,
+        FILE_TYPE,
+        IS_LINK,
+        LINK_DEST_PATH,
+        OWNER_GID,
+        LINK_ABS_DEST_PATH,
+        OWNER_UID,
+        OWNER_USERNAME,
+        METADATA_HASH,
+        FILEDATA_HASH,
+        SIZE,
+        BLOCK_SIZE,
+        BLOCK_COUNT,
+        FILE_ACCESSED_TIME,
+        FILE_MODIFIED_TIME,
+        FILE_CREATED_TIME,
+        FILE_PERMISSIONS,
+        HARD_LINK_COUNT
+    }
+}

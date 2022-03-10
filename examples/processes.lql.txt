@@ -1,0 +1,19 @@
+Custom_HE_Processes_1 {
+    source {
+        LW_HE_PROCESSES
+    }
+    return distinct {
+          BATCH_START_TIME,
+          BATCH_END_TIME,
+          RECORD_CREATED_TIME,
+          PROCESS_START_TIME,
+          MID,
+          PID_HASH,
+          PID,
+          USERNAME,
+          EXE_PATH,
+          CMDLINE,
+          CWD,
+          ROOT
+    }
+}

@@ -1,11 +1,11 @@
 # Poetry pyproject.toml: https://python-poetry.org/docs/pyproject/
 [build-system]
-requires = ["poetry_core=1.1.12"]
+requires = ["poetry_core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "laceworkreports"
-version = "0.1.12"
+version = "1.0.0"
 description = "laceworkreports is a Python cli/package for creating reports from Lacework data."
 readme = "README.md"
 authors = ["Lacework Inc. <jamie.mcmurray@lacework.net>"]
@@ -14,19 +14,19 @@ repository = "https://github.com/laceworkps/laceworkreports"
 homepage = "https://github.com/laceworkps/laceworkreports"
 
 # Keywords description https://python-poetry.org/docs/pyproject/#keywords
-keywords = []  #! Update me
+keywords = [] #! Update me
 
 # Pypi classifiers: https://pypi.org/classifiers/
-classifiers = [  #! Update me
+classifiers = [ #! Update me
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
   "Operating System :: OS Independent",
   "Topic :: Software Development :: Libraries :: Python Modules",
   "License :: OSI Approved :: BSD License",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
 ]
 
 [tool.poetry.scripts]
@@ -34,25 +34,30 @@ classifiers = [  #! Update me
 "laceworkreports" = "laceworkreports.__main__:app"
 
 [tool.poetry.dependencies]
-python = "^3.7"
-importlib_metadata = {version = "^4.5.0", python = "<3.8"}
-typer = {extras = ["all"], version = "^0.4.0"}
-rich = ">=10.14,<12.0"
+python = "^3.8"
+importlib_metadata = { version = "^4.5.0", python = "<3.8" }
+typer = { extras = ["all"], version = "^0.4.0" }
+rich = "^10.14.0"
 importlib-metadata = "^4.10.1"
 anaconda = "^0.0.1"
+laceworksdk = "^1.1.0"
+pandas = "^1.4.1"
+SQLAlchemy = "^1.4.32"
+psycopg2-binary = "^2.9.3"
+SQLAlchemy-Utils = "^0.38.2"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.4"
 black = {version = "^21.10b0", allow-prereleases = true}
 darglint = "^1.8.1"
-isort = {extras = ["colors"], version = "^5.10.1"}
-mypy = "^0.910"
+isort = { extras = ["colors"], version = "^5.10.1" }
+mypy = "^0.931"
 mypy-extensions = "^0.4.3"
-pre-commit = "^2.15.0"
+pre-commit = "^2.17.0"
 pydocstyle = "^6.1.1"
-pylint = "^2.11.1"
+pylint = "^2.12.2"
 pytest = "^7.0.1"
-pyupgrade = "^2.29.1"
+pyupgrade = "^2.31.0"
 safety = "^1.10.3"
 coverage = "^6.3.2"
 coverage-badge = "^1.1.0"
@@ -86,8 +91,21 @@ exclude = '''
 py_version = 37
 line_length = 88
 
-known_typing = ["typing", "types", "typing_extensions", "mypy", "mypy_extensions"]
-sections = ["FUTURE", "TYPING", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+known_typing = [
+  "typing",
+  "types",
+  "typing_extensions",
+  "mypy",
+  "mypy_extensions",
+]
+sections = [
+  "FUTURE",
+  "TYPING",
+  "STDLIB",
+  "THIRDPARTY",
+  "FIRSTPARTY",
+  "LOCALFOLDER",
+]
 include_trailing_comma = true
 profile = "black"
 multi_line_output = 3
@@ -96,7 +114,7 @@ color_output = true
 
 [tool.mypy]
 # https://mypy.readthedocs.io/en/latest/config_file.html#using-a-pyproject-toml-file
-python_version = 3.7
+python_version = 3.8
 pretty = true
 show_traceback = true
 color_output = true
@@ -124,8 +142,22 @@ warn_unused_ignores = true
 [tool.pytest.ini_options]
 # https://docs.pytest.org/en/6.2.x/customize.html#pyproject-toml
 # Directories that are not visited by pytest collector:
-norecursedirs =["hooks", "*.egg", ".eggs", "dist", "build", "docs", ".tox", ".git", "__pycache__"]
-doctest_optionflags = ["NUMBER", "NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL"]
+norecursedirs = [
+  "hooks",
+  "*.egg",
+  ".eggs",
+  "dist",
+  "build",
+  "docs",
+  ".tox",
+  ".git",
+  "__pycache__",
+]
+doctest_optionflags = [
+  "NUMBER",
+  "NORMALIZE_WHITESPACE",
+  "IGNORE_EXCEPTION_DETAIL",
+]
 
 # Extra options:
 addopts = [

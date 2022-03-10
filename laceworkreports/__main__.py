@@ -1,66 +1,62 @@
-# type: ignore[attr-defined]
-from typing import Optional
-
-from enum import Enum
-from random import choice
+from types import SimpleNamespace
 
 import typer
 from rich.console import Console
 
-from laceworkreports import version
-from laceworkreports.example import hello
+from laceworkreports import common, version
 
-
-class Color(str, Enum):
-    white = "white"
-    red = "red"
-    cyan = "cyan"
-    magenta = "magenta"
-    yellow = "yellow"
-    green = "green"
-
+from .cli.ExportHandler import Export
 
 app = typer.Typer(
     name="laceworkreports",
     help="laceworkreports is a Python cli/package for creating reports from Lacework data.",
     add_completion=False,
 )
+app.add_typer(Export.app, name="export")
 console = Console()
 
 
-def version_callback(print_version: bool) -> None:
+def version_callback(ctx: typer.Context, print_version: bool) -> None:
     """Print the version of the package."""
     if print_version:
         console.print(f"[yellow]laceworkreports[/] version: [bold blue]{version}[/]")
         raise typer.Exit()
 
 
-@app.command(name="")
+@app.callback()
 def main(
-    name: str = typer.Option(..., help="Person to greet."),
-    color: Optional[Color] = typer.Option(
-        None,
-        "-c",
-        "--color",
-        "--colour",
-        case_sensitive=False,
-        help="Color for print. If not specified then choice will be random.",
-    ),
-    print_version: bool = typer.Option(
-        None,
-        "-v",
-        "--version",
-        callback=version_callback,
-        is_eager=True,
-        help="Prints the version of the laceworkreports package.",
-    ),
+    ctx: typer.Context,
+    version: bool = typer.Option(None, "--version", callback=version_callback),
+    account: str = typer.Option(None),
+    subaccount: str = typer.Option(None),
+    api_key: str = typer.Option(None),
+    api_secret: str = typer.Option(None),
+    instance: str = typer.Option(None),
+    profile: str = typer.Option(None),
+    base_domain: str = typer.Option(None),
 ) -> None:
-    """Print a greeting with a giving name."""
-    if color is None:
-        color = choice(list(Color))
+    """
+    Set the search context for the LaceworkClient
+    """
 
-    greeting: str = hello(name)
-    console.print(f"[bold {color}]{greeting}[/]")
+    # lacework client context
+    common.config.account = account
+    common.config.subaccount = subaccount
+    common.config.api_key = api_key
+    common.config.api_secret = api_secret
+    common.config.instance = instance
+    common.config.profile = profile
+    common.config.base_domain = base_domain
+
+    ctx.obj = SimpleNamespace(
+        account=account,
+        subaccount=subaccount,
+        api_key=api_key,
+        api_secret=api_secret,
+        instance=instance,
+        profile=profile,
+        base_domain=base_domain,
+    )
 
 
 if __name__ == "__main__":
