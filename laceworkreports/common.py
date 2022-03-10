@@ -19,6 +19,7 @@ class ObjectTypes(Enum):
     Activities = "activities"
     Queries = "queries"
     Vulnerabilities = "vulnerabilities"
+    Configs = "configs"
 
     @classmethod
     def has_value(cls, value):
@@ -65,6 +66,24 @@ class VulnerabilitiesTypes(Enum):
         return value in cls._value2member_map_
 
 
+class ConfigsTypes(Enum):
+    ComplianceEvalutations = "compliance_evaluations"
+
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
+
+
+class ComplianceEvaluationsTypes(Enum):
+    AwsCompliance = "AwsCompliance"
+    AzureCompliance = "AzureCompliance"
+    GcpCompliance = "GcpCompliance"
+
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
+
+
 class QueriesTypes(Enum):
     Execute = "execute"
 
@@ -99,6 +118,7 @@ class Config:
         self.filters = None
         self.returns = None
         self.lql_query = None
+        self.dataset = ComplianceEvaluationsTypes.AwsCompliance
 
         # export context
         self.format = DataHandlerTypes.CSV

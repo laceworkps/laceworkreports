@@ -29,6 +29,9 @@ def csv(
     ),
     returns: Optional[str] = None,
     filters: Optional[str] = None,
+    dataset: common.ComplianceEvaluationsTypes = typer.Option(
+        common.ComplianceEvaluationsTypes.AwsCompliance.value
+    ),
     field_map: Optional[str] = None,
     file_path: str = typer.Option(...),
     append: bool = typer.Option(common.config.append),
@@ -67,6 +70,7 @@ def csv(
     # query parameters
     common.config.start_time = start_time
     common.config.end_time = end_time
+    common.config.dataset = dataset
     if filters is not None:
         common.config.filters = filters
     if returns is not None:
@@ -111,6 +115,9 @@ def json_type(
     ),
     returns: Optional[str] = None,
     filters: Optional[str] = None,
+    dataset: common.ComplianceEvaluationsTypes = typer.Option(
+        common.ComplianceEvaluationsTypes.AwsCompliance.value
+    ),
     field_map: Optional[str] = None,
     append: bool = typer.Option(common.config.append),
     file_path: str = typer.Option(...),
@@ -156,6 +163,7 @@ def json_type(
     # format context
     common.config.format = DataHandlerCliTypes.JSON
     common.config.append = append
+    common.config.dataset = dataset
     if field_map is not None:
         common.config.field_map = field_map
     if file_path is not None:
@@ -189,6 +197,9 @@ def postgres(
     ),
     returns: Optional[str] = None,
     filters: Optional[str] = None,
+    dataset: common.ComplianceEvaluationsTypes = typer.Option(
+        common.ComplianceEvaluationsTypes.AwsCompliance.value
+    ),
     field_map: Optional[str] = None,
     db_connection: str = typer.Option(...),
     db_table: str = typer.Option(common.config.db_table),
@@ -230,6 +241,7 @@ def postgres(
     # query parameters
     common.config.start_time = start_time
     common.config.end_time = end_time
+    common.config.dataset = dataset
     if filters is not None:
         common.config.filters = filters
     if returns is not None:
