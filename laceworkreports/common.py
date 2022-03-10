@@ -20,6 +20,7 @@ class ObjectTypes(Enum):
     Queries = "queries"
     Vulnerabilities = "vulnerabilities"
     Configs = "configs"
+    Alerts = "alerts"
 
     @classmethod
     def has_value(cls, value):
