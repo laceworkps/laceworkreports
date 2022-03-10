@@ -1,3 +1,7 @@
+"""
+Example usage of laceworkreports sdk
+"""
+
 from laceworksdk import LaceworkClient
 
 from laceworkreports import common
