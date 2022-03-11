@@ -39,7 +39,7 @@ eh = ExportHandler(
 eh = ExportHandler(
     format=DataHandlerTypes.POSTGRES,
     results=QueryHandler(
-        client=LaceworkClient(profile="fubotv"),
+        client=LaceworkClient(),
         type=common.ObjectTypes.Activities.value,
         object=common.ActivitiesTypes.DNSSummaries.value,
         filters=[{"field": "mid", "expression": "eq", "value": 851}],
