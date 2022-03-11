@@ -1,0 +1,28 @@
+<html>
+<head></head>
+<body>
+
+<h1>Example</h1>
+Results: {{ rows }}
+<table>
+<thead>
+   <tr>
+      {%- for field in dataset[0] %}
+      <TD class="c1">{{ field }}</TD>
+      {% endfor %}
+   </tr>
+</thead>
+{%- for item in dataset %}
+<tr>
+   {%- for field in item %}
+   <TD class="c1">{{ item[field] }}</TD>
+   {% endfor %}
+</tr>
+{% endfor %}
+
+</table>
+<script type="text/javascript">
+   var dataset = {{ dataset | tojson() }}
+   console.log(dataset)
+</script>
+</body>

@@ -129,6 +129,9 @@ class Config:
         # csv context
         self.file_path = "export.csv"
 
+        # jinja context
+        self.template_path = None
+
         # db context
         self.db_engine = None
         self.db_connection = None

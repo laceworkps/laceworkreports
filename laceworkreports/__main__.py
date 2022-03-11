@@ -10,7 +10,7 @@ from .cli.ExportHandler import Export
 app = typer.Typer(
     name="laceworkreports",
     help="laceworkreports is a Python cli/package for creating reports from Lacework data.",
-    add_completion=False,
+    add_completion=True,
 )
 app.add_typer(Export.app, name="export")
 console = Console()

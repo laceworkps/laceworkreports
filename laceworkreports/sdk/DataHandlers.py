@@ -5,11 +5,13 @@ Example script showing how to use the LaceworkClient class.
 import csv
 import json
 import logging
+import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 
+import jinja2
 import pandas as pd
 import sqlalchemy
 from dotenv import load_dotenv
@@ -38,6 +40,7 @@ class DataHandlerTypes(Enum):
     DICT = "dict"
     CSV = "csv"
     JSON = "json"
+    JINJA2 = "jinja2"
 
     @classmethod
     def has_value(cls, value):
@@ -48,6 +51,7 @@ class DataHandlerCliTypes(Enum):
     POSTGRES = "postgres"
     CSV = "csv"
     JSON = "json"
+    JINJA2 = "jinja2"
 
     @classmethod
     def has_value(cls, value):
@@ -59,6 +63,7 @@ class DataHandler:
         self,
         format,
         file_path="export.csv",
+        template_path=None,
         append=False,
         flatten_json=False,
         dtypes=None,
@@ -78,6 +83,7 @@ class DataHandler:
         self.reader = None
         self.format = format
         self.file_path = file_path
+        self.template_path = template_path
         self.db_connection = db_connection
         self.db_engine = None
         self.db_table = db_table
@@ -154,6 +160,22 @@ class DataHandler:
         if self.format in [DataHandlerTypes.CSV, DataHandlerCliTypes.CSV]:
             self.fp.close()
 
+        # for jinja2 we have aggregated into a dict, pass that to the template
+        elif self.format in [DataHandlerCliTypes.JINJA2]:
+            report_template = Path(self.template_path).resolve()
+            fileloader = jinja2.FileSystemLoader(
+                searchpath=os.path.dirname(report_template)
+            )
+            env = jinja2.Environment(loader=fileloader, extensions=["jinja2.ext.do"])
+            template = env.get_template(os.path.basename(report_template))
+            result = template.render(
+                dataset=self.dataset,
+                date=datetime.utcnow(),
+                config=common.config,
+            )
+
+            Path(self.file_path).write_text(result)
+
     def insert(self, row):
         # only flatten json if we're not dumping json
         if self.flatten_json and self.format not in [
@@ -169,7 +191,8 @@ class DataHandler:
             self.writer.writerow(row.values())
         elif self.format in [DataHandlerTypes.JSON, DataHandlerCliTypes.JSON]:
             self.fp.write(f"{json.dumps(row)}\n")
-        elif self.format == DataHandlerTypes.DICT:
+        # if we're doing jinja2 formatting aggregate the result in a dict
+        elif self.format in [DataHandlerTypes.DICT, DataHandlerCliTypes.JINJA2]:
             self.dataset.append(row)
         elif self.format == DataHandlerTypes.PANDAS:
             if not isinstance(self.dataset, pd.DataFrame):
@@ -389,6 +412,7 @@ class ExportHandler:
         field_map=None,
         dtypes=None,
         file_path="export.csv",
+        template_path=None,
         append=False,
         db_connection=None,
         db_table="export",
@@ -400,6 +424,7 @@ class ExportHandler:
         self.field_map = field_map
         self.dtypes = dtypes
         self.file_path = file_path
+        self.template_path = template_path
         self.append = append
         self.db_connection = db_connection
         self.db_table = db_table
@@ -410,6 +435,7 @@ class ExportHandler:
         with DataHandler(
             format=self.format,
             file_path=self.file_path,
+            template_path=self.template_path,
             append=self.append,
             db_connection=self.db_connection,
             db_table=self.db_table,
