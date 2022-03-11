@@ -45,6 +45,7 @@ pandas = "^1.4.1"
 SQLAlchemy = "^1.4.32"
 psycopg2-binary = "^2.9.3"
 SQLAlchemy-Utils = "^0.38.2"
+Jinja2 = "^3.0.3"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.4"
