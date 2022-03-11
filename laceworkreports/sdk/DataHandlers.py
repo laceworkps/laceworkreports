@@ -15,7 +15,7 @@ import jinja2
 import pandas as pd
 import sqlalchemy
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, text
+from sqlalchemy import MetaData, Table, create_engine, text
 from sqlalchemy_utils.functions import create_database, database_exists
 
 from laceworkreports import common
@@ -140,12 +140,12 @@ class DataHandler:
 
             # connect to the database
             self.conn = self.db_engine.connect()
+            metadata = MetaData(bind=self.conn)
 
             # if we are replacing drop the table first
             if self.db_if_exists == common.DBInsertTypes.Replace:
-                self.conn.execute(
-                    text("DROP TABLE IF EXISTS :table"), table=self.db_table
-                )
+                t = Table(self.db_table, metadata)
+                t.drop(self.conn, checkfirst=True)
             elif (
                 self.db_if_exists == common.DBInsertTypes.Fail
                 and self.db_engine.has_table(self.db_table)
@@ -231,7 +231,7 @@ class DataHandler:
 
                 df.to_sql(
                     self.db_table,
-                    if_exists=common.DBInsertTypes.Append,
+                    if_exists=common.DBInsertTypes.Append.value,
                     index=False,
                     con=self.conn,
                     dtype=dtypes,
@@ -266,7 +266,7 @@ class DataHandler:
                 # retry insert with missing columns added
                 df.to_sql(
                     self.db_table,
-                    if_exists=common.DBInsertTypes.Append,
+                    if_exists=common.DBInsertTypes.Append.value,
                     index=False,
                     method=None,
                     con=self.conn,
