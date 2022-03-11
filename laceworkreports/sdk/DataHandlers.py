@@ -166,7 +166,9 @@ class DataHandler:
             fileloader = jinja2.FileSystemLoader(
                 searchpath=os.path.dirname(report_template)
             )
-            env = jinja2.Environment(loader=fileloader, extensions=["jinja2.ext.do"])
+            env = jinja2.Environment(
+                loader=fileloader, extensions=["jinja2.ext.do"], autoescape=True
+            )
             template = env.get_template(os.path.basename(report_template))
             result = template.render(
                 dataset=self.dataset,
