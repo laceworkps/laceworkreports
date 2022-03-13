@@ -618,3 +618,4 @@ MigrationBackup/
 *.csv
 *.json
 *.html
+examples/_internal/**
