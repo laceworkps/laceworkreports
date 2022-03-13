@@ -1,3 +1,5 @@
+from typing import Any
+
 import json
 from datetime import datetime
 from pathlib import Path
@@ -8,21 +10,21 @@ from laceworkreports import common
 
 
 def validate(
-    start_time=None,
-    end_time=None,
-    returns=None,
-    filters=None,
-    field_map=None,
-    file_path=None,
-    lql_query=None,
-    flatten_json=None,
-    template_path=None,
-    dataset=None,
-    db_connection=None,
-    db_table=None,
-    db_if_exists=None,
-    append=None,
-) -> dict:
+    start_time: Any = None,
+    end_time: Any = None,
+    returns: Any = None,
+    filters: Any = None,
+    field_map: Any = None,
+    file_path: Any = None,
+    lql_query: Any = None,
+    flatten_json: Any = None,
+    template_path: Any = None,
+    dataset: Any = None,
+    db_connection: Any = None,
+    db_table: Any = None,
+    db_if_exists: Any = None,
+    append: Any = None,
+) -> Any:
     # query filters
     if start_time is not None and end_time is not None:
         if not isinstance(start_time, datetime):
@@ -82,7 +84,7 @@ def validate(
 
     # jinja
     if template_path is not None:
-        if not Path.exists(template_path):
+        if not Path(template_path).exists():
             raise typer.BadParameter("Template path does not exist")
 
     # postgres
@@ -111,7 +113,34 @@ def validate(
     }
 
 
-def update_config(options) -> bool:
-    for k in options.keys():
-        if options[k] is not None:
-            common.config.update(k, options[k])
+def update_config(options: Any) -> bool:
+    if options["start_time"] is not None:
+        common.config.start_time = options["start_time"]
+    if options["end_time"] is not None:
+        common.config.end_time = options["end_time"]
+    if options["returns"] is not None:
+        common.config.returns = options["returns"]
+    if options["filters"] is not None:
+        common.config.filters = options["filters"]
+    if options["field_map"] is not None:
+        common.config.field_map = options["field_map"]
+    if options["file_path"] is not None:
+        common.config.file_path = options["file_path"]
+    if options["lql_query"] is not None:
+        common.config.lql_query = options["lql_query"]
+    if options["flatten_json"] is not None:
+        common.config.flatten_json = options["flatten_json"]
+    if options["template_path"] is not None:
+        common.config.template_path = options["template_path"]
+    if options["dataset"] is not None:
+        common.config.dataset = options["dataset"]
+    if options["db_connection"] is not None:
+        common.config.db_connection = options["db_connection"]
+    if options["db_table"] is not None:
+        common.config.db_table = options["db_table"]
+    if options["db_if_exists"] is not None:
+        common.config.db_if_exists = options["db_if_exists"]
+    if options["append"] is not None:
+        common.config.append = options["append"]
+
+    return True

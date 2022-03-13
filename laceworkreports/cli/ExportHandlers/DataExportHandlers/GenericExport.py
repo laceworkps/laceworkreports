@@ -1,9 +1,13 @@
+import logging
+from pprint import pprint
+
 from laceworkreports import common
 from laceworkreports.sdk.DataHandlers import ExportHandler, QueryHandler
 
 
 # cli sets configuration, sdk executes
 def export() -> None:
+    # pprint(vars(common.config))
     # connect lacework client
     common.config.connect()
 

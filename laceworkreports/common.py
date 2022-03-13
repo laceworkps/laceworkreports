@@ -116,7 +116,8 @@ class Config:
     def __init__(self):
         self.name = __name__.split(".")[0]
 
-        # command context    self.ACTION = None
+        # command context
+        self.ACTION = None
         self.TYPE = None
         self.OBJECT = None
 
@@ -167,7 +168,7 @@ class Config:
     def update(self, key, value):
         obj = getattr(self, key)
         obj = value
-        logging.debug(f"Update {key} with {value}: self.{key} = {obj}")
+        logging.info(f"Update {key} with {value}: self.{key} = {obj}")
 
     def connect(self):
         self.client = LaceworkClient(
