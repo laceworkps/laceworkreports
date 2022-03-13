@@ -1,4 +1,4 @@
-# laceworkreports
+# Lacework Reports CLI/SDK
 
 <div align="center">
 
@@ -19,6 +19,46 @@ laceworkreports is a Python cli/package for creating reports from Lacework data.
 
 ## 🚀 Features
 
+ - Retrieve Lacework API data from activities, entities, queries, configs
+ - Save results as csv, json, or to postgres
+ - Transform results using jinja template
+ - Override returned field names using field_map (supports nested json notation: parent.child.value)
+ - Stores complex json objects s JSONB in postgres
+ - Flatten json structures before writing
+
+## CLI Usage
+
+```bash
+laceworkreports export vulnerabilities hosts csv --file-path="export.csv"
+```
+![laceworkreports](assets/images/laceworkreports.gif)
+
+See [CLI README](README-CLI.md) for details.
+
+## SDK Usage
+
+```python
+from laceworkreports import common
+from laceworkreports.sdk.DataHandlers import (
+    DataHandlerTypes,
+    ExportHandler,
+    QueryHandler,
+)
+
+eh = ExportHandler(
+    format=DataHandlerTypes.CSV,
+    results=QueryHandler(
+        client=LaceworkClient(),
+        type=common.ObjectTypes.Activities.value,
+        object=common.ActivitiesTypes.DNSSummaries.value,
+        filters=[{"field": "mid", "expression": "eq", "value": 851}],
+        returns=["fqdn"],
+    ).execute(),
+    file_path="export.csv",
+).export()
+```
+
+See [example.py](examples/sdk/example.py) for details.
 ## Installation
 
 ```bash

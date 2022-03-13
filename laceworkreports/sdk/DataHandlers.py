@@ -71,17 +71,35 @@ class DataHandler:
         db_table="export",
         db_if_exists="replace",
     ):
-        logging.info(f"Processing data with format: {format}")
-        if not DataHandlerTypes.has_value(format.value):
+        self.format = format
+        logging.info(f"Processing data with format: {self.format}")
+        if not DataHandlerTypes.has_value(self.format.value):
             raise Exception(
                 "Unsupported export format, exepcted {} found: {}".format(
-                    list(DataHandlerTypes), format
+                    list(DataHandlerTypes), self.format
                 )
             )
 
+        # check required args
+        if self.format in [DataHandlerTypes.CSV, DataHandlerCliTypes.CSV]:
+            if file_path is None:
+                raise Exception(f"file_path required for {self.format} type")
+        elif self.format in [DataHandlerTypes.JSON, DataHandlerCliTypes.JSON]:
+            if file_path is None:
+                raise Exception(f"file_path required for {self.format} type")
+        elif self.format in [DataHandlerTypes.JINJA2, DataHandlerCliTypes.JINJA2]:
+            if file_path is None:
+                raise Exception(f"file_path required for {self.format} type")
+            if template_path is None:
+                raise Exception(f"template_path required for {self.format} type")
+        elif self.format in [DataHandlerTypes.POSTGRES, DataHandlerCliTypes.POSTGRES]:
+            if db_connection is None:
+                raise Exception(f"db_connection required for {self.format} type")
+            if db_table is None:
+                raise Exception(f"db_table required for {self.format} type")
+
         self.dataset = []
         self.reader = None
-        self.format = format
         self.file_path = file_path
         self.template_path = template_path
         self.db_connection = db_connection
