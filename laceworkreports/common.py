@@ -1,3 +1,4 @@
+import logging
 from enum import Enum
 
 from laceworksdk import LaceworkClient
@@ -115,8 +116,7 @@ class Config:
     def __init__(self):
         self.name = __name__.split(".")[0]
 
-        # command context
-        self.ACTION = None
+        # command context    self.ACTION = None
         self.TYPE = None
         self.OBJECT = None
 
@@ -163,6 +163,11 @@ class Config:
 
         # other
         self.other = "Default"
+
+    def update(self, key, value):
+        obj = getattr(self, key)
+        obj = value
+        logging.debug(f"Update {key} with {value}: self.{key} = {obj}")
 
     def connect(self):
         self.client = LaceworkClient(

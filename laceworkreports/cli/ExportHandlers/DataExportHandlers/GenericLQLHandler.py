@@ -4,9 +4,7 @@ LQL Handler
 
 from typing import Optional
 
-import json
 from datetime import datetime, timedelta
-from pathlib import Path
 
 import typer
 
@@ -14,6 +12,7 @@ from laceworkreports import common
 from laceworkreports.sdk.DataHandlers import DataHandlerCliTypes
 
 from .GenericExport import export
+from .OptionValidator import update_config, validate
 
 app = typer.Typer()
 
@@ -24,55 +23,48 @@ def csv(
     start_time: datetime = typer.Option(
         (datetime.utcnow() - timedelta(days=1)).strftime(common.ISO_FORMAT),
         formats=[common.ISO_FORMAT],
+        help="Start time for query period",
     ),
     end_time: datetime = typer.Option(
-        (datetime.utcnow()).strftime(common.ISO_FORMAT), formats=[common.ISO_FORMAT]
+        (datetime.utcnow()).strftime(common.ISO_FORMAT),
+        formats=[common.ISO_FORMAT],
+        help="End time for query period",
     ),
-    lql_query: str = typer.Option(...),
-    field_map: Optional[str] = None,
-    file_path: str = typer.Option(...),
-    append: bool = typer.Option(common.config.append),
-    flatten_json: bool = typer.Option(common.config.flatten_json),
+    lql_query: str = typer.Option(
+        ..., help="LQL query string for file path (use @ to specify file path)"
+    ),
+    field_map: Optional[str] = typer.Option(
+        None, help="LQL query string for file path (use @ to specify file path)"
+    ),
+    file_path: str = typer.Option(..., help="Path to exported CSV result"),
+    append: bool = typer.Option(
+        common.config.append, help="Boolean value to append or replace results"
+    ),
+    flatten_json: bool = typer.Option(
+        common.config.flatten_json, help="Boolean value to flatten json result or not"
+    ),
 ) -> None:
     """
     Set the command context
     """
 
     # command context
-    typer.echo(ctx.command_path)
     common.config.ACTION = str(ctx.command_path.split(" ")[-4]).replace("-", "_")
     common.config.TYPE = str(ctx.command_path.split(" ")[-3]).replace("-", "_")
     common.config.OBJECT = str(ctx.command_path.split(" ")[-2]).replace("-", "_")
-
-    # handle argument defaults
-    if not start_time:
-        start_time = datetime.utcnow() - timedelta(days=1)
-
-    if not end_time:
-        end_time = datetime.utcnow()
-
-    if lql_query is not None and lql_query[0] == "@":
-        lql_query = Path(lql_query[1:]).read_text()
-
-    if field_map is not None and field_map[0] == "@":
-        field_map = json.loads(Path(field_map[1:]).read_text())
-
-    # update the config namespace
-
-    # query parameters
-    common.config.start_time = start_time
-    common.config.end_time = end_time
-    common.config.lql_query = lql_query
-
-    # format context
     common.config.format = DataHandlerCliTypes.CSV
-    common.config.append = append
-    if field_map is not None:
-        common.config.field_map = field_map
-    if file_path is not None:
-        common.config.file_path = file_path
-    if flatten_json is not None:
-        common.config.flatten_json = flatten_json
+
+    options = validate(
+        start_time=start_time,
+        end_time=end_time,
+        field_map=field_map,
+        file_path=file_path,
+        lql_query=lql_query,
+        flatten_json=flatten_json,
+        append=append,
+    )
+
+    update_config(options=options)
 
     # after setting context use sdk to execute
     export()
@@ -84,52 +76,44 @@ def json_type(
     start_time: datetime = typer.Option(
         (datetime.utcnow() - timedelta(days=1)).strftime(common.ISO_FORMAT),
         formats=[common.ISO_FORMAT],
+        help="Start time for query period",
     ),
     end_time: datetime = typer.Option(
-        (datetime.utcnow()).strftime(common.ISO_FORMAT), formats=[common.ISO_FORMAT]
+        (datetime.utcnow()).strftime(common.ISO_FORMAT),
+        formats=[common.ISO_FORMAT],
+        help="End time for query period",
     ),
-    lql_query: str = typer.Option(...),
-    field_map: Optional[str] = None,
-    file_path: str = typer.Option(...),
-    append: bool = typer.Option(common.config.append),
+    lql_query: str = typer.Option(
+        ..., help="LQL query string for file path (use @ to specify file path)"
+    ),
+    field_map: Optional[str] = typer.Option(
+        None, help="LQL query string for file path (use @ to specify file path)"
+    ),
+    file_path: str = typer.Option(..., help="Path to exported CSV result"),
+    append: bool = typer.Option(
+        common.config.append, help="Boolean value to append or replace results"
+    ),
 ) -> None:
     """
     Set the command context
     """
 
     # command context
-    typer.echo(ctx.command_path)
     common.config.ACTION = str(ctx.command_path.split(" ")[-4]).replace("-", "_")
     common.config.TYPE = str(ctx.command_path.split(" ")[-3]).replace("-", "_")
     common.config.OBJECT = str(ctx.command_path.split(" ")[-2]).replace("-", "_")
-
-    # handle argument defaults
-    if not start_time:
-        start_time = datetime.utcnow() - timedelta(days=1)
-
-    if not end_time:
-        end_time = datetime.utcnow()
-
-    if lql_query is not None and lql_query[0] == "@":
-        lql_query = Path(lql_query[1:]).read_text()
-
-    if field_map is not None and field_map[0] == "@":
-        field_map = json.loads(Path(field_map[1:]).read_text())
-
-    # update the config namespace
-
-    # query parameters
-    common.config.start_time = start_time
-    common.config.end_time = end_time
-    common.config.lql_query = lql_query
-
-    # format context
     common.config.format = DataHandlerCliTypes.JSON
-    common.config.append = append
-    if field_map is not None:
-        common.config.field_map = field_map
-    if file_path is not None:
-        common.config.file_path = file_path
+
+    options = validate(
+        start_time=start_time,
+        end_time=end_time,
+        field_map=field_map,
+        file_path=file_path,
+        lql_query=lql_query,
+        append=append,
+    )
+
+    update_config(options=options)
 
     # after setting context use sdk to execute
     export()
@@ -141,63 +125,57 @@ def postgres(
     start_time: datetime = typer.Option(
         (datetime.utcnow() - timedelta(days=1)).strftime(common.ISO_FORMAT),
         formats=[common.ISO_FORMAT],
+        help="Start time for query period",
     ),
     end_time: datetime = typer.Option(
-        (datetime.utcnow()).strftime(common.ISO_FORMAT), formats=[common.ISO_FORMAT]
+        (datetime.utcnow()).strftime(common.ISO_FORMAT),
+        formats=[common.ISO_FORMAT],
+        help="End time for query period",
     ),
-    lql_query: str = typer.Option(...),
-    field_map: Optional[str] = None,
-    db_connection: str = typer.Option(...),
-    db_table: str = typer.Option(common.config.db_table),
+    lql_query: str = typer.Option(
+        ..., help="LQL query string for file path (use @ to specify file path)"
+    ),
+    field_map: Optional[str] = typer.Option(
+        None,
+        help="JSON fieldmap to alias results columns. For file path (use @ to specify file path)",
+    ),
+    flatten_json: bool = typer.Option(
+        common.config.flatten_json, help="Boolean value to flatten json result or not"
+    ),
+    db_connection: str = typer.Option(
+        ...,
+        help="Postgres connection string (e.g. postgresql://postgres:password@localhost:5432/postgres)",
+    ),
+    db_table: str = typer.Option(
+        common.config.db_table, help="Postgres table to store results"
+    ),
     db_if_exists: Optional[common.DBInsertTypes] = typer.Option(
-        common.config.db_if_exists.value
+        common.config.db_if_exists.value,
+        help="Action to take if db table already exists",
     ),
-    flatten_json: bool = typer.Option(None),
 ) -> None:
     """
     Set the command context
     """
 
     # command context
-    typer.echo(ctx.command_path)
     common.config.ACTION = str(ctx.command_path.split(" ")[-4]).replace("-", "_")
     common.config.TYPE = str(ctx.command_path.split(" ")[-3]).replace("-", "_")
     common.config.OBJECT = str(ctx.command_path.split(" ")[-2]).replace("-", "_")
-
-    # handle argument defaults
-    if not start_time:
-        start_time = datetime.utcnow() - timedelta(days=1)
-
-    if not end_time:
-        end_time = datetime.utcnow()
-
-    if lql_query is not None and lql_query[0] == "@":
-        lql_query = Path(lql_query[1:]).read_text()
-
-    if field_map is not None and field_map[0] == "@":
-        field_map = Path(field_map[1:]).read_text()
-
-    # update the config namespace
-
-    # query parameters
-    common.config.start_time = start_time
-    common.config.end_time = end_time
-    common.config.lql_query = lql_query
-
-    # format context
     common.config.format = DataHandlerCliTypes.POSTGRES
-    if field_map is not None:
-        common.config.field_map = field_map
-    if flatten_json is not None:
-        common.config.flatten_json = flatten_json
 
-    # db context
-    if db_connection is not None:
-        common.config.db_connection = db_connection
-    if db_table is not None:
-        common.config.db_table = db_table
-    if db_if_exists is not None:
-        common.config.db_if_exists = db_if_exists
+    options = validate(
+        start_time=start_time,
+        end_time=end_time,
+        field_map=field_map,
+        lql_query=lql_query,
+        flatten_json=flatten_json,
+        db_connection=db_connection,
+        db_table=db_table,
+        db_if_exists=db_if_exists,
+    )
+
+    update_config(options=options)
 
     # after setting context use sdk to execute
     export()
@@ -211,56 +189,50 @@ def jinja2(
     start_time: datetime = typer.Option(
         (datetime.utcnow() - timedelta(days=1)).strftime(common.ISO_FORMAT),
         formats=[common.ISO_FORMAT],
+        help="Start time for query period",
     ),
     end_time: datetime = typer.Option(
-        (datetime.utcnow()).strftime(common.ISO_FORMAT), formats=[common.ISO_FORMAT]
+        (datetime.utcnow()).strftime(common.ISO_FORMAT),
+        formats=[common.ISO_FORMAT],
+        help="End time for query period",
     ),
-    lql_query: str = typer.Option(...),
-    field_map: Optional[str] = None,
-    file_path: str = typer.Option(...),
-    template_path: str = typer.Option(...),
-    flatten_json: bool = typer.Option(None),
+    lql_query: str = typer.Option(
+        ..., help="LQL query string for file path (use @ to specify file path)"
+    ),
+    field_map: Optional[str] = typer.Option(
+        None,
+        help="JSON fieldmap to alias results columns. For file path (use @ to specify file path)",
+    ),
+    file_path: str = typer.Option(..., help="Path to exported CSV result"),
+    flatten_json: bool = typer.Option(
+        common.config.flatten_json, help="Boolean value to flatten json result or not"
+    ),
+    template_path: str = typer.Option(
+        ...,
+        help="Path to jinja2 template. Results will be passed as 'dataset' variable.",
+    ),
 ) -> None:
     """
     Set the command context
     """
 
     # command context
-    typer.echo(ctx.command_path)
     common.config.ACTION = str(ctx.command_path.split(" ")[-4]).replace("-", "_")
     common.config.TYPE = str(ctx.command_path.split(" ")[-3]).replace("-", "_")
     common.config.OBJECT = str(ctx.command_path.split(" ")[-2]).replace("-", "_")
+    common.config.format = DataHandlerCliTypes.CSV
 
-    # handle argument defaults
-    if not start_time:
-        start_time = datetime.utcnow() - timedelta(days=1)
+    options = validate(
+        start_time=start_time,
+        end_time=end_time,
+        field_map=field_map,
+        file_path=file_path,
+        lql_query=lql_query,
+        flatten_json=flatten_json,
+        template_path=template_path,
+    )
 
-    if not end_time:
-        end_time = datetime.utcnow()
-
-    if lql_query is not None and lql_query[0] == "@":
-        lql_query = Path(lql_query[1:]).read_text()
-
-    if field_map is not None and field_map[0] == "@":
-        field_map = json.loads(Path(field_map[1:]).read_text())
-
-    # update the config namespace
-
-    # query parameters
-    common.config.start_time = start_time
-    common.config.end_time = end_time
-    common.config.lql_query = lql_query
-
-    # format context
-    common.config.format = DataHandlerCliTypes.JINJA2
-    if field_map is not None:
-        common.config.field_map = field_map
-    if file_path is not None:
-        common.config.file_path = file_path
-    if template_path is not None:
-        common.config.template_path = template_path
-    if flatten_json is not None:
-        common.config.flatten_json = flatten_json
+    update_config(options=options)
 
     # after setting context use sdk to execute
     export()
