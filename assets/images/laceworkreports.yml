@@ -1,0 +1,274 @@
+# The configurations that used for the recording, feel free to edit them
+config:
+
+  # Specify a command to be executed
+  # like `/bin/bash -l`, `ls`, or any other commands
+  # the default is bash for Linux
+  # or powershell.exe for Windows
+  command: /bin/zsh
+  
+  # Specify the current working directory path
+  # the default is the current working directory path
+  cwd: /Users/jamie
+  
+  # Export additional ENV variables
+  env:
+    recording: true
+  
+  # Explicitly set the number of columns
+  # or use `auto` to take the current
+  # number of columns of your shell
+  cols: 100
+  
+  # Explicitly set the number of rows
+  # or use `auto` to take the current
+  # number of rows of your shell
+  rows: 20
+  
+  # Amount of times to repeat GIF
+  # If value is -1, play once
+  # If value is 0, loop indefinitely
+  # If value is a positive number, loop n times
+  repeat: 0
+  
+  # Quality
+  # 1 - 100
+  quality: 100
+  
+  # Delay between frames in ms
+  # If the value is `auto` use the actual recording delays
+  frameDelay: auto
+  
+  # Maximum delay between frames in ms
+  # Ignored if the `frameDelay` isn't set to `auto`
+  # Set to `auto` to prevent limiting the max idle time
+  maxIdleTime: auto
+  
+  # The surrounding frame box
+  # The `type` can be null, window, floating, or solid`
+  # To hide the title use the value null
+  # Don't forget to add a backgroundColor style with a null as type
+  frameBox:
+    type: floating
+    title: terminal
+    style:
+      border: 0px black solid
+      backgroundColor: '#003440'
+      boxShadow: none
+      margin: 0px
+  
+  # Add a watermark image to the rendered gif
+  # You need to specify an absolute path for
+  # the image on your machine or a URL, and you can also
+  # add your own CSS styles
+  watermark:
+    imagePath: null
+    style:
+      position: absolute
+      right: 15px
+      bottom: 15px
+      width: 100px
+      opacity: 0.9
+  
+  # Cursor style can be one of
+  # `block`, `underline`, or `bar`
+  cursorStyle: block
+  
+  # Font family
+  # You can use any font that is installed on your machine
+  # in CSS-like syntax
+  fontFamily: "Source Code Pro for Powerline"
+  
+  # The size of the font
+  fontSize: 12
+  
+  # The height of lines
+  lineHeight: 1
+  
+  # The spacing between letters
+  letterSpacing: 0
+  
+  # Theme
+  theme:
+    background: "transparent"
+    foreground: "#eee7d4"
+    cursor: "#eee7d4"
+    black: "#003440"
+    red: "#db312f"
+    green: "#859801"
+    yellow: "#b48800"
+    blue: "#268ad1"
+    magenta: "#d23581"
+    cyan: "#2aa097"
+    white: "#eee7d4"
+    brightBlack: "#586d74"
+    brightRed: "#ca4a16"
+    brightGreen: "#ca4a16"
+    brightYellow: "#657a82"
+    brightBlue: "#839395"
+    brightMagenta: "#6c6ec6"
+    brightCyan: "#93a0a0"
+    brightWhite: "#fdf5e2"
+  
+# Records, feel free to edit them
+records:
+  - delay: 929
+    content: "\e[0m\e[49m\e[39m\e[27m\e[24m\r\e[K\r\n\r\n\e[2A\e7\e[0m\e[49m\e[39m\e[38;5;240m╭─\e[0m\e[38;5;240m\e[44m\e[38;5;254m \e[1m\e[38;5;254m\e[44m\e[38;5;255m~\e[0m\e[38;5;255m\e[44m\e[44m\e[38;5;254m\e[0m\e[38;5;254m\e[44m\e[44m\e[38;5;254m \e[0m\e[38;5;254m\e[44m\e[49m\e[34m\e[0m\e[34m\e[49m\e[39m\e[38;5;240m──────────────────────────────────────────────────────────────────────────────\e[0m\e[38;5;240m\e[49m\e[30m\e[0m\e[30m\e[40m\e[32m \e[0m\e[32m\e[40m\e[40m\e[32m✔\e[0m\e[32m\e[40m\e[40m\e[32m \e[0m\e[32m\e[40m\e[40m\e[32m\e[37m\e[0m\e[37m\e[40m\e[47m\e[30m 16:35:07\e[0m\e[30m\e[47m\e[47m\e[30m\e[0m\e[30m\e[47m\e[47m\e[30m \e[0m\e[30m\e[47m\e[49m\e[39m\r\n\e[0m\e[49m\e[39m\e[38;5;240m╰─\e[0m\e[38;5;240m\e[49m\e[39m\e[0m\e[49m\e[39m \e[0m\e[49m\e[39m\e[?2004h"
+  - delay: 697
+    content: "\e[?25l\e8\e[0m\e[49m\e[39m\e[27m\e[24m\e[J\e]2;jamie@transition:~\a\e]1;~\a\e[0m\e[38;5;254m\e[49m\e[39m\e[27m\e[24m\e[1m\e[7m%\e[27m\e[1m\e[0m                                                                                                   \r\e[0m\e[49m\e[39m\e[27m\e[24m\e[K\r\e[0m\e[27m\e[24m\e[J\e[0m\e[49m\e[39m\r\n\e[A\e[38;5;240m╭─\e[0m\e[38;5;240m\e[44m\e[38;5;254m \e[1m\e[38;5;254m\e[44m\e[38;5;255m~\e[0m\e[38;5;255m\e[44m\e[44m\e[38;5;254m\e[0m\e[38;5;254m\e[44m\e[44m\e[38;5;254m \e[0m\e[38;5;254m\e[44m\e[49m\e[34m\e[0m\e[34m\e[49m\e[39m\e[38;5;240m──────────────────────────────────────────────────────────────────────────────\e[0m\e[38;5;240m\e[49m\e[30m\e[0m\e[30m\e[40m\e[32m \e[0m\e[32m\e[40m\e[40m\e[32m✔\e[0m\e[32m\e[40m\e[40m\e[32m \e[0m\e[32m\e[40m\e[40m\e[32m\e[37m\e[0m\e[37m\e[40m\e[47m\e[30m 16:35:07\e[0m\e[30m\e[47m\e[47m\e[30m\e[0m\e[30m\e[47m\e[47m\e[30m \e[0m\e[30m\e[47m\e[49m\e[39m\r\n\e[0m\e[49m\e[39m\e[38;5;240m╰─\e[0m\e[38;5;240m\e[49m\e[39m\e[0m\e[49m\e[39m \e[0m\e[49m\e[39m\e[K\e[?1h\e=\e[?12l\e[?25h\e[?2004h"
+  - delay: 835
+    content: l
+  - delay: 55
+    content: "\bla"
+  - delay: 106
+    content: c
+  - delay: 104
+    content: e
+  - delay: 231
+    content: w
+  - delay: 110
+    content: o
+  - delay: 141
+    content: r
+  - delay: 95
+    content: k
+  - delay: 168
+    content: r
+  - delay: 90
+    content: e
+  - delay: 109
+    content: p
+  - delay: 72
+    content: o
+  - delay: 119
+    content: r
+  - delay: 99
+    content: t
+  - delay: 263
+    content: "s\e[1m \e[0m"
+  - delay: 930
+    content: "\b\e[0m e"
+  - delay: 236
+    content: x
+  - delay: 115
+    content: p
+  - delay: 25
+    content: o
+  - delay: 308
+    content: r
+  - delay: 102
+    content: t
+  - delay: 728
+    content: "\a"
+  - delay: 816
+    content: ' '
+  - delay: 2316
+    content: "\a\r\r\n\e[0mactivities       -- Query lacework api activities types\r\nalerts           -- Query lacework api alerts types\r\nconfigs          -- Query lacework api configs types\r\nentities         -- Query lacework api entities types\r\nqueries          -- Query lacework api queries types\r\n\e[Jvulnerabilities  -- Query lacework api vulnerabilities types\e[J\e[6A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export\e[K\e[0m\e[39m\e[49m\e[1C"
+  - delay: 978
+    content: "activities\r\r\n\e[7mactivities       -- Query lacework api activities types\e[K\e[0m\e[K\r\nalerts           -- Query lacework api alerts types\e[K\e[K\r\nconfigs          -- Query lacework api configs types\e[K\e[K\r\nentities         -- Query lacework api entities types\e[K\e[K\r\nqueries          -- Query lacework api queries types\e[K\e[K\r\n\e[Jvulnerabilities  -- Query lacework api vulnerabilities types\e[K\e[J\e[6A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export activities\e[K\e[0m\e[39m\e[49m"
+  - delay: 82
+    content: "\r\r\n\e[7mactivities       -- Query lacework api activities types\e[K\e[0m\r\e[7mactivities       -- Query lacework api activities types\e[K\e[0m\r\e[A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export activities\e[K\e[0m\e[39m\e[49m\e[9Dlerts    \b\b\b\b\r\r\n\e[0mactivities       -- Query lacework api activities types\e[K\r\e[1B\e[7malerts           -- Query lacework api alerts types\e[K\e[0m\r\e[A\e[A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export alerts\e[K\e[0m\e[39m\e[49m"
+  - delay: 240
+    content: "\b\b\b\b\b\bconfigs\r\r\n\e[1B\e[0malerts           -- Query lacework api alerts types\e[K\r\e[1B\e[7mconfigs          -- Query lacework api configs types\e[K\e[0m\r\e[3A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export configs\e[K\e[0m\e[39m\e[49m"
+  - delay: 567
+    content: "\b\b\b\b\b\b\balerts \b\r\r\n\e[1B\e[7malerts           -- Query lacework api alerts types\e[K\e[0m\r\e[1Bconfigs          -- Query lacework api configs types\e[K\r\e[3A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export alerts\e[K\e[0m\e[39m\e[49m"
+  - delay: 97
+    content: "\b\b\b\b\bctivities\r\r\n\e[7mactivities       -- Query lacework api activities types\e[K\e[0m\r\e[1Balerts           -- Query lacework api alerts types\e[K\r\e[A\e[A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export activities\e[K\e[0m\e[39m\e[49m"
+  - delay: 366
+    content: "\e[9Dlerts    \b\b\b\b\r\r\n\e[0mactivities       -- Query lacework api activities types\e[K\r\e[1B\e[7malerts           -- Query lacework api alerts types\e[K\e[0m\r\e[A\e[A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export alerts\e[K\e[0m\e[39m\e[49m"
+  - delay: 352
+    content: "\r\r\n\e[J\e[A\e[32C\e[1m \e[0m"
+  - delay: 2490
+    content: "\a\b\e[0m \r\r\n\e[J\e[0mcsv       -- Export to csv\r\njinja2    -- Use jinja template to transform export...\r\njson      -- Export to json\r\n\e[Jpostgres  -- Export to postgres database\e[J\e[4A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export alerts\e[K\e[0m\e[39m\e[49m\e[1C"
+  - delay: 1010
+    content: "csv\r\r\n\e[7mcsv       -- Export to csv\e[K\e[0m\e[K\r\njinja2    -- Use jinja template to transform export...\e[K\e[K\r\njson      -- Export to json\e[K\e[K\r\n\e[Jpostgres  -- Export to postgres database\e[K\e[J\e[4A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export alerts csv\e[K\e[0m\e[39m\e[49m\r\r\n\e[7mcsv       -- Export to csv\e[K\e[0m\r\e[7mcsv       -- Export to csv\e[K\e[0m\r\e[A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export alerts csv\e[K\e[0m\e[39m\e[49m\b\b\bjinja2\r\r\n\e[0mcsv       -- Export to csv\e[K\r\e[1B\e[7mjinja2    -- Use jinja template to transform export...\e[K\e[0m\r\e[A\e[A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export alerts jinja2\e[K\e[0m\e[39m\e[49m"
+  - delay: 113
+    content: "\b\b\b\b\bson  \b\b\r\r\n\e[1B\e[0mjinja2    -- Use jinja template to transform export...\e[K\r\e[1B\e[7mjson      -- Export to json\e[K\e[0m\r\e[3A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export alerts json\e[K\e[0m\e[39m\e[49m"
+  - delay: 495
+    content: "\b\b\binja2\r\r\n\e[1B\e[7mjinja2    -- Use jinja template to transform export...\e[K\e[0m\r\e[1Bjson      -- Export to json\e[K\r\e[3A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export alerts jinja2\e[K\e[0m\e[39m\e[49m"
+  - delay: 406
+    content: "\b\b\b\b\b\bcsv   \b\b\b\r\r\n\e[7mcsv       -- Export to csv\e[K\e[0m\r\e[1Bjinja2    -- Use jinja template to transform export...\e[K\r\e[A\e[A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export alerts csv\e[K\e[0m\e[39m\e[49m"
+  - delay: 825
+    content: "\r\r\n\e[J\e[A\e[36C\e[1m \e[0m"
+  - delay: 1514
+    content: "\b\e[0m --"
+  - delay: 1202
+    content: "\a\r\r\n\e[J\e[0m--end-time                         -- End time for query period                                   \r\n--field-map                        -- JSON fieldmap to alias results columns. For file path (use @\r\n--file-path                        -- Path to exported CSV result                                 \r\n--filters                          -- JSON array of filters to apply to query. For file path (use \r\n--no-append        --append        -- Boolean value to append or replace results                  \r\n--no-flatten-json  --flatten-json  -- Boolean value to flatten json result or not                 \r\n--returns                          -- JSON array of fields to result. For file path (use @ to spec\r\n\e[J--start-time       \e[J                \e[J-- Start time for query period                                 \e[J\e[8A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export alerts csv --\e[K\e[0m\e[39m\e[49m"
+  - delay: 999
+    content: "end-time\r\r\n\e[7m--end-time       \e[0m                  -- End time for query period                                   \e[K\r\n--field-map                        -- JSON fieldmap to alias results columns. For file path (use @\e[K\r\n--file-path                        -- Path to exported CSV result                                 \e[K\r\n--filters                          -- JSON array of filters to apply to query. For file path (use \e[K\r\n--no-append        --append        -- Boolean value to append or replace results                  \e[K\r\n--no-flatten-json  --flatten-json  -- Boolean value to flatten json result or not                 \e[K\r\n--returns                          -- JSON array of fields to result. For file path (use @ to spec\e[K\r\n\e[J--start-time       \e[J                \e[J-- Start time for query period                                 \e[J\e[8A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export alerts csv --end-time\e[K\e[0m\e[39m\e[49m\r\r\n\e[7m--end-time       \e[0m  \r\e[7m--end-time       \e[0m  \r\e[A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export alerts csv --end-time\e[K\e[0m\e[39m\e[49m\e[8Dfield-map\r\r\n\e[0m--end-time         \r\e[1B\e[7m--field-map      \e[0m  \r\e[A\e[A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export alerts csv --field-map\e[K\e[0m\e[39m\e[49m"
+  - delay: 124
+    content: "\b\b\b\b\b\b\ble-path\r\r\n\e[1B\e[0m--field-map        \r\e[1B\e[7m--file-path      \e[0m  \r\e[3A\e[0m\e[27m\e[24m\e[0m\e[39m\e[49m\r\e[3Claceworkreports export alerts csv --file-path\e[K\e[0m\e[39m\e[49m"
+  - delay: 978
+    content: "\r\r\n\e[J\e[A\e[48C\e[1m \e[0m"
+  - delay: 1267
+    content: "\b\e[0m t"
+  - delay: 80
+    content: e
+  - delay: 51
+    content: s
+  - delay: 122
+    content: t
+  - delay: 168
+    content: .
+  - delay: 266
+    content: c
+  - delay: 100
+    content: s
+  - delay: 231
+    content: v
+  - delay: 494
+    content: "\e[?1l\e>\e[?25l\e[?2004l\r\r\e[A\e[0m\e[27m\e[24m\e[J\e[0m\e[49m\e[27m\e[24m\e[38;5;76m❯\e[0m\e[38;5;76m\e[49m\e[39m\e[27m\e[24m laceworkreports export alerts csv --file-path test.csv\e[K\e[?12l\e[?25h\r\r\n\e]2;laceworkreports export alerts csv --file-path test.csv\a\e]1;laceworkreports\a"
+  - delay: 980
+    content: "2022-03-13 16:35:33,460 [INFO] http_session.py:146 - Creating Access Token in Lacework...\r\n"
+  - delay: 287
+    content: "2022-03-13 16:35:33,746 [INFO] DataHandlers.py:87 - Processing data with export format: DataHandlerCliTypes.CSV\r\n2022-03-13 16:35:33,747 [INFO] DataHandlers.py:132 - Removing existing file - append=False\r\n2022-03-13 16:35:33,748 [INFO] http_session.py:226 - POST request to URI: https://lwps.lacework.net/api/v2/Alerts/search\r\n"
+  - delay: 1076
+    content: "2022-03-13 16:35:34,823 [INFO] DataHandlers.py:512 - Processing 2 rows...\r\n"
+  - delay: 168
+    content: "\e[1m\e[7m%\e[27m\e[1m\e[0m                                                                                                   \r \r"
+  - delay: 143
+    content: "\e]2;jamie@transition:~\a\e]1;~\a"
+  - delay: 12
+    content: "\r\e[0m\e[27m\e[24m\e[J\e[0m\e[49m\e[39m\r\n\r\n\e[A\e[38;5;240m╭─\e[0m\e[38;5;240m\e[44m\e[38;5;254m \e[1m\e[38;5;254m\e[44m\e[38;5;255m~\e[0m\e[38;5;255m\e[44m\e[44m\e[38;5;254m\e[0m\e[38;5;254m\e[44m\e[44m\e[38;5;254m \e[0m\e[38;5;254m\e[44m\e[49m\e[34m\e[0m\e[34m\e[49m\e[39m\e[38;5;240m──────────────────────────────────────────────────────────────────────────────\e[0m\e[38;5;240m\e[49m\e[30m\e[0m\e[30m\e[40m\e[32m \e[0m\e[32m\e[40m\e[40m\e[32m✔\e[0m\e[32m\e[40m\e[40m\e[32m \e[0m\e[32m\e[40m\e[40m\e[32m\e[37m\e[0m\e[37m\e[40m\e[47m\e[30m 16:35:35\e[0m\e[30m\e[47m\e[47m\e[30m\e[0m\e[30m\e[47m\e[47m\e[30m \e[0m\e[30m\e[47m\e[49m\e[39m\r\n\e[0m\e[49m\e[39m\e[38;5;240m╰─\e[0m\e[38;5;240m\e[49m\e[39m\e[0m\e[49m\e[39m \e[0m\e[49m\e[39m\e[K\e[?1h\e=\e[?2004h"
+  - delay: 1051
+    content: h
+  - delay: 114
+    content: "\bhe"
+  - delay: 128
+    content: a
+  - delay: 102
+    content: d
+  - delay: 302
+    content: ' '
+  - delay: 234
+    content: '-'
+  - delay: 222
+    content: '1'
+  - delay: 161
+    content: ' '
+  - delay: 477
+    content: t
+  - delay: 78
+    content: e
+  - delay: 53
+    content: s
+  - delay: 124
+    content: t
+  - delay: 255
+    content: .
+  - delay: 100
+    content: c
+  - delay: 98
+    content: s
+  - delay: 192
+    content: v
+  - delay: 772
+    content: "\e[?1l\e>\e[?25l\e[?2004l\r\r\e[A\e[A\e[0m\e[27m\e[24m\e[J\e[0m\e[49m\e[27m\e[24m\e[38;5;76m❯\e[0m\e[38;5;76m\e[49m\e[39m\e[27m\e[24m head -1 test.csv\e[K\e[?12l\e[?25h\r\r\n\e]2;head -1 test.csv\a\e]1;head\a"
+  - delay: 5
+    content: "\"alertType\",\"alertId\",\"severity\",\"startTime\",\"endTime\",\"alertModel\",\"alertProps\",\"keys\",\"threatPrimaryTags\"\r\r\n\e[1m\e[7m%\e[27m\e[1m\e[0m                                                                                                   \r \r"
+  - delay: 142
+    content: "\e]2;jamie@transition:~\a\e]1;~\a"
+  - delay: 12
+    content: "\r\e[0m\e[27m\e[24m\e[J\e[0m\e[49m\e[39m\r\n\r\n\e[A\e[38;5;240m╭─\e[0m\e[38;5;240m\e[44m\e[38;5;254m \e[1m\e[38;5;254m\e[44m\e[38;5;255m~\e[0m\e[38;5;255m\e[44m\e[44m\e[38;5;254m\e[0m\e[38;5;254m\e[44m\e[44m\e[38;5;254m \e[0m\e[38;5;254m\e[44m\e[49m\e[34m\e[0m\e[34m\e[49m\e[39m\e[38;5;240m──────────────────────────────────────────────────────────────────────────────\e[0m\e[38;5;240m\e[49m\e[30m\e[0m\e[30m\e[40m\e[32m \e[0m\e[32m\e[40m\e[40m\e[32m✔\e[0m\e[32m\e[40m\e[40m\e[32m \e[0m\e[32m\e[40m\e[40m\e[32m\e[37m\e[0m\e[37m\e[40m\e[47m\e[30m 16:35:39\e[0m\e[30m\e[47m\e[47m\e[30m\e[0m\e[30m\e[47m\e[47m\e[30m \e[0m\e[30m\e[47m\e[49m\e[39m\r\n\e[0m\e[49m\e[39m\e[38;5;240m╰─\e[0m\e[38;5;240m\e[49m\e[39m\e[0m\e[49m\e[39m \e[0m\e[49m\e[39m\e[K\e[?1h\e=\e[?2004h"
+  - delay: 2038
+    content: "\e[?2004l\r\r\n"
