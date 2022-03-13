@@ -6,6 +6,7 @@ import csv
 import json
 import logging
 import os
+import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from enum import Enum
@@ -15,6 +16,7 @@ import jinja2
 import pandas as pd
 import sqlalchemy
 from dotenv import load_dotenv
+from psycopg2 import OperationalError
 from sqlalchemy import MetaData, Table, create_engine, text
 from sqlalchemy_utils.functions import create_database, database_exists
 
@@ -70,42 +72,46 @@ class DataHandler:
         db_connection=None,
         db_table="export",
         db_if_exists="replace",
+        db_create_if_missing=True,
     ):
         self.format = format
-        logging.info(f"Processing data with format: {self.format}")
+
+        # check for valid format type
         if not DataHandlerTypes.has_value(self.format.value):
-            raise Exception(
+            raise ValueError(
                 "Unsupported export format, exepcted {} found: {}".format(
                     list(DataHandlerTypes), self.format
                 )
             )
+        else:
+            logging.info(f"Processing data with export format: {self.format}")
 
         # check required args
         if self.format in [DataHandlerTypes.CSV, DataHandlerCliTypes.CSV]:
             if file_path is None:
-                raise Exception(f"file_path required for {self.format} type")
+                raise ValueError(f"file_path required for {self.format} type")
         elif self.format in [DataHandlerTypes.JSON, DataHandlerCliTypes.JSON]:
             if file_path is None:
-                raise Exception(f"file_path required for {self.format} type")
+                raise ValueError(f"file_path required for {self.format} type")
         elif self.format in [DataHandlerTypes.JINJA2, DataHandlerCliTypes.JINJA2]:
             if file_path is None:
-                raise Exception(f"file_path required for {self.format} type")
+                raise ValueError(f"file_path required for {self.format} type")
             if template_path is None:
-                raise Exception(f"template_path required for {self.format} type")
+                raise ValueError(f"template_path required for {self.format} type")
         elif self.format in [DataHandlerTypes.POSTGRES, DataHandlerCliTypes.POSTGRES]:
             if db_connection is None:
-                raise Exception(f"db_connection required for {self.format} type")
+                raise ValueError(f"db_connection required for {self.format} type")
             if db_table is None:
-                raise Exception(f"db_table required for {self.format} type")
+                raise ValueError(f"db_table required for {self.format} type")
 
         self.dataset = []
         self.reader = None
         self.file_path = file_path
         self.template_path = template_path
         self.db_connection = db_connection
-        self.db_engine = None
         self.db_table = db_table
         self.db_if_exists = db_if_exists
+        self.db_create_if_missing = db_create_if_missing
         self.dropped_columns = {}
         self.flatten_json = flatten_json
         self.append = append
@@ -147,14 +153,41 @@ class DataHandler:
                 self.fp = open(self.file_path, "w")
 
         elif self.format in [DataHandlerTypes.POSTGRES, DataHandlerCliTypes.POSTGRES]:
-            self.db_engine = create_engine(self.db_connection)
-
-            # check for the db if it doesn't exist create it
-            if not database_exists(self.db_engine.url):
-                logging.warn(
-                    f"Database not found - creating: {self.db_engine.url.database}"
+            try:
+                self.db_engine = create_engine(self.db_connection)
+                logging.info(
+                    f'Connecting to "{self.db_engine.url.database}" on port {self.db_engine.url.port} as user "{self.db_engine.url.username}"'
                 )
-                create_database(self.db_engine.url)
+                self.db_engine.connect()
+            except sqlalchemy.exc.OperationalError as e:
+                if re.match("password authentication failed for user", str(e)):
+                    logging.critical(str(e))
+                    exit(1)
+                elif re.search(r' database "[^"]+" does not exist', str(e)):
+                    # check for the db if it doesn't exist create it
+                    if (
+                        not database_exists(self.db_connection)
+                        and self.db_create_if_missing
+                    ):
+                        logging.info(
+                            f"Creating database - db_create_if_missing=True: {self.db_engine.url.database}"
+                        )
+                        create_database(self.db_engine.url)
+                    else:
+                        logging.critical(str(e))
+
+                elif re.search(
+                    r'could not translate host name "[^"]+" to address: nodename nor servname provided, or not known',
+                    str(e),
+                ):
+                    logging.critical(str(e))
+                    raise Exception(str(e))
+                elif re.search(
+                    r'connection to server at "[^"]+", port \d+ failed: Operation timed out',
+                    str(e),
+                ):
+                    logging.critical(str(e))
+                    raise Exception(str(e))
 
             # connect to the database
             self.conn = self.db_engine.connect()
@@ -170,9 +203,13 @@ class DataHandler:
             ):
                 logging.error("Table already exists and db_if_exists=fail")
                 raise Exception("Table already exists and db_if_exists=fail")
-
-            # run a test query
-            self.conn.execute(text("SELECT 1 as conn_test"))
+            elif (
+                self.db_if_exists == common.DBInsertTypes.Append
+                and not self.db_engine.has_table(self.db_table)
+            ):
+                logging.warning(
+                    "Database table does not exist and db_if_exists=replace: Table will be created"
+                )
 
     def __close(self):
         if self.format in [DataHandlerTypes.CSV, DataHandlerCliTypes.CSV]:
@@ -437,6 +474,7 @@ class ExportHandler:
         db_connection=None,
         db_table="export",
         db_if_exists="replace",
+        db_create_if_missing=True,
         flatten_json=False,
     ):
         self.format = format
@@ -449,6 +487,7 @@ class ExportHandler:
         self.db_connection = db_connection
         self.db_table = db_table
         self.db_if_exists = db_if_exists
+        self.db_create_if_missing = db_create_if_missing
         self.flatten_json = flatten_json
 
     def export(self):
@@ -460,13 +499,14 @@ class ExportHandler:
             db_connection=self.db_connection,
             db_table=self.db_table,
             db_if_exists=self.db_if_exists,
+            db_create_if_missing=self.db_create_if_missing,
             flatten_json=self.flatten_json,
             dtypes=self.dtypes,
         ) as h:
             # process results
             for result in self.results:
                 if len(result["data"]) == 0:
-                    logging.error("Query returned 0 results")
+                    logging.warn("Query returned 0 results")
                     # raise Exception("Query returned 0 results")
                 else:
                     logging.info(f"Processing {len(result['data'])} rows...")

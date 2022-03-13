@@ -23,6 +23,7 @@ def validate(
     db_connection: Any = None,
     db_table: Any = None,
     db_if_exists: Any = None,
+    db_create_if_missing: Any = None,
     append: Any = None,
 ) -> Any:
     # query filters
@@ -87,12 +88,14 @@ def validate(
         if not Path(template_path).exists():
             raise typer.BadParameter("Template path does not exist")
 
-    # postgres
+    # postgres - could add connection validation here
     if db_connection is not None:
         pass
     if db_table is not None:
         pass
     if db_if_exists is not None:
+        pass
+    if db_create_if_missing is not None:
         pass
 
     return {
@@ -109,6 +112,7 @@ def validate(
         "db_connection": db_connection,
         "db_table": db_table,
         "db_if_exists": db_if_exists,
+        "db_create_if_missing": db_create_if_missing,
         "append": append,
     }
 
@@ -140,6 +144,8 @@ def update_config(options: Any) -> bool:
         common.config.db_table = options["db_table"]
     if options["db_if_exists"] is not None:
         common.config.db_if_exists = options["db_if_exists"]
+    if options["db_create_if_missing"] is not None:
+        common.config.db_create_if_missing = options["db_create_if_missing"]
     if options["append"] is not None:
         common.config.append = options["append"]
 
