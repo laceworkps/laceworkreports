@@ -1,4 +1,7 @@
-from types import SimpleNamespace
+"""
+APIv2 Handler
+"""
+
 from typing import Optional
 
 import json
@@ -8,16 +11,14 @@ from pathlib import Path
 import typer
 
 from laceworkreports import common
-from laceworkreports.sdk.DataHandlers import (
-    DataHandlerCliTypes,
-    ExportHandler,
-    QueryHandler,
-)
+from laceworkreports.sdk.DataHandlers import DataHandlerCliTypes
 
-app = typer.Typer()
+from .GenericExport import export
+
+app = typer.Typer(no_args_is_help=True)
 
 
-@app.command()
+@app.command(no_args_is_help=True, help="Export to csv")
 def csv(
     ctx: typer.Context,
     start_time: datetime = typer.Option(
@@ -46,8 +47,6 @@ def csv(
     common.config.ACTION = str(ctx.command_path.split(" ")[-4]).replace("-", "_")
     common.config.TYPE = str(ctx.command_path.split(" ")[-3]).replace("-", "_")
     common.config.OBJECT = str(ctx.command_path.split(" ")[-2]).replace("-", "_")
-
-    ctx.obj = SimpleNamespace()
 
     # handle argument defaults
     if not start_time:
@@ -86,24 +85,11 @@ def csv(
     if flatten_json is not None:
         common.config.flatten_json = flatten_json
 
-    # connect lacework client
-    common.config.connect()
-
-    ExportHandler(
-        format=DataHandlerCliTypes.CSV,
-        results=QueryHandler(
-            client=common.config.client,
-            type=common.config.TYPE,
-            object=common.config.OBJECT,
-        ).execute(),
-        field_map=common.config.field_map,
-        file_path=common.config.file_path,
-        append=common.config.append,
-        flatten_json=common.config.flatten_json,
-    ).export()
+    # after setting context use sdk to execute
+    export()
 
 
-@app.command(name="json")
+@app.command(name="json", no_args_is_help=True, help="Export to json")
 def json_type(
     ctx: typer.Context,
     start_time: datetime = typer.Option(
@@ -131,8 +117,6 @@ def json_type(
     common.config.ACTION = str(ctx.command_path.split(" ")[-4]).replace("-", "_")
     common.config.TYPE = str(ctx.command_path.split(" ")[-3]).replace("-", "_")
     common.config.OBJECT = str(ctx.command_path.split(" ")[-2]).replace("-", "_")
-
-    ctx.obj = SimpleNamespace()
 
     # handle argument defaults
     if not start_time:
@@ -169,23 +153,11 @@ def json_type(
     if file_path is not None:
         common.config.file_path = file_path
 
-    # connect lacework client
-    common.config.connect()
-
-    ExportHandler(
-        format=DataHandlerCliTypes.JSON,
-        results=QueryHandler(
-            client=common.config.client,
-            type=common.config.TYPE,
-            object=common.config.OBJECT,
-        ).execute(),
-        field_map=common.config.field_map,
-        append=common.config.append,
-        file_path=common.config.file_path,
-    ).export()
+    # after setting context use sdk to execute
+    export()
 
 
-@app.command()
+@app.command(no_args_is_help=True, help="Export to postgres database")
 def postgres(
     ctx: typer.Context,
     start_time: datetime = typer.Option(
@@ -217,8 +189,6 @@ def postgres(
     common.config.ACTION = str(ctx.command_path.split(" ")[-4]).replace("-", "_")
     common.config.TYPE = str(ctx.command_path.split(" ")[-3]).replace("-", "_")
     common.config.OBJECT = str(ctx.command_path.split(" ")[-2]).replace("-", "_")
-
-    ctx.obj = SimpleNamespace()
 
     # handle argument defaults
     if not start_time:
@@ -262,27 +232,13 @@ def postgres(
     if db_if_exists is not None:
         common.config.db_if_exists = db_if_exists
 
-    # connect lacework client
-    common.config.connect()
-
-    ExportHandler(
-        format=common.config.format,
-        results=QueryHandler(
-            client=common.config.client,
-            type=common.config.TYPE,
-            object=common.config.OBJECT,
-        ).execute(),
-        field_map=common.config.field_map,
-        file_path=common.config.file_path,
-        dtypes=common.config.dtypes,
-        db_connection=common.config.db_connection,
-        db_table=common.config.db_table,
-        db_if_exists=common.config.db_if_exists,
-        flatten_json=common.config.flatten_json,
-    ).export()
+    # after setting context use sdk to execute
+    export()
 
 
-@app.command()
+@app.command(
+    no_args_is_help=True, help="Use jinja template to transform export results"
+)
 def jinja2(
     ctx: typer.Context,
     start_time: datetime = typer.Option(
@@ -312,8 +268,6 @@ def jinja2(
     common.config.ACTION = str(ctx.command_path.split(" ")[-4]).replace("-", "_")
     common.config.TYPE = str(ctx.command_path.split(" ")[-3]).replace("-", "_")
     common.config.OBJECT = str(ctx.command_path.split(" ")[-2]).replace("-", "_")
-
-    ctx.obj = SimpleNamespace()
 
     # handle argument defaults
     if not start_time:
@@ -354,22 +308,8 @@ def jinja2(
     if flatten_json is not None:
         common.config.flatten_json = flatten_json
 
-    # connect lacework client
-    common.config.connect()
-
-    ExportHandler(
-        format=DataHandlerCliTypes.JINJA2,
-        results=QueryHandler(
-            client=common.config.client,
-            type=common.config.TYPE,
-            object=common.config.OBJECT,
-        ).execute(),
-        field_map=common.config.field_map,
-        file_path=common.config.file_path,
-        template_path=common.config.template_path,
-        append=common.config.append,
-        flatten_json=common.config.flatten_json,
-    ).export()
+    # after setting context use sdk to execute
+    export()
 
 
 if __name__ == "__main__":

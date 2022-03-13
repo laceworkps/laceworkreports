@@ -4,6 +4,14 @@ from laceworksdk import LaceworkClient
 
 from laceworkreports.sdk.DataHandlers import DataHandlerTypes
 
+# Environment Variable Definitions
+LACEWORK_ACCOUNT_ENVIRONMENT_VARIABLE = "LW_ACCOUNT"
+LACEWORK_SUBACCOUNT_ENVIRONMENT_VARIABLE = "LW_SUBACCOUNT"
+LACEWORK_API_KEY_ENVIRONMENT_VARIABLE = "LW_API_KEY"
+LACEWORK_API_SECRET_ENVIRONMENT_VARIABLE = "LW_API_SECRET"
+LACEWORK_API_BASE_DOMAIN_ENVIRONMENT_VARIABLE = "LW_BASE_DOMAIN"
+LACEWORK_API_CONFIG_SECTION_ENVIRONMENT_VARIABLE = "LW_PROFILE"
+
 
 class ActionTypes(Enum):
     Export = "export"
@@ -105,6 +113,8 @@ class DBInsertTypes(Enum):
 
 class Config:
     def __init__(self):
+        self.name = __name__.split(".")[0]
+
         # command context
         self.ACTION = None
         self.TYPE = None
@@ -150,6 +160,9 @@ class Config:
         self.instance = None
         self.profile = None
         self.base_domain = None
+
+        # other
+        self.other = "Default"
 
     def connect(self):
         self.client = LaceworkClient(

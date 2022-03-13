@@ -1,4 +1,7 @@
-from types import SimpleNamespace
+"""
+APIv2 Handler
+"""
+
 from typing import Optional
 
 import json
@@ -8,16 +11,14 @@ from pathlib import Path
 import typer
 
 from laceworkreports import common
-from laceworkreports.sdk.DataHandlers import (
-    DataHandlerCliTypes,
-    ExportHandler,
-    QueryHandler,
-)
+from laceworkreports.sdk.DataHandlers import DataHandlerCliTypes
 
-app = typer.Typer()
+from .GenericExport import export
+
+app = typer.Typer(no_args_is_help=True)
 
 
-@app.command()
+@app.command(no_args_is_help=True, help="Export to csv")
 def csv(
     ctx: typer.Context,
     start_time: datetime = typer.Option(
@@ -27,7 +28,8 @@ def csv(
     end_time: datetime = typer.Option(
         (datetime.utcnow()).strftime(common.ISO_FORMAT), formats=[common.ISO_FORMAT]
     ),
-    lql_query: str = typer.Option(...),
+    returns: Optional[str] = None,
+    filters: Optional[str] = None,
     field_map: Optional[str] = None,
     file_path: str = typer.Option(...),
     append: bool = typer.Option(common.config.append),
@@ -43,8 +45,6 @@ def csv(
     common.config.TYPE = str(ctx.command_path.split(" ")[-3]).replace("-", "_")
     common.config.OBJECT = str(ctx.command_path.split(" ")[-2]).replace("-", "_")
 
-    ctx.obj = SimpleNamespace()
-
     # handle argument defaults
     if not start_time:
         start_time = datetime.utcnow() - timedelta(days=1)
@@ -52,8 +52,11 @@ def csv(
     if not end_time:
         end_time = datetime.utcnow()
 
-    if lql_query is not None and lql_query[0] == "@":
-        lql_query = Path(lql_query[1:]).read_text()
+    if returns is not None and returns[0] == "@":
+        returns = json.loads(Path(returns[1:]).read_text())
+
+    if filters is not None and filters[0] == "@":
+        returns = json.loads(Path(filters[1:]).read_text())
 
     if field_map is not None and field_map[0] == "@":
         field_map = json.loads(Path(field_map[1:]).read_text())
@@ -63,7 +66,10 @@ def csv(
     # query parameters
     common.config.start_time = start_time
     common.config.end_time = end_time
-    common.config.lql_query = lql_query
+    if filters is not None:
+        common.config.filters = filters
+    if returns is not None:
+        common.config.returns = returns
 
     # format context
     common.config.format = DataHandlerCliTypes.CSV
@@ -75,24 +81,11 @@ def csv(
     if flatten_json is not None:
         common.config.flatten_json = flatten_json
 
-    # connect lacework client
-    common.config.connect()
-
-    ExportHandler(
-        format=DataHandlerCliTypes.CSV,
-        results=QueryHandler(
-            client=common.config.client,
-            type=common.config.TYPE,
-            object=common.config.OBJECT,
-        ).execute(),
-        field_map=common.config.field_map,
-        file_path=common.config.file_path,
-        append=common.config.append,
-        flatten_json=common.config.flatten_json,
-    ).export()
+    # after setting context use sdk to execute
+    export()
 
 
-@app.command(name="json")
+@app.command(name="json", no_args_is_help=True, help="Export to json")
 def json_type(
     ctx: typer.Context,
     start_time: datetime = typer.Option(
@@ -102,10 +95,11 @@ def json_type(
     end_time: datetime = typer.Option(
         (datetime.utcnow()).strftime(common.ISO_FORMAT), formats=[common.ISO_FORMAT]
     ),
-    lql_query: str = typer.Option(...),
+    returns: Optional[str] = None,
+    filters: Optional[str] = None,
     field_map: Optional[str] = None,
-    file_path: str = typer.Option(...),
     append: bool = typer.Option(common.config.append),
+    file_path: str = typer.Option(...),
 ) -> None:
     """
     Set the command context
@@ -117,8 +111,6 @@ def json_type(
     common.config.TYPE = str(ctx.command_path.split(" ")[-3]).replace("-", "_")
     common.config.OBJECT = str(ctx.command_path.split(" ")[-2]).replace("-", "_")
 
-    ctx.obj = SimpleNamespace()
-
     # handle argument defaults
     if not start_time:
         start_time = datetime.utcnow() - timedelta(days=1)
@@ -126,8 +118,11 @@ def json_type(
     if not end_time:
         end_time = datetime.utcnow()
 
-    if lql_query is not None and lql_query[0] == "@":
-        lql_query = Path(lql_query[1:]).read_text()
+    if returns is not None and returns[0] == "@":
+        returns = json.loads(Path(returns[1:]).read_text())
+
+    if filters is not None and filters[0] == "@":
+        returns = json.loads(Path(filters[1:]).read_text())
 
     if field_map is not None and field_map[0] == "@":
         field_map = json.loads(Path(field_map[1:]).read_text())
@@ -137,7 +132,10 @@ def json_type(
     # query parameters
     common.config.start_time = start_time
     common.config.end_time = end_time
-    common.config.lql_query = lql_query
+    if filters is not None:
+        common.config.filters = filters
+    if returns is not None:
+        common.config.returns = returns
 
     # format context
     common.config.format = DataHandlerCliTypes.JSON
@@ -147,23 +145,11 @@ def json_type(
     if file_path is not None:
         common.config.file_path = file_path
 
-    # connect lacework client
-    common.config.connect()
-
-    ExportHandler(
-        format=DataHandlerCliTypes.JSON,
-        results=QueryHandler(
-            client=common.config.client,
-            type=common.config.TYPE,
-            object=common.config.OBJECT,
-        ).execute(),
-        field_map=common.config.field_map,
-        file_path=common.config.file_path,
-        append=common.config.append,
-    ).export()
+    # after setting context use sdk to execute
+    export()
 
 
-@app.command()
+@app.command(no_args_is_help=True, help="Export to postgres database")
 def postgres(
     ctx: typer.Context,
     start_time: datetime = typer.Option(
@@ -173,7 +159,8 @@ def postgres(
     end_time: datetime = typer.Option(
         (datetime.utcnow()).strftime(common.ISO_FORMAT), formats=[common.ISO_FORMAT]
     ),
-    lql_query: str = typer.Option(...),
+    returns: Optional[str] = None,
+    filters: Optional[str] = None,
     field_map: Optional[str] = None,
     db_connection: str = typer.Option(...),
     db_table: str = typer.Option(common.config.db_table),
@@ -192,8 +179,6 @@ def postgres(
     common.config.TYPE = str(ctx.command_path.split(" ")[-3]).replace("-", "_")
     common.config.OBJECT = str(ctx.command_path.split(" ")[-2]).replace("-", "_")
 
-    ctx.obj = SimpleNamespace()
-
     # handle argument defaults
     if not start_time:
         start_time = datetime.utcnow() - timedelta(days=1)
@@ -201,18 +186,24 @@ def postgres(
     if not end_time:
         end_time = datetime.utcnow()
 
-    if lql_query is not None and lql_query[0] == "@":
-        lql_query = Path(lql_query[1:]).read_text()
+    if returns is not None and returns[0] == "@":
+        returns = json.loads(Path(returns[1:]).read_text())
+
+    if filters is not None and filters[0] == "@":
+        returns = json.loads(Path(filters[1:]).read_text())
 
     if field_map is not None and field_map[0] == "@":
-        field_map = Path(field_map[1:]).read_text()
+        field_map = json.loads(Path(field_map[1:]).read_text())
 
     # update the config namespace
 
     # query parameters
     common.config.start_time = start_time
     common.config.end_time = end_time
-    common.config.lql_query = lql_query
+    if filters is not None:
+        common.config.filters = filters
+    if returns is not None:
+        common.config.returns = returns
 
     # format context
     common.config.format = DataHandlerCliTypes.POSTGRES
@@ -229,27 +220,13 @@ def postgres(
     if db_if_exists is not None:
         common.config.db_if_exists = db_if_exists
 
-    # connect lacework client
-    common.config.connect()
-
-    ExportHandler(
-        format=common.config.format,
-        results=QueryHandler(
-            client=common.config.client,
-            type=common.config.TYPE,
-            object=common.config.OBJECT,
-        ).execute(),
-        field_map=common.config.field_map,
-        file_path=common.config.file_path,
-        dtypes=common.config.dtypes,
-        db_connection=common.config.db_connection,
-        db_table=common.config.db_table,
-        db_if_exists=common.config.db_if_exists,
-        flatten_json=common.config.flatten_json,
-    ).export()
+    # after setting context use sdk to execute
+    export()
 
 
-@app.command()
+@app.command(
+    no_args_is_help=True, help="Use jinja template to transform export results"
+)
 def jinja2(
     ctx: typer.Context,
     start_time: datetime = typer.Option(
@@ -259,11 +236,13 @@ def jinja2(
     end_time: datetime = typer.Option(
         (datetime.utcnow()).strftime(common.ISO_FORMAT), formats=[common.ISO_FORMAT]
     ),
-    lql_query: str = typer.Option(...),
+    returns: Optional[str] = None,
+    filters: Optional[str] = None,
     field_map: Optional[str] = None,
     file_path: str = typer.Option(...),
     template_path: str = typer.Option(...),
-    flatten_json: bool = typer.Option(None),
+    append: bool = typer.Option(common.config.append),
+    flatten_json: bool = typer.Option(common.config.flatten_json),
 ) -> None:
     """
     Set the command context
@@ -275,8 +254,6 @@ def jinja2(
     common.config.TYPE = str(ctx.command_path.split(" ")[-3]).replace("-", "_")
     common.config.OBJECT = str(ctx.command_path.split(" ")[-2]).replace("-", "_")
 
-    ctx.obj = SimpleNamespace()
-
     # handle argument defaults
     if not start_time:
         start_time = datetime.utcnow() - timedelta(days=1)
@@ -284,8 +261,11 @@ def jinja2(
     if not end_time:
         end_time = datetime.utcnow()
 
-    if lql_query is not None and lql_query[0] == "@":
-        lql_query = Path(lql_query[1:]).read_text()
+    if returns is not None and returns[0] == "@":
+        returns = json.loads(Path(returns[1:]).read_text())
+
+    if filters is not None and filters[0] == "@":
+        returns = json.loads(Path(filters[1:]).read_text())
 
     if field_map is not None and field_map[0] == "@":
         field_map = json.loads(Path(field_map[1:]).read_text())
@@ -295,35 +275,25 @@ def jinja2(
     # query parameters
     common.config.start_time = start_time
     common.config.end_time = end_time
-    common.config.lql_query = lql_query
+    if filters is not None:
+        common.config.filters = filters
+    if returns is not None:
+        common.config.returns = returns
 
     # format context
     common.config.format = DataHandlerCliTypes.JINJA2
+    common.config.append = append
     if field_map is not None:
         common.config.field_map = field_map
-    if file_path is not None:
-        common.config.file_path = file_path
     if template_path is not None:
         common.config.template_path = template_path
+    if file_path is not None:
+        common.config.file_path = file_path
     if flatten_json is not None:
         common.config.flatten_json = flatten_json
 
-    # connect lacework client
-    common.config.connect()
-
-    ExportHandler(
-        format=DataHandlerCliTypes.JINJA2,
-        results=QueryHandler(
-            client=common.config.client,
-            type=common.config.TYPE,
-            object=common.config.OBJECT,
-        ).execute(),
-        field_map=common.config.field_map,
-        file_path=common.config.file_path,
-        template_path=common.config.template_path,
-        append=common.config.append,
-        flatten_json=common.config.flatten_json,
-    ).export()
+    # after setting context use sdk to execute
+    export()
 
 
 if __name__ == "__main__":
