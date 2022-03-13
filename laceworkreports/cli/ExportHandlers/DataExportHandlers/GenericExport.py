@@ -1,6 +1,8 @@
 import logging
 from pprint import pprint
 
+import typer
+
 from laceworkreports import common
 from laceworkreports.sdk.DataHandlers import ExportHandler, QueryHandler
 
@@ -29,6 +31,7 @@ def export() -> None:
         db_connection=common.config.db_connection,
         db_table=common.config.db_table,
         db_if_exists=common.config.db_if_exists,
+        db_create_if_missing=common.config.db_create_if_missing,
         append=common.config.append,
         flatten_json=common.config.flatten_json,
     ).export()

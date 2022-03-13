@@ -148,6 +148,7 @@ class Config:
         self.db_connection = None
         self.db_table = "export"
         self.db_if_exists = DBInsertTypes.Replace
+        self.db_create_if_missing = True
 
         # format
         self.flatten_json = False
@@ -164,11 +165,6 @@ class Config:
 
         # other
         self.other = "Default"
-
-    def update(self, key, value):
-        obj = getattr(self, key)
-        obj = value
-        logging.info(f"Update {key} with {value}: self.{key} = {obj}")
 
     def connect(self):
         self.client = LaceworkClient(

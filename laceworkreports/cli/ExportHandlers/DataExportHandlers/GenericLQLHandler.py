@@ -153,6 +153,10 @@ def postgres(
         common.config.db_if_exists.value,
         help="Action to take if db table already exists",
     ),
+    db_create_if_missing: Optional[bool] = typer.Option(
+        common.config.db_create_if_missing,
+        help="Bool to create database if missing",
+    ),
 ) -> None:
     """
     Set the command context
@@ -173,6 +177,7 @@ def postgres(
         db_connection=db_connection,
         db_table=db_table,
         db_if_exists=db_if_exists,
+        db_create_if_missing=db_create_if_missing,
     )
 
     update_config(options=options)
