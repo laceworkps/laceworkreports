@@ -23,7 +23,7 @@ laceworkreports is a Python cli/package for creating reports from Lacework data.
  - Save results as csv, json, or to postgres
  - Transform results using jinja template
  - Override returned field names using field_map (supports nested json notation: parent.child.value)
- - Stores complex json objects s JSONB in postgres
+ - Stores complex json objects as JSONB in postgres
  - Flatten json structures before writing
 
 ## CLI Usage
