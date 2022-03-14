@@ -83,6 +83,25 @@ or with `Poetry`:
 poetry run laceworkreports --help
 ```
 
+or run with `docker`:
+```bash
+#!/bin/bash
+
+docker run --rm -it \
+    `# name of the container` \
+    --name laceworkreports \
+    `# mount credentials and configuration` \
+    -v ~/.lacework.toml:/home/user/.lacework.toml \
+    -v $(pwd)/reports:/app/reports \
+    `# override the uid to allow docker write through to output volume (optional)` \
+    --env=HOME=/home/user \
+    --user $UID:$GID \
+    `# start in bash` \
+    --entrypoint="/bin/bash" \
+    `# run the report script` \
+    laceworkps/laceworkreports:latest
+```
+
 ## 📈 Releases
 
 You can see the list of available releases on the [GitHub Releases](https://github.com/laceworkps/laceworkreports/releases) page.

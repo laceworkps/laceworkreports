@@ -1,0 +1,9 @@
+example {
+    source {
+        <YOUR_AWS_CFG_TYPE_HERE> i
+    }
+    return distinct {
+        i.ACCOUNT_ID,
+        i.RESOURCE_CONFIG
+    }
+}
