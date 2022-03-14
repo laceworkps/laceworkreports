@@ -74,6 +74,11 @@ def main(
         envvar=common.LACEWORK_API_BASE_DOMAIN_ENVIRONMENT_VARIABLE,
         help="lacework.net or fra.lacework.net (default: lacework.net)",
     ),
+    sample: bool = typer.Option(
+        common.config.sample,
+        envvar=common.LACEWORK_API_BASE_DOMAIN_ENVIRONMENT_VARIABLE,
+        help="print first row of response from api and exit",
+    ),
 ) -> None:
     """
     Set the search context for the LaceworkClient
@@ -88,6 +93,7 @@ def main(
     common.config.instance = instance
     common.config.profile = profile
     common.config.base_domain = base_domain
+    common.config.sample = sample
 
     ctx.obj = SimpleNamespace(
         account=account,

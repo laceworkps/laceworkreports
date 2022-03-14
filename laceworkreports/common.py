@@ -1,4 +1,3 @@
-import logging
 from enum import Enum
 
 from laceworksdk import LaceworkClient
@@ -131,6 +130,7 @@ class Config:
         self.returns = None
         self.lql_query = None
         self.dataset = ComplianceEvaluationsTypes.AwsCompliance
+        self.sample = False
 
         # export context
         self.format = DataHandlerTypes.CSV

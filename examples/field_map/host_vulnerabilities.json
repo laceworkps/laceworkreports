@@ -1,0 +1,10 @@
+{
+    "startTime": "startTime",
+    "mid": "mid",
+    "status": "status",
+    "vulnId": "vulnId",
+    "package_name": "featureKey.name",
+    "package_namespace": "featureKey.namespace",
+    "package_active": "featureKey.package_active",
+    "version_installed": "featureKey.version_installed"
+}

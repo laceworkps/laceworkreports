@@ -1,0 +1,56 @@
+<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+    xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+    <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
+        <Author>Example</Author>
+        <Created>0</Created>
+    </DocumentProperties>
+    <Styles>
+        <Style ss:ID="Currency">
+            <NumberFormat ss:Format="Currency"></NumberFormat>
+        </Style>
+        <Style ss:ID="Date">
+            <NumberFormat ss:Format="Medium Date"></NumberFormat>
+        </Style>
+    </Styles>
+    <Worksheet ss:Name="Sheet1">
+        <Table>
+            <Row>
+                {%- for field in dataset[0] %}
+                <Cell>
+                    <Data ss:Type="String">{{ field }}</Data>
+                </Cell>
+                {% endfor %}
+            </Row>
+            {%- for item in dataset %}
+            <Row>
+            {%- for field in item %}
+                <Cell>
+                    <Data ss:Type="String">{{ item[field] }}</Data>
+                </Cell>
+            {% endfor %}
+            </Row>
+            {% endfor %}
+        </Table>
+    </Worksheet>
+    <Worksheet ss:Name="Sheet2">
+        <Table>
+            <Row>
+                {%- for field in dataset[0] %}
+                <Cell>
+                    <Data ss:Type="String">{{ field }}</Data>
+                </Cell>
+                {% endfor %}
+            </Row>
+            {%- for item in dataset %}
+            <Row>
+            {%- for field in item %}
+                <Cell>
+                    <Data ss:Type="String">{{ item[field] }}</Data>
+                </Cell>
+            {% endfor %}
+            </Row>
+            {% endfor %}
+        </Table>
+    </Worksheet>
+</Workbook>

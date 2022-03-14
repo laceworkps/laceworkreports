@@ -1,0 +1,9 @@
+[
+  { "field": "status", "expression": "in", "values": ["New", "Active"] },
+  {
+    "field": "severity",
+    "expression": "in",
+    "values": ["Critical", "High", "Medium"]
+  },
+  { "field": "fixInfo.fix_available", "expression": "eq", "value": 1 }
+]
