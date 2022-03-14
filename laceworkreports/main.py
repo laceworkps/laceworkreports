@@ -76,7 +76,6 @@ def main(
     ),
     sample: bool = typer.Option(
         common.config.sample,
-        envvar=common.LACEWORK_API_BASE_DOMAIN_ENVIRONMENT_VARIABLE,
         help="print first row of response from api and exit",
     ),
 ) -> None:
