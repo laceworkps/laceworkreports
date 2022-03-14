@@ -225,7 +225,7 @@ def jinja2(
     common.config.ACTION = str(ctx.command_path.split(" ")[-4]).replace("-", "_")
     common.config.TYPE = str(ctx.command_path.split(" ")[-3]).replace("-", "_")
     common.config.OBJECT = str(ctx.command_path.split(" ")[-2]).replace("-", "_")
-    common.config.format = DataHandlerCliTypes.CSV
+    common.config.format = DataHandlerCliTypes.JINJA2
 
     options = validate(
         start_time=start_time,
