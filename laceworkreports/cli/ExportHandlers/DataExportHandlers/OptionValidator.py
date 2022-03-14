@@ -39,7 +39,7 @@ def validate(
 
     if returns is not None:
         if returns[0] == "@":
-            if not Path.exists(returns[1:]):
+            if not Path(returns[1:]).exists():
                 raise typer.BadParameter("Returns path does not exist")
             try:
                 returns = json.loads(Path(returns[1:]).read_text())
@@ -53,7 +53,7 @@ def validate(
 
     if filters is not None:
         if filters[0] == "@":
-            if not Path.exists(filters[1:]):
+            if not Path(filters[1:]).exists():
                 raise typer.BadParameter("Filters path does not exist")
             try:
                 filters = json.loads(Path(filters[1:]).read_text())
@@ -67,7 +67,7 @@ def validate(
 
     if field_map is not None:
         if field_map[0] == "@":
-            if not Path.exists(field_map[1:]):
+            if not Path(field_map[1:]).exists():
                 raise typer.BadParameter("Field map path does not exist")
             try:
                 field_map = json.loads(Path(field_map[1:]).read_text())
@@ -81,7 +81,13 @@ def validate(
 
     # lql
     if lql_query is not None:
-        pass
+        if lql_query[0] == "@":
+            if not Path(lql_query[1:]).exists():
+                raise typer.BadParameter("LQL query path does not exist")
+            try:
+                lql_query = Path(lql_query[1:]).read_text()
+            except Exception as e:
+                raise typer.BadParameter(f"Failed to parse lql query: {e}")
 
     # jinja
     if template_path is not None:

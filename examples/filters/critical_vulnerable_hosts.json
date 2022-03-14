@@ -1,0 +1,4 @@
+[
+    {"field":"severity","expression":"in","values":["Critical","High"]},
+    {"field":"status","expression":"in","values":["New","Active"]}
+]

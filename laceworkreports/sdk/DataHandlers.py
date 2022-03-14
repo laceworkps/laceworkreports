@@ -16,7 +16,6 @@ import jinja2
 import pandas as pd
 import sqlalchemy
 from dotenv import load_dotenv
-from psycopg2 import OperationalError
 from sqlalchemy import MetaData, Table, create_engine, text
 from sqlalchemy_utils.functions import create_database, database_exists
 
@@ -73,6 +72,7 @@ class DataHandler:
         db_table="export",
         db_if_exists="replace",
         db_create_if_missing=True,
+        sample=False,
     ):
         self.format = format
 
@@ -115,6 +115,7 @@ class DataHandler:
         self.dropped_columns = {}
         self.flatten_json = flatten_json
         self.append = append
+        self.sample = sample
 
         # dtypes is the override for sql data types - empty when not provided
         if dtypes is None:
@@ -227,7 +228,9 @@ class DataHandler:
             template = env.get_template(os.path.basename(report_template))
             result = template.render(
                 dataset=self.dataset,
-                date=datetime.utcnow(),
+                rows=len(self.dataset),
+                datetime=datetime,
+                timedelta=timedelta,
                 config=common.config,
             )
 
@@ -329,16 +332,22 @@ class DataHandler:
         else:
             logging.error(f"Unkown format type: {self.format}")
 
+    def show_sample(self, row):
+        logging.warn("Sampling only no action will be taken")
+        print(json.dumps(row, indent=4))
+
     def get(self):
         return self.dataset
 
     def __enter__(self):
-        self.__open()
+        if not self.sample:
+            self.__open()
 
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.__close()
+        if not self.sample:
+            self.__close()
 
 
 class QueryHandler:
@@ -476,6 +485,7 @@ class ExportHandler:
         db_if_exists="replace",
         db_create_if_missing=True,
         flatten_json=False,
+        sample=False,
     ):
         self.format = format
         self.results = results
@@ -489,6 +499,7 @@ class ExportHandler:
         self.db_if_exists = db_if_exists
         self.db_create_if_missing = db_create_if_missing
         self.flatten_json = flatten_json
+        self.sample = sample
 
     def export(self):
         with DataHandler(
@@ -501,6 +512,7 @@ class ExportHandler:
             db_if_exists=self.db_if_exists,
             db_create_if_missing=self.db_create_if_missing,
             flatten_json=self.flatten_json,
+            sample=self.sample,
             dtypes=self.dtypes,
         ) as h:
             # process results
@@ -520,10 +532,16 @@ class ExportHandler:
                             logging.error(f"Failed to map fields for data: {data}")
                             raise Exception(e)
 
-                        with ThreadPoolExecutor(max_workers=5) as exe:
-                            futures = []
-                            future = exe.submit(h.insert, row)
-                            futures.append(future)
+                        # sample data and exit
+                        if self.sample:
+                            h.show_sample(row)
+                            exit(1)
+                        # thread exporting results
+                        else:
+                            with ThreadPoolExecutor(max_workers=5) as exe:
+                                futures = []
+                                future = exe.submit(h.insert, row)
+                                futures.append(future)
 
             # return
             return h.get()

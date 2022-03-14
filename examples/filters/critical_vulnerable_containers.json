@@ -1,0 +1,4 @@
+[
+    {"field":"severity","expression":"in","values":["Critical"]},
+    {"field":"status","expression":"eq","value":"VULNERABLE"}
+]

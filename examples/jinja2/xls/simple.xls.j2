@@ -1,0 +1,61 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"
+    xmlns="http://www.w3.org/TR/REC-html40">
+<meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8">
+<head>
+    <!--[if gte mso 9]>
+        <xml>
+            <x:ExcelWorkbook>
+                <x:ExcelWorksheets>
+                    <x:ExcelWorksheet>
+                        <x:Name>Sheet1</x:Name>
+                        <x:WorksheetOptions>
+                        <x:DisplayGridlines/>
+                        </x:WorksheetOptions>
+                    </x:ExcelWorksheet>
+                </x:ExcelWorksheets>
+            </x:ExcelWorkbook>
+        </xml>
+    <![endif]-->
+    <style>
+        @page {
+            size: portrait;
+            mso-page-orientation: portrait;
+        }
+
+        @page Section1 {
+            size: 595.28pt 841.89pt;
+            margin: 1.0in 1.25in 1.0in 1.25in;
+            mso-header-margin: .5in;
+            mso-footer-margin: .5in;
+            mso-paper-source: 0;
+        }
+
+        div.Section1 {
+            page: Section1;
+        }
+
+        br {
+            mso-data-placement: same-cell;
+        }
+    </style>
+</head>
+<body>
+    <div class="Section1">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    {%- for field in dataset[0] %}
+                    <TD class="c1">{{ field }}</TD>
+                    {% endfor %}
+                </tr>
+            </thead>
+            {%- for item in dataset %}
+            <tr>
+            {%- for field in item %}
+                <TD class="c1">{{ item[field] }}</TD>
+            {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>

@@ -1,0 +1,9 @@
+{
+  "startTime": "startTime",
+  "imageId": "imageId",
+  "status": "status",
+  "vulnId": "vulnId",
+  "package_name": "featureKey.name",
+  "package_namespace": "featureKey.namespace",
+  "version_installed": "featureKey.version"
+}

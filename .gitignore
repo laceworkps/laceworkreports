@@ -615,7 +615,6 @@ healthchecksdb
 MigrationBackup/
 
 # End of https://www.gitignore.io/api/osx,python,pycharm,windows,visualstudio,visualstudiocode
-*.csv
-*.json
-*.html
-examples/_internal/**
+/*.csv
+/*.json
+/*.html
