@@ -19,18 +19,19 @@ laceworkreports is a Python cli/package for creating reports from Lacework data.
 
 ## 🚀 Features
 
- - Retrieve Lacework API data from activities, entities, queries, configs
- - Save results as csv, json, or to postgres
- - Transform results using jinja template
- - Override returned field names using field_map (supports nested json notation: parent.child.value)
- - Stores complex json objects as JSONB in postgres
- - Flatten json structures before writing
+- Retrieve Lacework API data from activities, entities, queries, configs
+- Save results as csv, json, or to postgres
+- Transform results using jinja template
+- Override returned field names using field_map (supports nested json notation: parent.child.value)
+- Stores complex json objects as JSONB in postgres
+- Flatten json structures before writing
 
 ## CLI Usage
 
 ```bash
 laceworkreports export vulnerabilities hosts csv --file-path="export.csv"
 ```
+
 ![laceworkreports](assets/images/laceworkreports.gif)
 
 See [CLI README](README-CLI.md) for details.
@@ -59,6 +60,7 @@ eh = ExportHandler(
 ```
 
 See [example.py](examples/sdk/example.py) for details.
+
 ## Installation
 
 ```bash
@@ -84,9 +86,8 @@ poetry run laceworkreports --help
 ```
 
 or run with `docker`:
-```bash
-#!/bin/bash
 
+```bash
 docker run --rm -it \
     `# name of the container` \
     --name laceworkreports \
@@ -120,7 +121,6 @@ We use [`Release Drafter`](https://github.com/marketplace/actions/release-drafte
 |              `breaking`               |   💥 Breaking Changes   |
 |            `documentation`            |    📝 Documentation     |
 |            `dependencies`             | ⬆️ Dependencies updates |
-
 
 ## 🛡 License
 
