@@ -20,6 +20,11 @@ commands = [
     {"command_name": "vulnerabilities", "command_type": Vulnerabilities.app},
 ]
 
+for t in common.LegacyV2ObjectTypes:
+    commands.append(
+        {"command_name": t.value, "command_type": GenericAPIv2Handler.app},
+    )
+
 for command in commands:
     app.add_typer(
         command["command_type"],
