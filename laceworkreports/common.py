@@ -22,6 +22,24 @@ class ActionTypes(Enum):
         return value in cls._value2member_map_
 
 
+class LegacyV2ObjectTypes(Enum):
+    AgentAccessTokens = "agent_access_tokens"  # v2 legacy
+    AlertChannels = "alert_channels"  # v2 legacy
+    AlertRules = "alert_rules"  # v2 legacy
+    AuditLogs = "audit_logs"  # v2 legacy
+    CloudAccounts = "cloud_accounts"  # v2 legacy
+    CloudActivities = "cloud_activities"  # v2 legacy
+    ContainerRegistries = "container_registries"  # v2 legacy
+    ReportRules = "report_rules"
+    ResourceGroups = "resource_groups"
+    TeamMembers = "team_members"
+    VulnerabilityExceptions = "vulnerability_exceptions"
+
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
+
+
 class ObjectTypes(Enum):
     Entities = "entities"
     Activities = "activities"
@@ -29,6 +47,18 @@ class ObjectTypes(Enum):
     Vulnerabilities = "vulnerabilities"
     Configs = "configs"
     Alerts = "alerts"
+    # add support for legacy v2 which now support paging
+    AgentAccessTokens = "agent_access_tokens"  # v2 legacy
+    AlertChannels = "alert_channels"  # v2 legacy
+    AlertRules = "alert_rules"  # v2 legacy
+    AuditLogs = "audit_logs"  # v2 legacy
+    CloudAccounts = "cloud_accounts"  # v2 legacy
+    CloudActivities = "cloud_activities"  # v2 legacy
+    ContainerRegistries = "container_registries"  # v2 legacy
+    ReportRules = "report_rules"
+    ResourceGroups = "resource_groups"
+    TeamMembers = "team_members"
+    VulnerabilityExceptions = "vulnerability_exceptions"
 
     @classmethod
     def has_value(cls, value):

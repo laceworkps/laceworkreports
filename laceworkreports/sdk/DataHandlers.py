@@ -59,6 +59,53 @@ class DataHandlerCliTypes(Enum):
         return value in cls._value2member_map_
 
 
+class APIv2Helper:
+    def __init__(self, session, object_type, endpoint_root="/api/v2"):
+        self.session = session
+        self._session = session
+        self._object_type = object_type
+        self._endpoint_root = endpoint_root
+
+    def build_url(self, id=None, resource=None, action=None):
+        """
+        Builds the URL to use based on the endpoint path, resource, type, and ID.
+        :param id: A string representing the ID of an object to use in the URL
+        :param resource: A string representing the type of resource to append to the URL
+        :param action: A string representing the type of action to append to the URL
+        """
+
+        result = f"{self._endpoint_root}/{self._object_type}"
+
+        if resource:
+            result += f"/{resource}"
+        if action:
+            result += f"/{action}"
+        if id:
+            result += f"/{id}"
+
+        return result
+
+    def search(self, json=None, resource=None, **kwargs):
+        response = self._session.post(
+            self.build_url(resource=resource, action="search"), json=json
+        )
+        while True:
+            response_json = response.json()
+            yield response_json
+
+            try:
+                next_page = (
+                    response_json.get("paging", {}).get("urls", {}).get("nextPage")
+                )
+            except Exception:
+                next_page = None
+
+            if next_page:
+                response = self._session.get(next_page, **kwargs)
+            else:
+                break
+
+
 class DataHandler:
     def __init__(
         self,
@@ -460,7 +507,13 @@ class QueryHandler:
             return [response]
         elif common.ObjectTypes.has_value(self.type):
             # return query result reference
-            return obj.search(json=q)
+
+            # support legacy API functions migrated to v2
+            if common.LegacyV2ObjectTypes.has_value(self.type):
+                h = APIv2Helper(self.client._session, obj._object_type)
+                return h.search(json=q)
+            else:
+                return obj.search(json=q)
         else:
             logging.error(
                 f"Query type {self.type}.{self.object} currently not supported"
