@@ -44,7 +44,11 @@ def csv(
         None,
         help="JSON fieldmap to alias results columns. For file path (use @ to specify file path)",
     ),
-    file_path: str = typer.Option(..., help="Path to exported CSV result"),
+    file_path: str = typer.Option(
+        ...,
+        help="Path to exported CSV result",
+        envvar=common.LACEWORK_REPORTS_FILE_PATH,
+    ),
     flatten_json: bool = typer.Option(
         common.config.flatten_json, help="Boolean value to flatten json result or not"
     ),
@@ -108,7 +112,11 @@ def json_type(
         None,
         help="JSON fieldmap to alias results columns. For file path (use @ to specify file path)",
     ),
-    file_path: str = typer.Option(..., help="Path to exported CSV result"),
+    file_path: str = typer.Option(
+        ...,
+        help="Path to exported JSON result",
+        envvar=common.LACEWORK_REPORTS_FILE_PATH,
+    ),
     dataset: common.ComplianceEvaluationsTypes = typer.Option(
         common.ComplianceEvaluationsTypes.AwsCompliance.value
     ),
@@ -177,9 +185,12 @@ def postgres(
     db_connection: str = typer.Option(
         ...,
         help="Postgres connection string (e.g. postgresql://postgres:password@localhost:5432/postgres)",
+        envvar=common.LACEWORK_REPORTS_DB_CONNECTION,
     ),
     db_table: str = typer.Option(
-        common.config.db_table, help="Postgres table to store results"
+        common.config.db_table,
+        help="Postgres table to store results",
+        envvar=common.LACEWORK_REPORTS_DB_TABLE,
     ),
     db_if_exists: Optional[common.DBInsertTypes] = typer.Option(
         common.config.db_if_exists.value,
@@ -250,13 +261,18 @@ def jinja2(
         None,
         help="JSON fieldmap to alias results columns. For file path (use @ to specify file path)",
     ),
-    file_path: str = typer.Option(..., help="Path to exported CSV result"),
+    file_path: str = typer.Option(
+        ...,
+        help="Path to exported JINJA2 result",
+        envvar=common.LACEWORK_REPORTS_FILE_PATH,
+    ),
     flatten_json: bool = typer.Option(
         common.config.flatten_json, help="Boolean value to flatten json result or not"
     ),
     template_path: str = typer.Option(
         ...,
         help="Path to jinja2 template. Results will be passed as 'dataset' variable.",
+        envvar=common.LACEWORK_REPORTS_TEMPLATE_PATH,
     ),
 ) -> None:
     """
