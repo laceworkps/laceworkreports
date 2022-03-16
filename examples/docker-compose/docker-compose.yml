@@ -1,0 +1,39 @@
+version: "3"
+
+services:
+  postgres:
+    image: library/postgres:latest
+    container_name: ${POSTGRES_CONTAINER}
+    restart: always
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    # use for persistent storage
+    # volumes:
+    #   - postgres:/var/lib/postgresql/data
+    networks:
+      - postgres
+  laceworkreports:
+    image: laceworkps/laceworkreports:latest
+    container_name: ${LACEWORKREPORTS_CONTAINER}
+    restart: always
+    entrypoint: "tail -f /dev/null"
+    environment:
+      LW_REPORTS_DB_CONNECTION: ${LW_REPORTS_DB_CONNECTION}
+    depends_on:
+      - postgres
+    volumes:
+      - ${HOME}/.lacework.toml:/home/user/.lacework.toml
+    networks:
+      - postgres
+
+networks:
+  postgres:
+    driver: bridge
+# use for persistent storage
+# volumes:
+#   postgres:
