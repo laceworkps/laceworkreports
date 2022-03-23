@@ -200,7 +200,7 @@ def sqlite_sync_report(report, table_name, queries={}, db_path_override=None):
         for query in queries.keys():
             logging.info(f"Executing query: {query}")
             df = pd.read_sql_query(
-                sql=queries[query],
+                sql=queries[query].replace(":table_name", table_name),
                 con=con,
             )
             results[query] = df.to_dict(orient="records")

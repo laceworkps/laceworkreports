@@ -104,7 +104,7 @@ def html(
 
     # report queries
     queries = {
-        "report": f"""
+        "report": """
                     select 
                         reportType,
                         reportTime,
@@ -127,8 +127,8 @@ def html(
                         json_extract(json_recommendations.value, '$.SEVERITY') AS severity,
                         CAST(100-cast(json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) AS FLOAT)*100/json_extract(json_recommendations.value, '$.RESOURCE_COUNT') AS INTEGER) as percent
                     from 
-                        {db_table}, 
-                        json_each({db_table}.recommendations) AS json_recommendations
+                        :table_name, 
+                        json_each(:table_name.recommendations) AS json_recommendations
                     where
                         percent < 100 AND status != 'Compliant'
                     order by
@@ -137,17 +137,17 @@ def html(
                         reportType,
                         rec_id
                     """,
-        "account_coverage": f"""
+        "account_coverage": """
                             SELECT 
                                 t.Account,
-                                AVG(t.Percent) AS Percent
+                                CAST(AVG(t.Percent) AS INTEGER) AS Percent
                             FROM
                                 (SELECT
                                     accountId AS Account,
                                     CAST(100-cast(json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) AS FLOAT)*100/json_extract(json_recommendations.value, '$.RESOURCE_COUNT') AS INTEGER) as percent
                                 FROM
-                                    {db_table},
-                                    json_each({db_table}.recommendations) AS json_recommendations
+                                    :table_name,
+                                    json_each(:table_name.recommendations) AS json_recommendations
                                 ) as t
                             GROUP BY
                                 Account
@@ -155,23 +155,23 @@ def html(
                                 Account,
                                 Percent
                             """,
-        "total_coverage": f"""
+        "total_coverage": """
                             SELECT 
-                                AVG(t.Percent) AS Percent
+                                CAST(AVG(t.Percent) AS INTEGER) AS Percent
                             FROM
                                 (SELECT
                                     accountId AS Account,
                                     CAST(100-cast(json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) AS FLOAT)*100/json_extract(json_recommendations.value, '$.RESOURCE_COUNT') AS INTEGER) as percent
                                 FROM
-                                    {db_table},
-                                    json_each({db_table}.recommendations) AS json_recommendations
+                                    :table_name,
+                                    json_each(:table_name.recommendations) AS json_recommendations
                                 ) as t
                             """,
-        "total_accounts": f"""
+        "total_accounts": """
                             SELECT
                                 COUNT(DISTINCT accountId) AS Total
                             FROM
-                                {db_table}
+                                :table_name
                             """,
     }
 

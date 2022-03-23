@@ -198,14 +198,14 @@ def html(
 
     # sync to sqlite to build stats
     queries = {
-        "account_coverage": f"""
+        "account_coverage": """
                             SELECT 
                                 Account, 
                                 SUM(Lacework) AS Installed,
                                 COUNT(*) AS Total,
                                 SUM(Lacework)*100/COUNT(*) AS Percent
                             FROM 
-                                {db_table} 
+                                :table_name 
                             WHERE
                                 State = 'running'
                             GROUP BY
@@ -214,22 +214,22 @@ def html(
                                 Account,
                                 Percent
                             """,
-        "total_coverage": f"""
+        "total_coverage": """
                             SELECT  
                                 SUM(Lacework) AS Installed,
                                 COUNT(*)-SUM(Lacework) AS NotInstalled,
                                 COUNT(*) AS Total,
                                 SUM(Lacework)*100/COUNT(*) AS Percent
                             FROM 
-                                {db_table} 
+                                :table_name 
                             WHERE
                                 State = 'running'
                             """,
-        "total_accounts": f"""
+        "total_accounts": """
                             SELECT  
                                 COUNT(DISTINCT ACCOUNT) AS Total
                             FROM 
-                                {db_table}
+                                :table_name
                             """,
     }
     results = sqlite_sync_report(report=report, table_name=db_table, queries=queries)
