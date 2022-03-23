@@ -947,7 +947,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "109a99c1a85662a776b81977fbd754f2448eb57730e04e834f9d74416768aad6"
+content-hash = "df79a3ce97c512780649f3d1d0203497328e84d3bd815baf416da43667e40ed9"
 
 [metadata.files]
 anaconda = [
