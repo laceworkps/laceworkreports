@@ -314,8 +314,8 @@ def csv_handler(
                         json_extract(json_recommendations.value, '$.SEVERITY') AS severity,
                         CAST(100-cast(json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) AS FLOAT)*100/json_extract(json_recommendations.value, '$.RESOURCE_COUNT') AS INTEGER) as percent
                     from 
-                        {db_table}, 
-                        json_each({db_table}.recommendations) AS json_recommendations
+                        :table_name, 
+                        json_each(:table_name.recommendations) AS json_recommendations
                     where
                         percent < 100 AND status != 'Compliant'
                     order by
