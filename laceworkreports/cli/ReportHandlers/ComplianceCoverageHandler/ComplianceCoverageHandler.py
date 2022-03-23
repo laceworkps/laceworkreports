@@ -291,7 +291,7 @@ def csv_handler(
 
     # report queries
     queries = {
-        "report": f"""
+        "report": """
                     select 
                         reportType,
                         reportTime,
