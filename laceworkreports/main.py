@@ -8,6 +8,7 @@ from rich.console import Console
 
 from laceworkreports import common, version
 from laceworkreports.cli.ExportHandlers import Export
+from laceworkreports.cli.ReportHandlers import Report
 
 app = typer.Typer(
     name=common.config.name,
@@ -21,7 +22,16 @@ parent_command = common.config.name
 self_command = common.ActionTypes.Export.value
 
 commands = [
-    {"command_name": "export", "command_type": Export.app},
+    {
+        "command_name": "export",
+        "command_type": Export.app,
+        "epilog": f"{common.config.name} export <type> <subtype> <exporttype> [OPTIONS]",
+    },
+    {
+        "command_name": "report",
+        "command_type": Report.app,
+        "epilog": f"{common.config.name} report <type> <format> [OPTIONS]",
+    },
 ]
 
 for command in iter(commands):
@@ -30,7 +40,7 @@ for command in iter(commands):
         name=command["command_name"],
         help=f"{command['command_name'].capitalize()} lacework events",
         no_args_is_help=True,
-        epilog=f"{common.config.name} {command['command_name']} <type> <subtype> <exporttype> [OPTIONS]",
+        epilog=command["epilog"],
     )
 
 console = Console()

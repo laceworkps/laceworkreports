@@ -1,10 +1,10 @@
 import typer
 
 from laceworkreports import common
-from laceworkreports.cli.ExportHandlers.DataExportHandlers import GenericAPIv2Handler
 
 from .ActivitiesHandler import Activities
 from .ConfigsHandler import Configs
+from .DataExportHandlers import GenericAPIv2Handler
 from .EntitiesHandler import Entities
 from .QueriesHandler import Queries
 from .VulnerabilitiesHandler import Vulnerabilities

@@ -1,0 +1,17 @@
+example {
+    source {
+        LW_HA_USER_LOGINS
+    }
+    return distinct {
+        LOGIN_TIME,
+        LOGOFF_TIME,
+        EVENT_TYPE,
+        MID,
+        USERNAME,
+        HOSTNAME,
+        IP_ADDR,
+        TTY,
+        UID,
+        GID
+    }
+}
