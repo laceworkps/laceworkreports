@@ -27,6 +27,10 @@ postgres-console:
 postgres-create-db:
 	$(PSQL) -c "CREATE DATABASE $(POSTGRES_DBNAME)"
 
+laceworkreports-console:
+	docker exec -it $(LACEWORKREPORTS_CONTAINER) \
+	/bin/bash
+
 build:
 	docker-compose up -d
 	make postgres-create-db

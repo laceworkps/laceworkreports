@@ -258,27 +258,294 @@
          <div class="col-sm-8">&nbsp;</div>
       </div>
       <article class="card">
+        {%- for dataset in datasets %}
           <content class="card-body">
-            <h5 class="card-title">Report {{ datetime.now().strftime('%Y-%m-%d') }}</h5>
+            <h5 class="card-title">{{ dataset.summary.reportTitle }}</h5>
+            <div class="row card">
+                <div id="legend-container" class="col-12"></div>
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    <div class="row">
+                        <strong>Coverage Score</strong>
+                    </div>
+                    <div class="row" style="font-size: 110pt;">
+                        {{ dataset.summary.stats['total_coverage'][0]['Percent'] }}%
+                    </div>
+                </div>
+                <div class="col-8">
+                    <div class="trend-chart">
+                        <canvas id="chart_{{ dataset.name }}"></canvas>
+                    </div>
+                </div>
+            </div>
             <div class="row">
                 <div class="col-12">
-                    <div class="toolbar_dataset">
-                        Total rows: <span id="total">{{ rows }}</span>
+                    <div class="row card">
+                        <div class="row">
+                            <div class="col-4 compliance-severity">TOTAL ACCOUNTS</div>
+                            <div class="col-4 compliance-severity">TOTAL ASSESSMENTS</div>
+                            <div class="col-4 compliance-severity">TOTAL VIOLATIONS</div>
+                            
+                        </div>
+                        <div class="row">
+                            <div class="col-4 compliance-severity-count">{{ dataset.summary.stats['total_accounts'][0]['Total'] }}</div>
+                            <div class="col-4 compliance-severity-count">{{ dataset.summary.stats['total_coverage'][0]['Assessments'] }}</div>
+                            <div class="col-4 compliance-severity-count">{{ dataset.summary.stats['total_coverage'][0]['Violations'] }}</div>
+                        </div>
                     </div>
-                    <table class="data-table" id="table_dataset"></table>
+                </div>
+                {% set accumulator = namespace(critical=0,high=0,medium=0,low=0,info=0) %}
+                {%- for severity in dataset.summary.stats['total_severity'] %}
+                    {%- if severity['Severity'] == 'critical' %}
+                        {%- set accumulator.critical = severity %}
+                    {%- elif severity['Severity'] == 'high' %}
+                        {%- set accumulator.high = severity %}
+                    {%- elif severity['Severity'] == 'medium' %}
+                        {%- set accumulator.medium = severity %}
+                    {%- elif severity['Severity'] == 'low' %}
+                        {%- set accumulator.low = severity %}
+                    {%- elif severity['Severity'] == 'info' %}
+                        {%- set accumulator.info = severity %}
+                    {%- endif %}
+                {%- endfor %}
+                <div class="col-12">
+                    <div class="row card">
+                        <div class="row">
+                            <div class="col-1 compliance-severity">&nbsp;</div>
+                            <div class="col-2 compliance-severity">TOTAL CRITICAL</div>
+                            <div class="col-2 compliance-severity">TOTAL HIGH</div>
+                            <div class="col-2 compliance-severity">TOTAL MEDIUM</div>
+                            <div class="col-2 compliance-severity">TOTAL LOW</div>
+                            <div class="col-2 compliance-severity">TOTAL INFO</div>
+                            <div class="col-1 compliance-severity">&nbsp;</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-1 compliance-severity">&nbsp;</div>
+                            <div class="col-2 compliance-severity-count">{{ accumulator.critical['Violations']|default(0)  }}</div>
+                            <div class="col-2 compliance-severity-count">{{ accumulator.high['Violations']|default(0)  }}</div>
+                            <div class="col-2 compliance-severity-count">{{ accumulator.medium['Violations']|default(0)  }}</div>
+                            <div class="col-2 compliance-severity-count">{{ accumulator.low['Violations']|default(0)  }}</div>
+                            <div class="col-2 compliance-severity-count">{{ accumulator.info['Violations']|default(0) }}</div>
+                            <div class="col-1 compliance-severity">&nbsp;</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="row card" style="padding: 10px">
+                        <h5 class="card-title">Executive Summary</h5>
+                        <div class="col-12">
+                            The Account Compliance Report shows a list of all accounts and their compliance against the measured framework. Ideally all resources would be fully aligned with the compliance framework. Exception should be created and documented for all resources which will should not be measured as part of compliance demonstration.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="toolbar_{{ dataset.name }}">
+                        Total rows: <span id="total">{{ dataset.summary.rows }}</span>
+                    </div>
+                    <table class="data-table" id="table_{{ dataset.name }}"></table>
                 </div>
             </div>
         </content>
+        {%- endfor %}
       </article>
    </section>
    <script type="text/javascript">
-        // data table dataset
-        {%- set fields = dataset[0] %}
+    {%- for dataset in datasets %}
+        // chart {{ dataset.name }}
+        const ctx_{{ dataset.name }} = document.getElementById('chart_{{ dataset.name }}');
+        ctx_{{ dataset.name }}.getContext("2d").canvas.width = 200;
+        ctx_{{ dataset.name }}.getContext("2d").canvas.height = 110;
+        
+        const chartLabels = [
+            {%- for row in dataset.summary.stats['account_coverage'] %}
+                '{{ row['Account'] }}'
+                {%- if not loop.last -%}
+                ,
+                {%- endif %}
+            {%- endfor %}
+        ]
 
-        var $table = $('#table_dataset')
+        const chartData = [
+            {%- for row in dataset.summary.stats['account_coverage'] %}
+                {%- if row['Percent'] > 15 -%}
+                {{ row['Percent'] }}
+                {%- else %}
+                15.1
+                {%- endif %}
+                {%- if not loop.last -%}
+                ,
+                {%- endif %}
+            {%- endfor %}
+        ]
+        i = 0;
+        var graphColors = [];
+        var graphOutlines = [];
+        var hoverColor = [];
+        while (i <= chartData.length) {
+            var randomR = Math.floor((Math.random() * 130) + 100);
+            var randomG = Math.floor((Math.random() * 130) + 100);
+            var randomB = Math.floor((Math.random() * 130) + 100);
+        
+            var graphBackground = "rgb(" 
+                    + randomR + ", " 
+                    + randomG + ", " 
+                    + randomB + ", "
+                    + 0.75 + ")";
+            graphColors.push(graphBackground);
+            
+            var graphOutline = "rgb(" 
+                    + (randomR - 80) + ", " 
+                    + (randomG - 80) + ", " 
+                    + (randomB - 80) + ")";
+            graphOutlines.push(graphOutline);
+            
+            var hoverColors = "rgb(" 
+                    + (randomR + 25) + ", " 
+                    + (randomG + 25) + ", " 
+                    + (randomB + 25) + ")";
+            hoverColor.push(hoverColors);
+            
+            i++;
+        };
+
+        const data = {
+            labels: chartLabels,
+            datasets: [{
+                data: chartData,
+                backgroundColor: graphColors,
+                hoverOffset: 4
+            }]
+        };
+
+        const getOrCreateLegendList = (chart, id) => {
+            const legendContainer = document.getElementById(id);
+            let listContainer = legendContainer.querySelector('ul');
+
+            if (!listContainer) {
+                listContainer = document.createElement('ul');
+                listContainer.style.display = 'flex';
+                listContainer.style.flexWrap = 'wrap';
+                listContainer.style.margin = 0;
+                listContainer.style.padding = 0;
+                listContainer.style.textAlign = 'center';
+                listContainer.style.height = '110px';
+                listContainer.style.overflowY = 'scroll';
+
+                legendContainer.appendChild(listContainer);
+            }
+
+            return listContainer;
+        };
+
+        const htmlLegendPlugin = {
+            id: 'htmlLegend',
+            afterUpdate(chart, args, options) {
+                console.log(chart)
+                const ul = getOrCreateLegendList(chart, chart.options.plugins.htmlLegend.containerID);
+
+                // Remove old legend items
+                while (ul.firstChild) {
+                    ul.firstChild.remove();
+                }
+
+                // Reuse the built-in legendItems generator                    
+                const items = chart.options.legend.labels.generateLabels(chart);
+
+                items.forEach(item => {
+                    const li = document.createElement('li');
+                    li.style.alignItems = 'center';
+                    li.style.cursor = 'pointer';
+                    li.style.display = 'flex';
+                    li.style.flexDirection = 'row';
+                    li.style.marginLeft = '10px';
+
+                    li.onclick = () => {
+                        const {type} = chart.config;
+                        //if (type === 'pie' || type === 'doughnut') {
+                        // Pie and doughnut charts only have a single dataset and visibility is per item
+                        //chart.toggleDataVisibility(item.index);
+                        //} else {
+                        //chart.setDatasetVisibility(item.datasetIndex, !chart.isDatasetVisible(item.datasetIndex));
+                        //}
+                        //chart.update();
+                    };
+
+                    // Color box
+                    const boxSpan = document.createElement('span');
+                    boxSpan.style.background = item.fillStyle;
+                    boxSpan.style.borderColor = item.strokeStyle;
+                    boxSpan.style.borderWidth = item.lineWidth + 'px';
+                    boxSpan.style.display = 'inline-block';
+                    boxSpan.style.height = '20px';
+                    boxSpan.style.marginRight = '10px';
+                    boxSpan.style.width = '20px';
+
+                    // Text
+                    const textContainer = document.createElement('p');
+                    textContainer.style.color = item.fontColor;
+                    textContainer.style.margin = 0;
+                    textContainer.style.padding = 0;
+                    textContainer.style.textDecoration = item.hidden ? 'line-through' : '';
+
+                    const text = document.createTextNode(item.text);
+                    textContainer.appendChild(text);
+
+                    li.appendChild(boxSpan);
+                    li.appendChild(textContainer);
+                    ul.appendChild(li);
+                });
+            }
+        };
+        const chart_{{ dataset.name }} = new Chart(ctx_{{ dataset.name }}, {
+            type: 'polarArea',
+            data: data,
+            responsive: true,
+            maintainAspectRatio: true,
+            options: {
+                plugins: {
+                    htmlLegend: {
+                        // ID of the container to put the legend in
+                        containerID: 'legend-container',
+                    },
+                    legend: {
+                        display: false,
+                    }
+                },
+                legend: {
+                    display: false,
+                },
+                title: {
+                    display: true,
+                    text: '% by Account'
+                },
+                tooltips: {
+                    callbacks: {
+                        label: function(tooltipItem, data) {
+                            var value = data.datasets[0].data[tooltipItem.index];
+                            var label = data.labels[tooltipItem.index];
+
+                            if (value === 15.1) {
+                                value = 0;
+                            }
+
+                            return label + ': ' + value + ' %';
+                        }
+                    }
+                },
+            },
+            plugins: [htmlLegendPlugin]
+        });
+
+        // data table {{ dataset.name }}
+        {%- set fields = dataset.report[0].keys() %}
+
+        var $table = $('#table_{{ dataset.name }}')
         var total = 0
         
-        const table_cols_dataset = [
+        const table_cols_{{ dataset.name }} = [
             {%- for field in fields %}
                  {
                     field: '{{ field }}',
@@ -291,8 +558,8 @@
             {%- endfor %}    
             ]
 
-        const table_data_dataset = [
-            {%- for row in dataset %}
+        const table_data_{{ dataset.name }} = [
+            {%- for row in dataset.report %}
                 {
                     id: {{ loop.index }},
                     {%- for field in fields %}
@@ -309,7 +576,7 @@
         ]
 
         $table.bootstrapTable({
-            toolbar: ".toolbar_dataset",
+            toolbar: ".toolbar_{{ dataset.name }}",
 
             search: true,
             showColumns: true,
@@ -319,12 +586,9 @@
             exportTypes: ['json', 'xml', 'csv', 'txt', 'sql', 'excel', 'pdf'],
             filterControl: false,
 
-            data: table_data_dataset,
-            columns: table_cols_dataset,
+            data: table_data_{{ dataset.name }},
+            columns: table_cols_{{ dataset.name }},
 
-            {%- if rows>10000 %}
-            virtualScroll: true
-            {%- else %}
             virtualScroll: false,
             showExtendedPagination: true,
             pagination: true,
@@ -332,7 +596,7 @@
             paginationVAlign: "bottom",
             showFooter: false,
             sortable: true
-            {%- endif %}
         });
+    {%- endfor %}
     </script>
 </body>
