@@ -2,7 +2,7 @@
 Report Handler
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 import csv
 import logging

@@ -297,16 +297,16 @@
                 </div>
                 {% set accumulator = namespace(critical=0,high=0,medium=0,low=0,info=0) %}
                 {%- for severity in dataset.summary.stats['total_severity'] %}
-                    {%- if severity['Severity'] == 5 %}
-                        {%- set accumulator.critical = severity['Violations'] %}
-                    {%- elif severity['Severity'] == 4 %}
-                        {%- set accumulator.high = severity['Violations'] %}
-                    {%- elif severity['Severity'] == 3 %}
-                        {%- set accumulator.medium = severity['Violations'] %}
-                    {%- elif severity['Severity'] == 2 %}
-                        {%- set accumulator.low = severity['Violations'] %}
-                    {%- elif severity['Severity'] == 1 %}
-                        {%- set accumulator.info = severity['Violations'] %}
+                    {%- if severity['Severity'] == 'critical' %}
+                        {%- set accumulator.critical = severity %}
+                    {%- elif severity['Severity'] == 'high' %}
+                        {%- set accumulator.high = severity %}
+                    {%- elif severity['Severity'] == 'medium' %}
+                        {%- set accumulator.medium = severity %}
+                    {%- elif severity['Severity'] == 'low' %}
+                        {%- set accumulator.low = severity %}
+                    {%- elif severity['Severity'] == 'info' %}
+                        {%- set accumulator.info = severity %}
                     {%- endif %}
                 {%- endfor %}
                 <div class="col-12">
@@ -322,11 +322,11 @@
                         </div>
                         <div class="row">
                             <div class="col-1 compliance-severity">&nbsp;</div>
-                            <div class="col-2 compliance-severity-count">{{ accumulator.critical }}</div>
-                            <div class="col-2 compliance-severity-count">{{ accumulator.high }}</div>
-                            <div class="col-2 compliance-severity-count">{{ accumulator.medium }}</div>
-                            <div class="col-2 compliance-severity-count">{{ accumulator.low }}</div>
-                            <div class="col-2 compliance-severity-count">{{ accumulator.info }}</div>
+                            <div class="col-2 compliance-severity-count">{{ accumulator.critical['Violations']|default(0)  }}</div>
+                            <div class="col-2 compliance-severity-count">{{ accumulator.high['Violations']|default(0)  }}</div>
+                            <div class="col-2 compliance-severity-count">{{ accumulator.medium['Violations']|default(0)  }}</div>
+                            <div class="col-2 compliance-severity-count">{{ accumulator.low['Violations']|default(0)  }}</div>
+                            <div class="col-2 compliance-severity-count">{{ accumulator.info['Violations']|default(0) }}</div>
                             <div class="col-1 compliance-severity">&nbsp;</div>
                         </div>
                     </div>

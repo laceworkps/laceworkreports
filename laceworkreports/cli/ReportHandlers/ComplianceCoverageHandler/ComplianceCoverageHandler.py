@@ -164,8 +164,18 @@ def html(
                             json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') AS assessed_resource_count,
                             json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) as violation_count,
                             json_array_length(json_extract(json_recommendations.value, '$.SUPPRESSIONS')) as suppression_count,
-                            json_extract(json_recommendations.value, '$.SEVERITY') AS severity,
-                            CAST(100-cast(json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) AS FLOAT)*100/json_extract(json_recommendations.value, '$.RESOURCE_COUNT') AS INTEGER) as percent
+                            CASE
+                                WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 1 THEN 'info'
+                                WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 2 THEN 'low'
+                                WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 3 THEN 'medium'
+                                WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 4 THEN 'high'
+                                WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 5 THEN 'critical'
+                            END AS severity,
+                            json_extract(json_recommendations.value, '$.SEVERITY') AS severity_number,
+                            CASE
+                                WHEN json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) > json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') THEN 100
+                                ELSE CAST(100-cast(json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) AS FLOAT)*100/json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') AS INTEGER)
+                            END AS percent
                         from 
                             :table_name, 
                             json_each(:table_name.recommendations) AS json_recommendations
@@ -176,6 +186,38 @@ def html(
                             reportType,
                             rec_id
                         """,
+            "account_coverage_severity": """
+                                SELECT 
+                                    t.Account,
+                                    CAST(AVG(t.Percent) AS INTEGER) AS Percent,
+                                    severity AS Severity
+                                FROM
+                                    (SELECT
+                                        accountId AS Account,
+                                        CASE
+                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 1 THEN 'info'
+                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 2 THEN 'low'
+                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 3 THEN 'medium'
+                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 4 THEN 'high'
+                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 5 THEN 'critical'
+                                        END AS severity,
+                                        json_extract(json_recommendations.value, '$.SEVERITY') AS severity_number,
+                                        CASE
+                                            WHEN json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) > json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') THEN 100
+                                            ELSE CAST(100-cast(json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) AS FLOAT)*100/json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') AS INTEGER)
+                                        END AS percent
+                                    FROM
+                                        :table_name,
+                                        json_each(:table_name.recommendations) AS json_recommendations
+                                    ) as t
+                                GROUP BY
+                                    Account,
+                                    Severity
+                                ORDER BY
+                                    Account,
+                                    Percent,
+                                    Severity
+                                """,
             "account_coverage": """
                                 SELECT 
                                     t.Account,
@@ -183,7 +225,10 @@ def html(
                                 FROM
                                     (SELECT
                                         accountId AS Account,
-                                        CAST(100-cast(json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) AS FLOAT)*100/json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') AS INTEGER) as percent
+                                        CASE
+                                            WHEN json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) > json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') THEN 100
+                                            ELSE CAST(100-cast(json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) AS FLOAT)*100/json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') AS INTEGER)
+                                        END AS percent
                                     FROM
                                         :table_name,
                                         json_each(:table_name.recommendations) AS json_recommendations
@@ -196,14 +241,22 @@ def html(
                                 """,
             "total_coverage": """
                                 SELECT 
-                                    100-SUM(violation_count)*100/SUM(assessed_resource_count) AS Percent,
-                                    SUM(assessed_resource_count) AS Assessments,
-                                    SUM(violation_count) AS Violations
+                                    CASE
+                                        WHEN SUM(violation_count) > SUM(assessed_resource_count) THEN 100
+                                        ELSE 100-SUM(violation_count)*100/SUM(assessed_resource_count)
+                                    END AS Percent,
+                                    CASE 
+                                        WHEN CAST(SUM(assessed_resource_count) AS INTEGER) IS NULL THEN 0 
+                                        ELSE CAST(SUM(assessed_resource_count) AS INTEGER)
+                                    END AS Assessments,
+                                    CASE 
+                                        WHEN CAST(SUM(violation_count) AS INTEGER) IS NULL THEN 0 
+                                        ELSE CAST(SUM(violation_count) AS INTEGER)
+                                    END AS Violations
                                 FROM
                                     (SELECT
                                         json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') AS assessed_resource_count,
-                                        json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) as violation_count,
-                                        CAST(100-cast(json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) AS FLOAT)*100/json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') AS INTEGER) as percent
+                                        json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) as violation_count
                                     FROM
                                         :table_name,
                                         json_each(:table_name.recommendations) AS json_recommendations
@@ -211,14 +264,27 @@ def html(
                                 """,
             "total_severity": """
                                 SELECT 
-                                    SUM(violation_count) AS Violations,
+                                    CASE 
+                                        WHEN CAST(SUM(violation_count) AS INTEGER) IS NULL THEN 0 
+                                        ELSE CAST(SUM(violation_count) AS INTEGER)
+                                    END AS Violations,
                                     severity as Severity,
-                                    SUM(assessed_resource_count) AS Total
+                                    CASE 
+                                        WHEN CAST(SUM(assessed_resource_count) AS INTEGER) IS NULL THEN 0 
+                                        ELSE CAST(SUM(assessed_resource_count) AS INTEGER)
+                                    END AS Total
                                 FROM
                                     (SELECT
                                         json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') AS assessed_resource_count,
                                         json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) as violation_count,
-                                        json_extract(json_recommendations.value, '$.SEVERITY') AS severity
+                                        CASE
+                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 1 THEN 'info'
+                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 2 THEN 'low'
+                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 3 THEN 'medium'
+                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 4 THEN 'high'
+                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 5 THEN 'critical'
+                                        END AS severity,
+                                        json_extract(json_recommendations.value, '$.SEVERITY') AS severity_number
                                     FROM
                                         :table_name,
                                         json_each(:table_name.recommendations) AS json_recommendations
@@ -236,11 +302,16 @@ def html(
 
         # use sqlite query to generate final result
         results = sqlite_sync_report(
-            report=reports, table_name=db_table, queries=queries
+            report=reports,
+            table_name=db_table,
+            queries=queries,
+            # bypass temporary storage - testing only
+            # db_path_override="database.db",
         )
         report = results["report"]
         stats = {}
         stats["account_coverage"] = results["account_coverage"]
+        stats["account_coverage_severity"] = results["account_coverage_severity"]
         stats["total_coverage"] = results["total_coverage"]
         stats["total_severity"] = results["total_severity"]
         stats["total_accounts"] = results["total_accounts"]
