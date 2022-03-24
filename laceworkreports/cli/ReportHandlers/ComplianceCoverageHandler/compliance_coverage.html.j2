@@ -284,13 +284,50 @@
                     <div class="row card">
                         <div class="row">
                             <div class="col-4 compliance-severity">TOTAL ACCOUNTS</div>
-                            <div class="col-4 compliance-severity">TOTAL INSTALLED</div>
-                            <div class="col-4 compliance-severity">TOTAL NOT INSTALLED</div>
+                            <div class="col-4 compliance-severity">TOTAL ASSESSMENTS</div>
+                            <div class="col-4 compliance-severity">TOTAL VIOLATIONS</div>
+                            
                         </div>
                         <div class="row">
                             <div class="col-4 compliance-severity-count">{{ dataset.summary.stats['total_accounts'][0]['Total'] }}</div>
-                            <div class="col-4 compliance-severity-count">{{ dataset.summary.stats['total_coverage'][0]['Installed'] }}</div>
-                            <div class="col-4 compliance-severity-count">{{ dataset.summary.stats['total_coverage'][0]['NotInstalled'] }}</div>
+                            <div class="col-4 compliance-severity-count">{{ dataset.summary.stats['total_coverage'][0]['Assessments'] }}</div>
+                            <div class="col-4 compliance-severity-count">{{ dataset.summary.stats['total_coverage'][0]['Violations'] }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% set accumulator = namespace(critical=0,high=0,medium=0,low=0,info=0) %}
+                {%- for severity in dataset.summary.stats['total_severity'] %}
+                    {%- if severity['Severity'] == 5 %}
+                        {%- set accumulator.critical = severity['Violations'] %}
+                    {%- elif severity['Severity'] == 4 %}
+                        {%- set accumulator.high = severity['Violations'] %}
+                    {%- elif severity['Severity'] == 3 %}
+                        {%- set accumulator.medium = severity['Violations'] %}
+                    {%- elif severity['Severity'] == 2 %}
+                        {%- set accumulator.low = severity['Violations'] %}
+                    {%- elif severity['Severity'] == 1 %}
+                        {%- set accumulator.info = severity['Violations'] %}
+                    {%- endif %}
+                {%- endfor %}
+                <div class="col-12">
+                    <div class="row card">
+                        <div class="row">
+                            <div class="col-1 compliance-severity">&nbsp;</div>
+                            <div class="col-2 compliance-severity">TOTAL CRITICAL</div>
+                            <div class="col-2 compliance-severity">TOTAL HIGH</div>
+                            <div class="col-2 compliance-severity">TOTAL MEDIUM</div>
+                            <div class="col-2 compliance-severity">TOTAL LOW</div>
+                            <div class="col-2 compliance-severity">TOTAL INFO</div>
+                            <div class="col-1 compliance-severity">&nbsp;</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-1 compliance-severity">&nbsp;</div>
+                            <div class="col-2 compliance-severity-count">{{ accumulator.critical }}</div>
+                            <div class="col-2 compliance-severity-count">{{ accumulator.high }}</div>
+                            <div class="col-2 compliance-severity-count">{{ accumulator.medium }}</div>
+                            <div class="col-2 compliance-severity-count">{{ accumulator.low }}</div>
+                            <div class="col-2 compliance-severity-count">{{ accumulator.info }}</div>
+                            <div class="col-1 compliance-severity">&nbsp;</div>
                         </div>
                     </div>
                 </div>
@@ -300,7 +337,7 @@
                     <div class="row card" style="padding: 10px">
                         <h5 class="card-title">Executive Summary</h5>
                         <div class="col-12">
-                            The Agent Coverage Report shows a list of all accounts and their current agent deployment coverage. Ideally all resources have the lacework agent installed.
+                            The Account Compliance Report shows a list of all accounts and their compliance against the measured framework. Ideally all resources would be fully aligned with the compliance framework. Exception should be created and documented for all resources which will should not be measured as part of compliance demonstration.
                         </div>
                     </div>
                 </div>

@@ -1,3 +1,5 @@
+from typing import Any, AnyStr, Dict, List
+
 import logging
 import re
 import tempfile
@@ -6,6 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 import sqlalchemy
+from laceworksdk import LaceworkClient
 from sqlalchemy import MetaData, Table, create_engine, text
 from sqlalchemy_utils.functions import create_database, database_exists
 
@@ -30,10 +33,10 @@ class ComplianceReportTypes(Enum):
         return value in cls._value2member_map_
 
 
-def get_cloud_accounts(client=None):
+def get_cloud_accounts(client: LaceworkClient = None) -> list[Any]:
     cloud_accounts = client.cloud_accounts.search(json={})
 
-    accounts = []
+    accounts: list[Any] = []
     for row in cloud_accounts["data"]:
         if row["type"] == "GcpCfg":
             projectIds = [x for x in row["state"]["details"]["projectErrors"].keys()]
@@ -106,7 +109,12 @@ def get_cloud_accounts(client=None):
     return accounts
 
 
-def sqlite_sync_report(report, table_name, queries={}, db_path_override=None):
+def sqlite_sync_report(
+    report: Any,
+    table_name: AnyStr,
+    queries: dict[Any, Any] = {},
+    db_path_override: Any = None,
+) -> dict[Any, Any]:
     logging.info("Syncing data to cache for stats generation...")
     with tempfile.TemporaryDirectory() as tmpdirname:
         db_table = table_name

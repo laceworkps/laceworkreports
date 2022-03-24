@@ -2,6 +2,8 @@
 Report Handler
 """
 
+from typing import Any, Dict, List
+
 import csv
 import logging
 import os
@@ -58,8 +60,8 @@ def html(
     db_table = "agent_coverage"
 
     # pull a list of ec2 instance details
-    name = "EC2S"
-    query_text = f"""{name}{{
+    query_name = "EC2S"
+    query_text = f"""{query_name}{{
             source {{LW_CFG_AWS_EC2_INSTANCES}}
             return {{RESOURCE_CONFIG, ACCOUNT_ID, RESOURCE_ID, RESOURCE_TYPE}}
             }}
@@ -83,14 +85,11 @@ def html(
         logging.warn("Max rows retrieved - results will be tructed beyond 5000")
 
     for h in query:
-        name = next(
-            (
-                item
-                for item in h["RESOURCE_CONFIG"].get("Tags", {})
-                if item["Key"] == "Name"
-            ),
-            {},
-        )
+        name: dict[Any, Any] = [
+            item
+            for item in h["RESOURCE_CONFIG"].get("Tags", {})
+            if item["Key"] == "Name"
+        ].pop()
 
         data = {
             "Name": name.get("Value"),
@@ -102,8 +101,8 @@ def html(
         instances.append(data)
 
     # pull a list of agent machine
-    name = "AGENTS"
-    query_text = f"""{name}{{
+    query_name = "AGENTS"
+    query_text = f"""{query_name}{{
             source {{LW_HE_MACHINES}}
             filter {{TAGS:VmProvider = 'AWS'}}
             return {{TAGS}}
@@ -126,7 +125,7 @@ def html(
     if len(query) >= 5000:
         logging.warn("Max rows retrieved - results will be tructed beyond 5000")
 
-    agents = []
+    agents: list[Any] = []
     for a in query:
         data = {
             "Name": a["TAGS"].get("Name"),
@@ -146,7 +145,7 @@ def html(
     for i in instances:
         has_lacework = False
         InstanceId = i["InstanceId"]
-        record = next((item for item in agents if item["InstanceId"] == InstanceId), {})
+        record = [item for item in agents if item["InstanceId"] == InstanceId].pop()
         if record.get("LwTokenShort") is not None:
             has_lacework = True
 
@@ -168,9 +167,7 @@ def html(
     for i in agents:
         has_ec2_instance = True
         InstanceId = i["InstanceId"]
-        record = next(
-            (item for item in instances if item["InstanceId"] == InstanceId), {}
-        )
+        record = [item for item in instances if item["InstanceId"] == InstanceId].pop()
         if record.get("InstanceId") is not None:
             has_ec2_instance = True
 
@@ -183,7 +180,7 @@ def html(
                 "InstanceId": i["InstanceId"],
                 "State": i["State"],
                 "Account": i["Account"],
-                "LwTokenShort": i("LwTokenShort"),
+                "LwTokenShort": i["LwTokenShort"],
                 "Lacework": True,
                 "HasEC2InstanceConfig": has_ec2_instance,
             }
@@ -290,8 +287,8 @@ def csv_handler(
     lw = common.config.connect()
 
     # pull a list of ec2 instance details
-    name = "EC2S"
-    query_text = f"""{name}{{
+    query_name = "EC2S"
+    query_text = f"""{query_name}{{
             source {{LW_CFG_AWS_EC2_INSTANCES}}
             return {{RESOURCE_CONFIG, ACCOUNT_ID, RESOURCE_ID, RESOURCE_TYPE}}
             }}
@@ -307,7 +304,7 @@ def csv_handler(
         ).execute(),
     ).export()
 
-    instances = []
+    instances: list[Any] = []
 
     # note: current limitation if 5000 rows
     logging.info(f"Found {len(query)} rows")
@@ -315,14 +312,11 @@ def csv_handler(
         logging.warn("Max rows retrieved - results will be tructed beyond 5000")
 
     for h in query:
-        name = next(
-            (
-                item
-                for item in h["RESOURCE_CONFIG"].get("Tags", {})
-                if item["Key"] == "Name"
-            ),
-            {},
-        )
+        name: dict[Any, Any] = [
+            item
+            for item in h["RESOURCE_CONFIG"].get("Tags", {})
+            if item["Key"] == "Name"
+        ].pop()
 
         data = {
             "Name": name.get("Value"),
@@ -334,8 +328,8 @@ def csv_handler(
         instances.append(data)
 
     # pull a list of agent machine
-    name = "AGENTS"
-    query_text = f"""{name}{{
+    query_name = "AGENTS"
+    query_text = f"""{query_name}{{
             source {{LW_HE_MACHINES}}
             filter {{TAGS:VmProvider = 'AWS'}}
             return {{TAGS}}
@@ -380,9 +374,8 @@ def csv_handler(
         for i in instances:
             has_lacework = False
             InstanceId = i["InstanceId"]
-            record = next(
-                (item for item in agents if item["InstanceId"] == InstanceId), {}
-            )
+            record = [item for item in agents if item["InstanceId"] == InstanceId].pop()
+
             if record.get("LwTokenShort") is not None:
                 has_lacework = True
 
@@ -408,9 +401,10 @@ def csv_handler(
         for i in agents:
             has_ec2_instance = True
             InstanceId = i["InstanceId"]
-            record = next(
-                (item for item in instances if item["InstanceId"] == InstanceId), {}
-            )
+            record = [
+                item for item in instances if item["InstanceId"] == InstanceId
+            ].pop()
+
             if record.get("InstanceId") is not None:
                 has_ec2_instance = True
 
@@ -423,7 +417,7 @@ def csv_handler(
                     "InstanceId": i["InstanceId"],
                     "State": i["State"],
                     "Account": i["Account"],
-                    "LwTokenShort": i("LwTokenShort"),
+                    "LwTokenShort": i["LwTokenShort"],
                     "Lacework": True,
                     "HasEC2InstanceConfig": has_ec2_instance,
                 }
