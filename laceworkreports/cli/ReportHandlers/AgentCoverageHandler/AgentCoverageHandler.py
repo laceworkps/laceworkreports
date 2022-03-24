@@ -89,10 +89,15 @@ def html(
             item
             for item in h["RESOURCE_CONFIG"].get("Tags", {})
             if item["Key"] == "Name"
-        ].pop()
+        ]
+
+        if len(name) > 0:
+            name = name.pop().get("Value")
+        else:
+            name = None
 
         data = {
-            "Name": name.get("Value"),
+            "Name": name,
             "ImageId": h["RESOURCE_CONFIG"].get("ImageId"),
             "InstanceId": h["RESOURCE_CONFIG"].get("InstanceId"),
             "State": h["RESOURCE_CONFIG"].get("State").get("Name"),
@@ -145,8 +150,14 @@ def html(
     for i in instances:
         has_lacework = False
         InstanceId = i["InstanceId"]
-        record = [item for item in agents if item["InstanceId"] == InstanceId].pop()
-        if record.get("LwTokenShort") is not None:
+        record = [item for item in agents if item["InstanceId"] == InstanceId]
+
+        if len(record) > 0:
+            record = record.pop().get("LwTokenShort")
+        else:
+            record = None
+
+        if record is not None:
             has_lacework = True
 
         row = {
@@ -157,7 +168,7 @@ def html(
             "Account": i["Account"],
             "Lacework": has_lacework,
             "HasEC2InstanceConfig": True,
-            "LwTokenShort": record.get("LwTokenShort"),
+            "LwTokenShort": record,
         }
         report.append(row)
 
@@ -167,8 +178,14 @@ def html(
     for i in agents:
         has_ec2_instance = True
         InstanceId = i["InstanceId"]
-        record = [item for item in instances if item["InstanceId"] == InstanceId].pop()
-        if record.get("InstanceId") is not None:
+        record = [item for item in instances if item["InstanceId"] == InstanceId]
+
+        if len(record) > 0:
+            record = record.pop().get("InstanceId")
+        else:
+            record = None
+
+        if record is not None:
             has_ec2_instance = True
 
         # if we have an agent but no ec2 log it
