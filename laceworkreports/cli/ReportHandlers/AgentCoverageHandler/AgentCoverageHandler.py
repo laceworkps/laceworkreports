@@ -132,6 +132,7 @@ def html(
     if len(query) >= 5000:
         logging.warn("Max rows retrieved - results will be tructed beyond 5000")
 
+
     agents: typing.Any = []
     for a in query:
         data = {
