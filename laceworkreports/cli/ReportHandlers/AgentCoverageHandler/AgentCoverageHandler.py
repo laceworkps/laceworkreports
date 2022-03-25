@@ -2,7 +2,9 @@
 Report Handler
 """
 
-from typing import Any, Dict
+import typing
+from typing import Dict as typing_dict
+from typing import List as typing_list
 
 import csv
 import logging
@@ -85,7 +87,7 @@ def html(
         logging.warn("Max rows retrieved - results will be tructed beyond 5000")
 
     for h in query:
-        name: dict[Any, Any] = [
+        name: typing.Any = [
             item
             for item in h["RESOURCE_CONFIG"].get("Tags", {})
             if item["Key"] == "Name"
@@ -130,7 +132,7 @@ def html(
     if len(query) >= 5000:
         logging.warn("Max rows retrieved - results will be tructed beyond 5000")
 
-    agents: list[Any] = []
+    agents: typing.Any = []
     for a in query:
         data = {
             "Name": a["TAGS"].get("Name"),
@@ -150,7 +152,9 @@ def html(
     for i in instances:
         has_lacework = False
         InstanceId = i["InstanceId"]
-        record = [item for item in agents if item["InstanceId"] == InstanceId]
+        record: typing.Any = [
+            item for item in agents if item["InstanceId"] == InstanceId
+        ]
 
         if len(record) > 0:
             record = record.pop().get("LwTokenShort")
@@ -321,7 +325,7 @@ def csv_handler(
         ).execute(),
     ).export()
 
-    instances: list[Any] = []
+    instances: typing_list[typing.Any] = []
 
     # note: current limitation if 5000 rows
     logging.info(f"Found {len(query)} rows")
@@ -329,7 +333,7 @@ def csv_handler(
         logging.warn("Max rows retrieved - results will be tructed beyond 5000")
 
     for h in query:
-        name: dict[Any, Any] = [
+        name: typing_dict[typing.Any, typing.Any] = [
             item
             for item in h["RESOURCE_CONFIG"].get("Tags", {})
             if item["Key"] == "Name"
