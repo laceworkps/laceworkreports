@@ -962,7 +962,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "2b3df97679dbf49dd320278547200cd3976c8dbf85df05bd79bbfc7804d8167e"
+content-hash = "85d2dce4ad0c5718f476fd0eb7ef065da5d7a500ac3a734e5370f838fcdc43c3"
 
 [metadata.files]
 anaconda = [
