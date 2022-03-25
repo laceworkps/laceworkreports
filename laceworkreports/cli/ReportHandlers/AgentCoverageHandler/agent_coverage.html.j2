@@ -19,7 +19,6 @@
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css"
         integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
     <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.15.5/dist/bootstrap-table.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/chart.js@2.9.3/dist/Chart.min.css">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"
@@ -35,7 +34,7 @@
         integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
         crossorigin="anonymous"></script>
     <script src="https://unpkg.com/bootstrap-table@1.15.5/dist/bootstrap-table.min.js"></script>
-    <script src="https://unpkg.com/chart.js@2.9.3/dist//Chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script src="https://visjs.github.io/vis-network/standalone/umd/vis-network.min.js"></script>
 
@@ -147,7 +146,7 @@
                 font-size: 0.75em;
             }
             .trend-chart {
-                position: relative; margin: 10px; width: 40vw;
+                position: relative; margin: 10px; width: 40vw; height: 300px;
             }
         }
 
@@ -245,7 +244,7 @@
                 font-size: 0.75em;
             }
             .trend-chart {
-                position: relative; margin: auto; width: 40vw;
+                position: relative; margin: auto; width: 40vw; height: 400px;
             }
         }
     </style>
@@ -269,15 +268,38 @@
                     <div class="row">
                         <strong>Coverage Score</strong>
                     </div>
-                    <div class="row" style="font-size: 110pt;">
-                        {{ dataset.summary.stats['total_coverage'][0]['Percent'] }}%
+                    <div class="col-xs-1 center-block text-center text-nowrap" style="font-size: 110pt;height:500px;">
+                       {{ dataset.summary.stats['total_coverage'][0]['Percent'] }}%
                     </div>
                 </div>
                 <div class="col-8">
-                    <div class="trend-chart">
-                        <canvas id="chart_{{ dataset.name }}"></canvas>
+                <div class="row">
+                    <div class="col-12 center-block text-center text-nowrap">
+                        <div id="filtergroup" class="btn-group" role="group" aria-label="Basic example">
+                            <input type="radio" class="btn-check" name="btnradio" id="gt75" autocomplete="off" onclick="filterChart.call(this,75,true)">
+                            <label class="btn btn-outline-primary" for="gt75">&gt; 75</label>
+
+                            <input type="radio" class="btn-check" name="btnradio" id="gt50" autocomplete="off" onclick="filterChart.call(this,50,true)">
+                            <label class="btn btn-outline-primary" for="gt50">&gt; 50</label>
+
+                            <input type="radio" class="btn-check" name="btnradio" id="gt25" autocomplete="off" onclick="filterChart.call(this,25,true)">
+                            <label class="btn btn-outline-primary" for="gt25">&gt; 25</label>
+
+                            <input type="radio" class="btn-check" name="btnradio" id="lt75" autocomplete="off" onclick="filterChart.call(this,75,false)">
+                            <label class="btn btn-outline-primary" for="lt75">&lt; 75</label>
+
+                            <input type="radio" class="btn-check" name="btnradio" id="lt50" autocomplete="off" onclick="filterChart.call(this,50,false)">
+                            <label class="btn btn-outline-primary" for="lt50">&lt; 50</label>
+
+                            <input type="radio" class="btn-check" name="btnradio" id="lt25" autocomplete="off" onclick="filterChart.call(this,25,false)">
+                            <label class="btn btn-outline-primary" for="lt25">&lt; 25</label>
+                        </div>
                     </div>
                 </div>
+                <div class="trend-chart">
+                    <canvas id="chart_{{ dataset.name }}"></canvas>
+                </div>
+            </div>
             </div>
             <div class="row">
                 <div class="col-12">
@@ -403,71 +425,117 @@
             return listContainer;
         };
 
+        var filtered = false;
+        var filteredId = "";
+
+        function filterChart(threshold,greaterThan){
+            chart = chart_{{ dataset.name }};
+            // if we are filtered we need to remove the filter
+            if(filtered && this.id == filteredId){
+                // reset the button filter
+                $('.btn-group').find('label').removeClass('active').end().find('[type="radio"]').prop('checked', false);
+                filteredId = "";
+            }else if(filtered){
+                // reset the chart filter
+                const items = chart.options.plugins.legend.labels.generateLabels(chart);
+                items.forEach((item, index) => {
+                    if(!chart.getDataVisibility(item.index)){
+                        chart.toggleDataVisibility(item.index)
+                    }
+                });
+                chart.update();
+                filtered = false;
+            }
+            
+            filteredId = this.id;
+
+            const items = chart.options.plugins.legend.labels.generateLabels(chart);
+            items.forEach((item, index) => {
+                if(filtered){
+                    if(!chart.getDataVisibility(item.index)){
+                        chart.toggleDataVisibility(item.index)
+                    }
+                }else{
+                    if((chart.data.datasets[0].data[index]>threshold && greaterThan) || (chart.data.datasets[0].data[index]<threshold && !greaterThan)){
+                        if(!chart.getDataVisibility(item.index)){
+                            chart.toggleDataVisibility(item.index)
+                        }
+                    }else{
+                        if(chart.getDataVisibility(item.index)){
+                            chart.toggleDataVisibility(item.index)
+                        }
+                    }
+                }
+            });
+            filtered = filtered?false:true;
+            chart.update();
+        }
+
         const htmlLegendPlugin = {
             id: 'htmlLegend',
             afterUpdate(chart, args, options) {
-                console.log(chart)
-                const ul = getOrCreateLegendList(chart, chart.options.plugins.htmlLegend.containerID);
+                const ul = getOrCreateLegendList(chart, options.containerID);
 
                 // Remove old legend items
                 while (ul.firstChild) {
-                    ul.firstChild.remove();
+                ul.firstChild.remove();
                 }
 
-                // Reuse the built-in legendItems generator                    
-                const items = chart.options.legend.labels.generateLabels(chart);
+                // Reuse the built-in legendItems generator
+                const items = chart.options.plugins.legend.labels.generateLabels(chart);
 
                 items.forEach(item => {
-                    const li = document.createElement('li');
-                    li.style.alignItems = 'center';
-                    li.style.cursor = 'pointer';
-                    li.style.display = 'flex';
-                    li.style.flexDirection = 'row';
-                    li.style.marginLeft = '10px';
+                const li = document.createElement('li');
+                li.style.alignItems = 'center';
+                li.style.cursor = 'pointer';
+                li.style.display = 'flex';
+                li.style.flexDirection = 'row';
+                li.style.marginLeft = '10px';
 
-                    li.onclick = () => {
-                        const {type} = chart.config;
-                        //if (type === 'pie' || type === 'doughnut') {
+                li.onclick = () => {
+                    const {type} = chart.config;
+                    if (type === 'pie' || type === 'doughnut' || type === 'polarArea') {
                         // Pie and doughnut charts only have a single dataset and visibility is per item
-                        //chart.toggleDataVisibility(item.index);
-                        //} else {
-                        //chart.setDatasetVisibility(item.datasetIndex, !chart.isDatasetVisible(item.datasetIndex));
-                        //}
-                        //chart.update();
-                    };
+                        chart.toggleDataVisibility(item.index);
+                    } else {
+                        chart.setDatasetVisibility(item.datasetIndex, !chart.isDatasetVisible(item.datasetIndex));
+                    }
+                    chart.update();
+                };
 
-                    // Color box
-                    const boxSpan = document.createElement('span');
-                    boxSpan.style.background = item.fillStyle;
-                    boxSpan.style.borderColor = item.strokeStyle;
-                    boxSpan.style.borderWidth = item.lineWidth + 'px';
-                    boxSpan.style.display = 'inline-block';
-                    boxSpan.style.height = '20px';
-                    boxSpan.style.marginRight = '10px';
-                    boxSpan.style.width = '20px';
+                // Color box
+                const boxSpan = document.createElement('span');
+                boxSpan.style.background = item.fillStyle;
+                boxSpan.style.borderColor = item.strokeStyle;
+                boxSpan.style.borderWidth = item.lineWidth + 'px';
+                boxSpan.style.display = 'inline-block';
+                boxSpan.style.height = '20px';
+                boxSpan.style.marginRight = '10px';
+                boxSpan.style.width = '20px';
 
-                    // Text
-                    const textContainer = document.createElement('p');
-                    textContainer.style.color = item.fontColor;
-                    textContainer.style.margin = 0;
-                    textContainer.style.padding = 0;
-                    textContainer.style.textDecoration = item.hidden ? 'line-through' : '';
+                // Text
+                const textContainer = document.createElement('p');
+                textContainer.style.color = item.fontColor;
+                textContainer.style.margin = 0;
+                textContainer.style.padding = 0;
+                textContainer.style.textDecoration = item.hidden ? 'line-through' : '';
 
-                    const text = document.createTextNode(item.text);
-                    textContainer.appendChild(text);
+                const text = document.createTextNode(item.text);
+                textContainer.appendChild(text);
 
-                    li.appendChild(boxSpan);
-                    li.appendChild(textContainer);
-                    ul.appendChild(li);
+                li.appendChild(boxSpan);
+                li.appendChild(textContainer);
+                ul.appendChild(li);
                 });
             }
         };
+
         const chart_{{ dataset.name }} = new Chart(ctx_{{ dataset.name }}, {
             type: 'polarArea',
             data: data,
-            responsive: true,
-            maintainAspectRatio: true,
             options: {
+                responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     htmlLegend: {
                         // ID of the container to put the legend in
