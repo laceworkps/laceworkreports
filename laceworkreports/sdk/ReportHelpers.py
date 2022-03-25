@@ -1,4 +1,6 @@
 import typing
+from typing import Dict as typing_dict
+from typing import List as typing_list
 
 import logging
 import re
@@ -33,10 +35,10 @@ class ComplianceReportTypes(Enum):
         return value in cls._value2member_map_
 
 
-def get_cloud_accounts(client: LaceworkClient = None) -> list[typing.Any]:
+def get_cloud_accounts(client: LaceworkClient = None) -> typing_list[typing.Any]:
     cloud_accounts = client.cloud_accounts.search(json={})
 
-    accounts: list[typing.Any] = []
+    accounts: typing_list[typing.Any] = []
     for row in cloud_accounts["data"]:
         if row["type"] == "GcpCfg":
             projectIds = [x for x in row["state"]["details"]["projectErrors"].keys()]
@@ -112,9 +114,9 @@ def get_cloud_accounts(client: LaceworkClient = None) -> list[typing.Any]:
 def sqlite_sync_report(
     report: typing.Any,
     table_name: typing.AnyStr,
-    queries: dict[typing.Any, typing.Any] = {},
+    queries: typing_dict[typing.Any, typing.Any] = {},
     db_path_override: typing.Any = None,
-) -> dict[typing.Any, typing.Any]:
+) -> typing_dict[typing.Any, typing.Any]:
     logging.info("Syncing data to cache for stats generation...")
     with tempfile.TemporaryDirectory() as tmpdirname:
         db_table = table_name

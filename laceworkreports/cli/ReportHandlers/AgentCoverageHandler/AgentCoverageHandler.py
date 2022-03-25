@@ -3,6 +3,8 @@ Report Handler
 """
 
 import typing
+from typing import Dict as typing_dict
+from typing import List as typing_list
 
 import csv
 import logging
@@ -323,7 +325,7 @@ def csv_handler(
         ).execute(),
     ).export()
 
-    instances: list[typing.Any] = []
+    instances: typing_list[typing.Any] = []
 
     # note: current limitation if 5000 rows
     logging.info(f"Found {len(query)} rows")
@@ -331,7 +333,7 @@ def csv_handler(
         logging.warn("Max rows retrieved - results will be tructed beyond 5000")
 
     for h in query:
-        name: dict[typing.Any, typing.Any] = [
+        name: typing_dict[typing.Any, typing.Any] = [
             item
             for item in h["RESOURCE_CONFIG"].get("Tags", {})
             if item["Key"] == "Name"
