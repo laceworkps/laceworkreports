@@ -2,7 +2,7 @@
 Report Handler
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import csv
 import logging
@@ -85,7 +85,7 @@ def html(
         logging.warn("Max rows retrieved - results will be tructed beyond 5000")
 
     for h in query:
-        name: dict[Any, Any] = [
+        name: Any = [
             item
             for item in h["RESOURCE_CONFIG"].get("Tags", {})
             if item["Key"] == "Name"
@@ -130,7 +130,7 @@ def html(
     if len(query) >= 5000:
         logging.warn("Max rows retrieved - results will be tructed beyond 5000")
 
-    agents: list[Any] = []
+    agents: Any = []
     for a in query:
         data = {
             "Name": a["TAGS"].get("Name"),
@@ -150,7 +150,7 @@ def html(
     for i in instances:
         has_lacework = False
         InstanceId = i["InstanceId"]
-        record = [item for item in agents if item["InstanceId"] == InstanceId]
+        record: Any = [item for item in agents if item["InstanceId"] == InstanceId]
 
         if len(record) > 0:
             record = record.pop().get("LwTokenShort")
