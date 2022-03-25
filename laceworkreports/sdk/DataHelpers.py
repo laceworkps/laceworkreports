@@ -1,4 +1,4 @@
-from typing import Any
+import typing
 
 import logging
 
@@ -6,13 +6,15 @@ from pandas import DataFrame
 
 
 class ReferenceLookup:
-    def __init__(self, key: str, field: Any, dict: Any, multivalue: bool = False):
+    def __init__(
+        self, key: str, field: typing.Any, dict: typing.Any, multivalue: bool = False
+    ):
         self.key = key
         self.field = field
         self.dict = dict
         self.multivalue = multivalue
 
-    def lookup(self, value: str, default: Any = None) -> Any:
+    def lookup(self, value: str, default: typing.Any = None) -> typing.Any:
         # only return the first matching result or default value
         dict = list(filter(lambda x: x[self.key] == value, self.dict))
 
@@ -66,10 +68,10 @@ class DataHelpers:
         return return_type
 
     @staticmethod
-    def dict_flatten(y: Any) -> Any:
+    def dict_flatten(y: typing.Any) -> typing.Any:
         out = {}
 
-        def flatten(x: Any, name: Any = "") -> Any:
+        def flatten(x: typing.Any, name: typing.Any = "") -> typing.Any:
             if isinstance(x, dict):
                 for a in x:
                     flatten(x[a], name + a + "_")
@@ -86,7 +88,9 @@ class DataHelpers:
         return out
 
     @staticmethod
-    def dict_lookup(key: str, dict: Any, default: Any = None) -> Any:
+    def dict_lookup(
+        key: str, dict: typing.Any, default: typing.Any = None
+    ) -> typing.Any:
         for i in key.split("."):
             if i in dict:
                 dict = dict[i]
@@ -96,7 +100,7 @@ class DataHelpers:
         return dict
 
     @staticmethod
-    def map_fields(data: Any, field_map: Any = None) -> Any:
+    def map_fields(data: typing.Any, field_map: typing.Any = None) -> typing.Any:
         if field_map is None:
             # flatten json
             # data = DataHelpers.dict_flatten(data)
