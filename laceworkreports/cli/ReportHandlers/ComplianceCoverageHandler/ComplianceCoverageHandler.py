@@ -4,18 +4,15 @@ Report Handler
 
 from typing import Optional
 
-import csv
 import logging
-import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import jinja2
-import laceworksdk.exceptions
 import typer
 
 from laceworkreports import common
-from laceworkreports.sdk.ReportHelpers import get_cloud_accounts, sqlite_sync_report
+from laceworkreports.sdk.DataHandlers import DataHandlerTypes, ExportHandler
+from laceworkreports.sdk.ReportHelpers import ComplianceQueries, ReportHelper
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -36,6 +33,11 @@ def html(
     organization: Optional[str] = typer.Option(
         None,
         help="GCP organization id; Required when org level integration is not used",
+    ),
+    subaccounts: bool = typer.Option(
+        False,
+        help="Enumerate subaccounts",
+        envvar=common.LACEWORK_REPORTS_SUBACCOUNTS,
     ),
     file_path: str = typer.Option(
         ...,
@@ -62,288 +64,89 @@ def html(
     # report details
     report_title = "Compliance Coverage"
     db_table = "compliance_coverage"
+    reportHelper = ReportHelper()
 
-    # get cloud account list - enumerate accounts and pull report
-    cloud_accounts = get_cloud_accounts(client=lw)
+    has_subaccounts = False
+    if subaccounts:
+        accounts = reportHelper.get_subaccounts(client=lw)
+        if len(accounts) == 0:
+            logging.error("Subaccounts specificed but none found")
+            raise Exception("Subaccounts specificed but none found")
+        else:
+            has_subaccounts = True
+    else:
+        accounts = [{"accountName": lw._account}]
 
+    lacework_account_count = 0
+    cloud_account_count = 0
+    missing_cloud_accounts = []
     reports = []
-    for account in cloud_accounts:
-        if account["type"] == "AwsCfg" and account["enabled"] == 1:
-            try:
-                report = lw.compliance.get_latest_aws_report(
-                    aws_account_id=account["account"],
-                    file_format="json",
-                    report_type=None,
+    for account in accounts:
+        lacework_account_count += 1
+        if has_subaccounts:
+            logging.info(f"Switching to subaccount context: {account['accountName']}")
+            lw.set_subaccount(account["accountName"])
+
+        for cloud_account in reportHelper.get_cloud_accounts(client=lw):
+            # get a list of formatted enabled cloud accounts
+            for ca in reportHelper.cloud_accounts_format(
+                cloud_account=cloud_account, organization=organization
+            ):
+                cloud_account_count += 1
+                logging.info(f"Enumerating {account['accountName']}:{ca}")
+                report = reportHelper.get_compliance_report(
+                    client=lw,
+                    cloud_account=ca,
+                    account=account,
+                    ignore_errors=ignore_errors,
+                    organization=organization,
                 )
-                r = report["data"].pop()
-                r["accountId"] = f"aws:{r['accountId']}"
-                reports.append(r)
-            except laceworksdk.exceptions.ApiError as e:
-                logging.error(f"Lacework api returned: {e}")
 
-                if not ignore_errors:
-                    raise e
-        elif account["type"] == "GcpCfg" and account["enabled"] == 1:
-            # requires special case handling as there are cases where orgId is not available via API
-            orgId = None
-            if organization is None and account["orgId"] is None:
-                logging.warn(
-                    f"Skipping GCP projectId:{account['projectIds']}, organization available and not specified (use --organization)"
-                )
-                if not ignore_errors:
-                    raise Exception(
-                        f"GCP projectId:{account['projectIds']} missing organization (use --organization)"
-                    )
-            else:
-                # when org is available use it
-                if (
-                    organization is not None and account["orgId"] is not None
-                ) or account["orgId"] is not None:
-                    orgId = account["orgId"]
-                elif organization is not None:
-                    orgId = organization
+                if len(report) > 0:
+                    reports.append(report[0])
+                else:
+                    missing_cloud_accounts.append(ca)
 
-                for projectId in account["projectIds"]:
-                    try:
-                        report = lw.compliance.get_latest_gcp_report(
-                            gcp_organization_id=orgId,
-                            gcp_project_id=projectId,
-                            file_format="json",
-                            report_type=None,
-                        )
-                        r = report["data"].pop()
-                        r["accountId"] = f"gcp:{account['orgId']}:{projectId}"
-                        r.pop("organizationId")
-                        r.pop("projectId")
-                        reports.append(r)
-                    except laceworksdk.exceptions.ApiError as e:
-                        logging.error(f"Lacework api returned: {e}")
+    for miss in missing_cloud_accounts:
+        logging.warn(f"missing report for : {miss}")
 
-                        if not ignore_errors:
-                            raise e
-
-        elif account["type"] == "AzureCfg" and account["enabled"] == 1:
-            for subscriptionId in account["subscriptionIds"]:
-                try:
-                    report = lw.compliance.get_latest_azure_report(
-                        azure_tenant_id=account["tenantId"],
-                        azure_subscription_id=subscriptionId,
-                        file_format="json",
-                        report_type=None,
-                    )
-                    r = report["data"].pop()
-                    r["accountId"] = f"gcp:{account['orgId']}:{projectId}"
-                    r.pop("tenantId")
-                    r.pop("subscriptionId")
-                    reports.append(r)
-                except laceworksdk.exceptions.ApiError as e:
-                    logging.error(f"Lacework api returned: {e}")
-
-                    if not ignore_errors:
-                        raise e
-
-    # check for empty report result
-    if len(reports) > 0:
-        # report queries
-        queries = {
-            "report": """
-                        select 
-                            reportType,
-                            reportTime,
-                            reportTitle,
-                            accountId,
-                            json_extract(json_recommendations.value, '$.TITLE') AS title,
-                            json_extract(json_recommendations.value, '$.INFO_LINK') AS info_link,
-                            json_extract(json_recommendations.value, '$.REC_ID') AS rec_id,
-                            json_extract(json_recommendations.value, '$.STATUS') AS status,
-                            json_extract(json_recommendations.value, '$.CATEGORY') AS category,
-                            json_extract(json_recommendations.value, '$.SERVICE') AS service,
-                            json_extract(json_recommendations.value, '$.VIOLATIONS') AS violations,
-                            json_extract(json_recommendations.value, '$.SUPPRESSIONS') AS suppressions,
-                            json_extract(json_recommendations.value, '$.RESOURCE_COUNT') AS resource_count,
-                            json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') AS assessed_resource_count,
-                            json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) as violation_count,
-                            json_array_length(json_extract(json_recommendations.value, '$.SUPPRESSIONS')) as suppression_count,
-                            CASE
-                                WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 1 THEN 'info'
-                                WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 2 THEN 'low'
-                                WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 3 THEN 'medium'
-                                WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 4 THEN 'high'
-                                WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 5 THEN 'critical'
-                            END AS severity,
-                            json_extract(json_recommendations.value, '$.SEVERITY') AS severity_number,
-                            CASE
-                                WHEN json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) > json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') THEN 100
-                                ELSE CAST(100-cast(json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) AS FLOAT)*100/json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') AS INTEGER)
-                            END AS percent
-                        from 
-                            :table_name, 
-                            json_each(:table_name.recommendations) AS json_recommendations
-                        where
-                            percent < 100 AND status != 'Compliant'
-                        order by
-                            accountId,
-                            reportType,
-                            rec_id
-                        """,
-            "account_coverage_severity": """
-                                SELECT 
-                                    t.Account,
-                                    CAST(AVG(t.Percent) AS INTEGER) AS Percent,
-                                    severity AS Severity
-                                FROM
-                                    (SELECT
-                                        accountId AS Account,
-                                        CASE
-                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 1 THEN 'info'
-                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 2 THEN 'low'
-                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 3 THEN 'medium'
-                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 4 THEN 'high'
-                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 5 THEN 'critical'
-                                        END AS severity,
-                                        json_extract(json_recommendations.value, '$.SEVERITY') AS severity_number,
-                                        CASE
-                                            WHEN json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) > json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') THEN 100
-                                            ELSE CAST(100-cast(json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) AS FLOAT)*100/json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') AS INTEGER)
-                                        END AS percent
-                                    FROM
-                                        :table_name,
-                                        json_each(:table_name.recommendations) AS json_recommendations
-                                    ) as t
-                                GROUP BY
-                                    Account,
-                                    Severity
-                                ORDER BY
-                                    Account,
-                                    Percent,
-                                    Severity
-                                """,
-            "account_coverage": """
-                                SELECT 
-                                    t.Account,
-                                    CAST(AVG(t.Percent) AS INTEGER) AS Percent
-                                FROM
-                                    (SELECT
-                                        accountId AS Account,
-                                        CASE
-                                            WHEN json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) > json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') THEN 100
-                                            ELSE CAST(100-cast(json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) AS FLOAT)*100/json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') AS INTEGER)
-                                        END AS percent
-                                    FROM
-                                        :table_name,
-                                        json_each(:table_name.recommendations) AS json_recommendations
-                                    ) as t
-                                GROUP BY
-                                    Account
-                                ORDER BY
-                                    Account,
-                                    Percent
-                                """,
-            "total_coverage": """
-                                SELECT 
-                                    CASE
-                                        WHEN SUM(violation_count) > SUM(assessed_resource_count) THEN 100
-                                        ELSE 100-SUM(violation_count)*100/SUM(assessed_resource_count)
-                                    END AS Percent,
-                                    CASE 
-                                        WHEN CAST(SUM(assessed_resource_count) AS INTEGER) IS NULL THEN 0 
-                                        ELSE CAST(SUM(assessed_resource_count) AS INTEGER)
-                                    END AS Assessments,
-                                    CASE 
-                                        WHEN CAST(SUM(violation_count) AS INTEGER) IS NULL THEN 0 
-                                        ELSE CAST(SUM(violation_count) AS INTEGER)
-                                    END AS Violations
-                                FROM
-                                    (SELECT
-                                        json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') AS assessed_resource_count,
-                                        json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) as violation_count
-                                    FROM
-                                        :table_name,
-                                        json_each(:table_name.recommendations) AS json_recommendations
-                                    ) as t
-                                """,
-            "total_severity": """
-                                SELECT 
-                                    CASE 
-                                        WHEN CAST(SUM(violation_count) AS INTEGER) IS NULL THEN 0 
-                                        ELSE CAST(SUM(violation_count) AS INTEGER)
-                                    END AS Violations,
-                                    severity as Severity,
-                                    CASE 
-                                        WHEN CAST(SUM(assessed_resource_count) AS INTEGER) IS NULL THEN 0 
-                                        ELSE CAST(SUM(assessed_resource_count) AS INTEGER)
-                                    END AS Total
-                                FROM
-                                    (SELECT
-                                        json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') AS assessed_resource_count,
-                                        json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) as violation_count,
-                                        CASE
-                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 1 THEN 'info'
-                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 2 THEN 'low'
-                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 3 THEN 'medium'
-                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 4 THEN 'high'
-                                            WHEN json_extract(json_recommendations.value, '$.SEVERITY') = 5 THEN 'critical'
-                                        END AS severity,
-                                        json_extract(json_recommendations.value, '$.SEVERITY') AS severity_number
-                                    FROM
-                                        :table_name,
-                                        json_each(:table_name.recommendations) AS json_recommendations
-                                    ) as t
-                                GROUP BY
-                                    Severity
-                                """,
-            "total_accounts": """
-                                SELECT
-                                    COUNT(DISTINCT accountId) AS Total
-                                FROM
-                                    :table_name
-                                """,
-        }
-
-        # use sqlite query to generate final result
-        results = sqlite_sync_report(
-            report=reports,
-            table_name=db_table,
-            queries=queries,
-            # bypass temporary storage - testing only
-            # db_path_override="database.db",
-        )
+    # use sqlite query to generate final result
+    results = reportHelper.sqlite_sync_report(
+        report=reports,
+        table_name=db_table,
+        queries=ComplianceQueries,
+        # bypass temporary storage - testing only
+        # db_path_override="database.db",
+    )
+    if len(results["report"]) > 0:
         report = results["report"]
+
+        # return additional stats under summary
         stats = {}
-        stats["account_coverage"] = results["account_coverage"]
-        stats["account_coverage_severity"] = results["account_coverage_severity"]
-        stats["total_coverage"] = results["total_coverage"]
-        stats["total_severity"] = results["total_severity"]
-        stats["total_accounts"] = results["total_accounts"]
+        for key in [x for x in results.keys() if x != "report"]:
+            stats[key] = results[key]
 
         # write jinja template
-        report_template = template_path
-        fileloader = jinja2.FileSystemLoader(
-            searchpath=os.path.dirname(report_template)
-        )
-        env = jinja2.Environment(
-            loader=fileloader, extensions=["jinja2.ext.do"], autoescape=True
-        )
-        template = env.get_template(os.path.basename(report_template))
-
-        template_result = template.render(
-            datasets=[
+        ExportHandler(
+            format=DataHandlerTypes.JINJA2,
+            results=[
                 {
-                    "name": db_table,
-                    "report": report,
-                    "summary": {
-                        "rows": len(report),
-                        "reportTitle": report_title,
-                        "stats": stats,
-                    },
+                    "data": [
+                        {
+                            "name": db_table,
+                            "report": report,
+                            "summary": {
+                                "rows": len(report),
+                                "reportTitle": report_title,
+                                "stats": stats,
+                            },
+                        }
+                    ]
                 }
             ],
-            datetime=datetime,
-            timedelta=timedelta,
-            config=common.config,
-        )
-
-        Path(file_path).write_text(template_result)
+            template_path=template_path,
+            file_path=file_path,
+        ).export()
     else:
         logging.warn("No report results found.")
 
@@ -365,6 +168,16 @@ def csv_handler(
         None,
         help="GCP organization id; Required when org level integration is not used",
     ),
+    subaccounts: bool = typer.Option(
+        False,
+        help="Enumerate subaccounts",
+        envvar=common.LACEWORK_REPORTS_SUBACCOUNTS,
+    ),
+    summary_only: bool = typer.Option(
+        False,
+        help="Return only summary details",
+        envvar=common.LACEWORK_REPORTS_SUBACCOUNTS,
+    ),
     file_path: str = typer.Option(
         ...,
         help="Path to exported result",
@@ -384,138 +197,73 @@ def csv_handler(
 
     # report details
     db_table = "compliance_coverage"
+    reportHelper = ReportHelper()
 
-    # get cloud account list - enumerate accounts and pull report
-    cloud_accounts = get_cloud_accounts(client=lw)
+    has_subaccounts = False
+    if subaccounts:
+        accounts = reportHelper.get_subaccounts(client=lw)
+        if len(accounts) == 0:
+            logging.error("Subaccounts specificed but none found")
+            raise Exception("Subaccounts specificed but none found")
+        else:
+            has_subaccounts = True
+    else:
+        accounts = [{"accountName": lw._account}]
 
+    lacework_account_count = 0
+    cloud_account_count = 0
+    missing_cloud_accounts = []
     reports = []
-    for account in cloud_accounts:
-        if account["type"] == "AwsCfg" and account["enabled"] == 1:
-            try:
-                report = lw.compliance.get_latest_aws_report(
-                    aws_account_id=account["account"],
-                    file_format="json",
-                    report_type=None,
+    for account in accounts:
+        lacework_account_count += 1
+        if has_subaccounts:
+            logging.info(f"Switching to subaccount context: {account['accountName']}")
+            lw.set_subaccount(account["accountName"])
+
+        for cloud_account in reportHelper.get_cloud_accounts(client=lw):
+            # get a list of formatted enabled cloud accounts
+            for ca in reportHelper.cloud_accounts_format(
+                cloud_account=cloud_account, organization=organization
+            ):
+                cloud_account_count += 1
+                logging.info(f"Enumerating {account['accountName']}:{ca}")
+                report = reportHelper.get_compliance_report(
+                    client=lw,
+                    cloud_account=ca,
+                    account=account,
+                    ignore_errors=ignore_errors,
+                    organization=organization,
                 )
-                r = report["data"].pop()
-                r["accountId"] = f"aws:{r['accountId']}"
-                reports.append(r)
-            except laceworksdk.exceptions.ApiError as e:
-                logging.error(f"Lacework api returned: {e}")
 
-                if not ignore_errors:
-                    raise e
-        elif account["type"] == "GcpCfg" and account["enabled"] == 1:
-            # requires special case handling as there are cases where orgId is not available via API
-            orgId = None
-            if organization is None and account["orgId"] is None:
-                logging.warn(
-                    f"Skipping GCP projectId:{account['projectIds']}, organization available and not specified (use --organization)"
-                )
-                if not ignore_errors:
-                    raise Exception(
-                        f"GCP projectId:{account['projectIds']} missing organization (use --organization)"
-                    )
-            else:
-                # when org is available use it
-                if (
-                    organization is not None and account["orgId"] is not None
-                ) or account["orgId"] is not None:
-                    orgId = account["orgId"]
-                elif organization is not None:
-                    orgId = organization
+                if len(report) > 0:
+                    reports.append(report[0])
+                else:
+                    missing_cloud_accounts.append(ca)
 
-                for projectId in account["projectIds"]:
-                    try:
-                        report = lw.compliance.get_latest_gcp_report(
-                            gcp_organization_id=orgId,
-                            gcp_project_id=projectId,
-                            file_format="json",
-                            report_type=None,
-                        )
-                        r = report["data"].pop()
-                        r["accountId"] = f"gcp:{account['orgId']}:{projectId}"
-                        r.pop("organizationId")
-                        r.pop("projectId")
-                        reports.append(r)
-                    except laceworksdk.exceptions.ApiError as e:
-                        logging.error(f"Lacework api returned: {e}")
+    for miss in missing_cloud_accounts:
+        logging.warn(f"missing report for : {miss}")
 
-                        if not ignore_errors:
-                            raise e
+    # use sqlite query to generate final result
+    results = reportHelper.sqlite_sync_report(
+        report=reports,
+        table_name=db_table,
+        queries=ComplianceQueries,
+        # bypass temporary storage - testing only
+        db_path_override="test.db",
+    )
 
-        elif account["type"] == "AzureCfg" and account["enabled"] == 1:
-            for subscriptionId in account["subscriptionIds"]:
-                try:
-                    report = lw.compliance.get_latest_azure_report(
-                        azure_tenant_id=account["tenantId"],
-                        azure_subscription_id=subscriptionId,
-                        file_format="json",
-                        report_type=None,
-                    )
-                    r = report["data"].pop()
-                    r["accountId"] = f"gcp:{account['orgId']}:{projectId}"
-                    r.pop("tenantId")
-                    r.pop("subscriptionId")
-                    reports.append(r)
-                except laceworksdk.exceptions.ApiError as e:
-                    logging.error(f"Lacework api returned: {e}")
+    if len(results["report"]) > 0:
+        if summary_only:
+            report = results["account_coverage_severity"]
+        else:
+            report = results["report"]
 
-                    if not ignore_errors:
-                        raise e
-    # check for empty report result
-    if len(reports) > 0:
-        # report queries
-        queries = {
-            "report": """
-                        select 
-                            reportType,
-                            reportTime,
-                            reportTitle,
-                            accountId,
-                            json_extract(json_recommendations.value, '$.TITLE') AS title,
-                            json_extract(json_recommendations.value, '$.INFO_LINK') AS info_link,
-                            json_extract(json_recommendations.value, '$.REC_ID') AS rec_id,
-                            json_extract(json_recommendations.value, '$.STATUS') AS status,
-                            json_extract(json_recommendations.value, '$.CATEGORY') AS category,
-                            json_extract(json_recommendations.value, '$.SERVICE') AS service,
-                            json_extract(json_recommendations.value, '$.VIOLATIONS') AS violations,
-                            json_extract(json_recommendations.value, '$.SUPPRESSIONS') AS suppressions,
-                            json_extract(json_recommendations.value, '$.RESOURCE_COUNT') AS resource_count,
-                            json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') AS assessed_resource_count,
-                            json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) as violation_count,
-                            json_array_length(json_extract(json_recommendations.value, '$.SUPPRESSIONS')) as suppression_count,
-                            json_extract(json_recommendations.value, '$.SEVERITY') AS severity,
-                            CAST(100-cast(json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) AS FLOAT)*100/json_extract(json_recommendations.value, '$.RESOURCE_COUNT') AS INTEGER) as percent
-                        from 
-                            :table_name, 
-                            json_each(:table_name.recommendations) AS json_recommendations
-                        where
-                            percent < 100 AND status != 'Compliant'
-                        order by
-                            accountId,
-                            reportType,
-                            rec_id
-                        """,
-        }
-
-        # use sqlite query to generate final result
-        results = sqlite_sync_report(
-            report=reports, table_name=db_table, queries=queries
-        )
-        report = results["report"]
-
-        # write results to csv
-        header = False
-        with open(file_path, "w", newline="") as csvfile:
-            writer = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
-
-            for row in report:
-                if not header:
-                    writer.writerow(row.keys())
-                    header = True
-
-                writer.writerow(row.values())
+        logging.info("Building CSV from resultant data...")
+        ExportHandler(
+            format=DataHandlerTypes.CSV,
+            results=[{"data": report}],
+            file_path=file_path,
+        ).export()
     else:
         logging.warn("No report results found.")
 

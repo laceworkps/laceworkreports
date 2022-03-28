@@ -257,6 +257,7 @@
          <div class="col-sm-8">&nbsp;</div>
       </div>
       <article class="card">
+        {%- set stats_accumulator = namespace(stats_table_name='account_coverage') %}
         {%- for dataset in datasets %}
           <content class="card-body">
             <h5 class="card-title">{{ dataset.summary.reportTitle }}</h5>
@@ -268,9 +269,7 @@
                     <div class="row">
                         <strong>Coverage Score</strong>
                     </div>
-                    <div class="col-xs-1 center-block text-center text-nowrap" style="font-size: 110pt;height:500px;">
-                       {{ dataset.summary.stats['total_coverage'][0]['Percent'] }}%
-                    </div>
+                    <div id="total_coverage" class="col-xs-1 center-block text-center text-nowrap" style="font-size: 110pt;height:500px;"></div>
                 </div>
                 <div class="col-8">
                 <div class="row">
@@ -284,6 +283,13 @@
 
                             <input type="radio" class="btn-check" name="btnradio" id="gt25" autocomplete="off" onclick="filterChart.call(this,25,true)">
                             <label class="btn btn-outline-primary" for="gt25">&gt; 25</label>
+
+                            <div class="btn-group" role="group">
+                                <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <div id="lwAccount"></div>
+                                </button>
+                                <ul id="account_list" class="dropdown-menu" aria-labelledby="btnGroupDrop1"></ul>
+                            </div>
 
                             <input type="radio" class="btn-check" name="btnradio" id="lt75" autocomplete="off" onclick="filterChart.call(this,75,false)">
                             <label class="btn btn-outline-primary" for="lt75">&lt; 75</label>
@@ -305,14 +311,16 @@
                 <div class="col-12">
                     <div class="row card">
                         <div class="row">
-                            <div class="col-4 compliance-severity">TOTAL ACCOUNTS</div>
-                            <div class="col-4 compliance-severity">TOTAL INSTALLED</div>
-                            <div class="col-4 compliance-severity">TOTAL NOT INSTALLED</div>
+                            <div class="col-3 compliance-severity">TOTAL ACCOUNTS</div>
+                            <div class="col-3 compliance-severity">TOTAL INSTANCES</div>
+                            <div class="col-3 compliance-severity">TOTAL INSTALLED</div>
+                            <div class="col-3 compliance-severity">TOTAL NOT INSTALLED</div>
                         </div>
                         <div class="row">
-                            <div class="col-4 compliance-severity-count">{{ dataset.summary.stats['total_accounts'][0]['Total'] }}</div>
-                            <div class="col-4 compliance-severity-count">{{ dataset.summary.stats['total_coverage'][0]['Installed'] }}</div>
-                            <div class="col-4 compliance-severity-count">{{ dataset.summary.stats['total_coverage'][0]['NotInstalled'] }}</div>
+                            <div id="total_accounts" class="col-3 compliance-severity-count"></div>
+                            <div id="total" class="col-3 compliance-severity-count"></div>
+                            <div id="total_installed" class="col-3 compliance-severity-count"></div>
+                            <div id="total_not_installed" class="col-3 compliance-severity-count"></div>
                         </div>
                     </div>
                 </div>
@@ -326,9 +334,17 @@
                         </div>
                     </div>
                 </div>
+                <!-- stats table -->
+                <div class="col-12">
+                    <div class="toolbar_summary_{{ dataset.name }}">
+                        <strong>Summary</strong> {{ dataset.summary.stats[ stats_accumulator.stats_table_name ]|length }}
+                    </div>
+                    <table class="data-table" id="table_summary_{{ dataset.name }}"></table>
+                </div>
+                <!-- data table -->
                 <div class="col-12">
                     <div class="toolbar_{{ dataset.name }}">
-                        Total rows: <span id="total">{{ dataset.summary.rows }}</span>
+                        <strong>Details</strong> {{ dataset.summary.rows }}
                     </div>
                     <table class="data-table" id="table_{{ dataset.name }}"></table>
                 </div>
@@ -339,6 +355,26 @@
    </section>
    <script type="text/javascript">
     {%- for dataset in datasets %}
+       // summary info
+        var lwaccount_summary = {{ dataset.summary.stats['lwaccount_summary'] | tojson()  }};
+        var total_summary = {{ dataset.summary.stats['total_summary'] | tojson()  }};
+        lwaccount_summary.unshift(total_summary[0]);
+
+        // initial setting
+        var lwaccount = 'Any';
+        $('#total_coverage').html(lwaccount_summary[0]['total_coverage'] + "%");
+        $('#total').html(lwaccount_summary[0]['total']);
+        $('#total_installed').html(lwaccount_summary[0]['total_installed']);
+        $('#total_not_installed').html(lwaccount_summary[0]['total_not_installed']);
+        $('#total_accounts').html(lwaccount_summary[0]['total_accounts']);
+        $('#lwAccount').html(lwaccount_summary[0]['lwAccount']);
+
+        lwaccount_summary.forEach(account => {
+            $('#account_list').append(
+                "<li><a id=\"account_" + account['lwAccount'] + "\" class=\"dropdown-item\" onclick=\"filterChartAccount.call(this,'" + account['lwAccount'] + "')\">" + account['lwAccount'] + "</a></li>"
+            );
+        });
+
         // chart {{ dataset.name }}
         const ctx_{{ dataset.name }} = document.getElementById('chart_{{ dataset.name }}');
         ctx_{{ dataset.name }}.getContext("2d").canvas.width = 200;
@@ -346,7 +382,7 @@
         
         const chartLabels = [
             {%- for row in dataset.summary.stats['account_coverage'] %}
-                '{{ row['Account'] }}'
+                '{{ row['accountId'] }} [{{ row['lwAccount'] }}]'
                 {%- if not loop.last -%}
                 ,
                 {%- endif %}
@@ -355,8 +391,8 @@
 
         const chartData = [
             {%- for row in dataset.summary.stats['account_coverage'] %}
-                {%- if row['Percent'] > 15 -%}
-                {{ row['Percent'] }}
+                {%- if row['total_coverage'] > 15 -%}
+                {{ row['total_coverage'] }}
                 {%- else %}
                 15.1
                 {%- endif %}
@@ -471,6 +507,80 @@
             chart.update();
         }
 
+        function filterChartAccount(account, reset=false){
+            var $table_summary = $('#table_summary_{{ dataset.name }}');
+            var $table = $('#table_{{ dataset.name }}');
+            var chart = chart_{{ dataset.name }};
+            // if we are filtered we need to remove the filter
+            $('.btn-group').find('label').removeClass('active').end().find('[type="radio"]').prop('checked', false);
+            if((filtered && this.id == filteredId) || reset){
+                // reset the button filter
+                filteredId = "";
+                account = "Any";
+            }else if(filtered){
+                // reset the chart filter
+                const items = chart.options.plugins.legend.labels.generateLabels(chart);
+                items.forEach((item, index) => {
+                    if(!chart.getDataVisibility(item.index)){
+                        chart.toggleDataVisibility(item.index)
+                    }
+                });
+                chart.update();
+                filtered = false;
+            }
+            
+            filteredId = this.id;
+
+            const items = chart.options.plugins.legend.labels.generateLabels(chart);
+            var avg = [];
+            items.forEach((item, index) => {
+                if(filtered || account == 'Any'){
+                    // reset visibility if we were previous filtered
+                    if(!chart.getDataVisibility(item.index)){
+                        chart.toggleDataVisibility(item.index)
+                    }
+                    
+                }else{
+                    // for each matching filter ensure visbility enable
+                    lwaccount = chart.data.labels[index].split(" ").slice(-1)[0]
+                    if((lwaccount == "[" + account + "]")){
+                        if(!chart.getDataVisibility(item.index)){
+                            chart.toggleDataVisibility(item.index)
+                        }
+                    }else{
+                        // hide all visibility non-matching
+                        if(chart.getDataVisibility(item.index)){
+                            chart.toggleDataVisibility(item.index)
+                        }
+                    }
+                }
+            });
+            
+            filtered = filtered?false:true;
+            
+            // apply filter to the bootstrap table
+            if(account == 'Any'){
+                $table_summary.bootstrapTable('filterBy', {});
+                $table.bootstrapTable('filterBy', {});
+            }else{
+                $table_summary.bootstrapTable('filterBy', {
+                    lwAccount: [account]
+                });
+                $table.bootstrapTable('filterBy', {
+                    lwAccount: [account]
+                });
+            }
+
+            account_info = lwaccount_summary.find((o) => { return o['lwAccount'] === account })
+            $('#total_coverage').html(account_info['total_coverage'] + "%")
+            $('#total').html(account_info['total'])
+            $('#total_installed').html(account_info['total_installed'])
+            $('#total_not_installed').html(account_info['total_not_installed'])
+            $('#total_accounts').html(account_info['total_accounts'])
+            $('#lwAccount').html(account_info['lwAccount'])
+            chart.update();
+        }
+
         const htmlLegendPlugin = {
             id: 'htmlLegend',
             afterUpdate(chart, args, options) {
@@ -543,6 +653,18 @@
                     },
                     legend: {
                         display: false,
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label + ': ' + context.raw + '%';
+                                if(context.raw == 15.1){
+                                    label = context.label + ': 0%';
+                                }
+                                return label
+                                
+                            }
+                        }
                     }
                 },
                 legend: {
@@ -551,23 +673,68 @@
                 title: {
                     display: true,
                     text: '% by Account'
-                },
-                tooltips: {
-                    callbacks: {
-                        label: function(tooltipItem, data) {
-                            var value = data.datasets[0].data[tooltipItem.index];
-                            var label = data.labels[tooltipItem.index];
-
-                            if (value === 15.1) {
-                                value = 0;
-                            }
-
-                            return label + ': ' + value + ' %';
-                        }
-                    }
-                },
+                }
             },
             plugins: [htmlLegendPlugin]
+        });
+
+        // stats summary data {{ dataset.name }}
+        {%- set fields = dataset.summary.stats[ stats_accumulator.stats_table_name ][0].keys() %}
+
+        var $table = $('#table_summary_{{ dataset.name }}')
+        var total = 0
+
+        const table_summary_cols_{{ dataset.name }} = [
+            {%- for field in fields %}
+                 {
+                    field: '{{ field }}',
+                    title: '{{ field }}',
+                    sortable: true
+                }
+                {%- if not loop.last -%}
+                ,
+                {%- endif %}
+            {%- endfor %}    
+            ]
+
+        const table_summary_data_{{ dataset.name }} = [
+            {%- for row in dataset.summary.stats[ stats_accumulator.stats_table_name ] %}
+                {
+                    id: {{ loop.index }},
+                    {%- for field in fields %}
+                        {{ field }}: "{{ row[field] }}"
+                        {%- if not loop.last -%}
+                        ,
+                        {%- endif %}
+                    {%- endfor %}
+                }
+                {%- if not loop.last -%}
+                ,
+                {%- endif %}
+            {%- endfor %}    
+        ]
+
+        $table.bootstrapTable({
+            toolbar: ".toolbar_summary_{{ dataset.name }}",
+
+            search: true,
+            showColumns: true,
+            showFullscreen: true,
+            
+            showExport: true,
+            exportTypes: ['json', 'xml', 'csv', 'txt', 'sql', 'excel', 'pdf'],
+            filterControl: false,
+
+            data: table_summary_data_{{ dataset.name }},
+            columns: table_summary_cols_{{ dataset.name }},
+
+            virtualScroll: false,
+            showExtendedPagination: true,
+            pagination: true,
+            showPaginationSwitch: true,
+            paginationVAlign: "bottom",
+            showFooter: false,
+            sortable: true
         });
 
         // data table {{ dataset.name }}

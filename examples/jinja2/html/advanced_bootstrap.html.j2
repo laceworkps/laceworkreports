@@ -272,7 +272,7 @@
    </section>
    <script type="text/javascript">
         // data table dataset
-        {%- set fields = dataset[0] %}
+        {%- set fields = datasets[0] %}
 
         var $table = $('#table_dataset')
         var total = 0
@@ -291,7 +291,7 @@
             ]
 
         const table_data_dataset = [
-            {%- for row in dataset %}
+            {%- for row in datasets %}
                 {
                     id: {{ loop.index }},
                     {%- for field in fields %}

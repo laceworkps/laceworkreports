@@ -8,12 +8,12 @@ Date: {{ datetime.now() - timedelta(days=1) }}
 <table border=1>
 <thead>
    <tr>
-      {%- for field in dataset[0] %}
+      {%- for field in datasets[0] %}
       <TD class="c1">{{ field }}</TD>
       {% endfor %}
    </tr>
 </thead>
-{%- for item in dataset %}
+{%- for item in datasets %}
 <tr>
    {%- for field in item %}
    <TD class="c1">{{ item[field] }}</TD>
@@ -23,7 +23,7 @@ Date: {{ datetime.now() - timedelta(days=1) }}
 
 </table>
 <script type="text/javascript">
-   var dataset = {{ dataset | tojson() }}
-   console.log(dataset)
+   var dataset = {{ datasets | tojson() }}
+   console.log(datasets)
 </script>
 </body>

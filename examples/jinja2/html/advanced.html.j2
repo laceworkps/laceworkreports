@@ -249,12 +249,12 @@
                   <table class="data-table">
                      <thead>
                         <tr>
-                            {%- for field in dataset[0] %}
+                            {%- for field in datasets[0] %}
                             <td class="c1">{{ field }}</td>
                             {% endfor %}
                         </tr>
                     </thead>
-                     {%- for item in dataset %}
+                     {%- for item in datasets %}
                     <tr>
                         {%- for field in item %}
                         <TD class="c1">{{ item[field] }}</TD>
