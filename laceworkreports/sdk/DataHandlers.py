@@ -264,7 +264,7 @@ class DataHandler:
             self.fp.close()
 
         # for jinja2 we have aggregated into a dict, pass that to the template
-        elif self.format in [DataHandlerCliTypes.JINJA2]:
+        elif self.format in [DataHandlerTypes.JINJA2, DataHandlerCliTypes.JINJA2]:
             report_template = Path(self.template_path).resolve()
             fileloader = jinja2.FileSystemLoader(
                 searchpath=os.path.dirname(report_template)
@@ -274,7 +274,7 @@ class DataHandler:
             )
             template = env.get_template(os.path.basename(report_template))
             result = template.render(
-                dataset=self.dataset,
+                datasets=self.dataset,
                 rows=len(self.dataset),
                 datetime=datetime,
                 timedelta=timedelta,
@@ -299,7 +299,11 @@ class DataHandler:
         elif self.format in [DataHandlerTypes.JSON, DataHandlerCliTypes.JSON]:
             self.fp.write(f"{json.dumps(row)}\n")
         # if we're doing jinja2 formatting aggregate the result in a dict
-        elif self.format in [DataHandlerTypes.DICT, DataHandlerCliTypes.JINJA2]:
+        elif self.format in [
+            DataHandlerTypes.DICT,
+            DataHandlerTypes.JINJA2,
+            DataHandlerCliTypes.JINJA2,
+        ]:
             self.dataset.append(row)
         elif self.format == DataHandlerTypes.PANDAS:
             if not isinstance(self.dataset, pd.DataFrame):
@@ -574,7 +578,13 @@ class ExportHandler:
                     logging.warn("Query returned 0 results")
                     # raise Exception("Query returned 0 results")
                 else:
-                    logging.info(f"Processing {len(result['data'])} rows...")
+                    rows = 0
+                    if result["data"][0].get("report") is not None:
+                        rows = len(result["data"][0].get("report"))
+                    else:
+                        rows = len(result["data"])
+
+                    logging.info(f"Processing {rows} rows...")
                     for data in result["data"]:
                         # create the data row
                         try:

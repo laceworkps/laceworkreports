@@ -3,16 +3,12 @@ Report Handler
 """
 
 import typing
-from typing import Dict as typing_dict
-from typing import List as typing_list
+from typing import Any
 
-import csv
 import logging
-import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import jinja2
 import typer
 
 from laceworkreports import common
@@ -21,7 +17,7 @@ from laceworkreports.sdk.DataHandlers import (
     ExportHandler,
     QueryHandler,
 )
-from laceworkreports.sdk.ReportHelpers import sqlite_sync_report
+from laceworkreports.sdk.ReportHelpers import AgentQueries, ReportHelper
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -38,6 +34,11 @@ def html(
         (datetime.utcnow()).strftime(common.ISO_FORMAT),
         formats=[common.ISO_FORMAT],
         help="End time for query period",
+    ),
+    subaccounts: bool = typer.Option(
+        False,
+        help="Enumerate subaccounts",
+        envvar=common.LACEWORK_REPORTS_SUBACCOUNTS,
     ),
     file_path: str = typer.Option(
         ...,
@@ -60,89 +61,108 @@ def html(
     # report details
     report_title = "Agent Coverage"
     db_table = "agent_coverage"
+    reportHelper = ReportHelper()
 
-    # pull a list of ec2 instance details
-    query_name = "EC2S"
-    query_text = f"""{query_name}{{
-            source {{LW_CFG_AWS_EC2_INSTANCES}}
-            return {{RESOURCE_CONFIG, ACCOUNT_ID, RESOURCE_ID, RESOURCE_TYPE}}
-            }}
-            """
+    has_subaccounts = False
+    if subaccounts:
 
-    query = ExportHandler(
-        format=DataHandlerTypes.DICT,
-        results=QueryHandler(
-            client=lw,
-            type=common.ObjectTypes.Queries.value,
-            object=common.QueriesTypes.Execute.value,
-            lql_query=query_text,
-        ).execute(),
-    ).export()
+        accounts = reportHelper.get_subaccounts(client=lw)
+        if len(accounts) == 0:
+            logging.error("Subaccounts specificed but none found")
+            raise Exception("Subaccounts specificed but none found")
+        else:
+            has_subaccounts = True
+    else:
+        accounts = [{"accountName": lw._account}]
 
+    agents = []
     instances = []
 
-    # note: current limitation if 5000 rows
-    logging.info(f"Found {len(query)} rows")
-    if len(query) >= 5000:
-        logging.warn("Max rows retrieved - results will be tructed beyond 5000")
+    for account in accounts:
+        if has_subaccounts:
+            lw.set_subaccount(account["accountName"])
 
-    for h in query:
-        name: typing.Any = [
-            item
-            for item in h["RESOURCE_CONFIG"].get("Tags", {})
-            if item["Key"] == "Name"
-        ]
+        # pull a list of ec2 instance details
+        query_name = "EC2S"
+        query_text = f"""{query_name}{{
+                source {{LW_CFG_AWS_EC2_INSTANCES}}
+                return {{RESOURCE_CONFIG, ACCOUNT_ID, RESOURCE_ID, RESOURCE_TYPE}}
+                }}
+                """
 
-        if len(name) > 0:
-            name = name.pop().get("Value")
-        else:
-            name = None
+        query = ExportHandler(
+            format=DataHandlerTypes.DICT,
+            results=QueryHandler(
+                client=lw,
+                type=common.ObjectTypes.Queries.value,
+                object=common.QueriesTypes.Execute.value,
+                lql_query=query_text,
+            ).execute(),
+        ).export()
 
-        data = {
-            "Name": name,
-            "ImageId": h["RESOURCE_CONFIG"].get("ImageId"),
-            "InstanceId": h["RESOURCE_CONFIG"].get("InstanceId"),
-            "State": h["RESOURCE_CONFIG"].get("State").get("Name"),
-            "Account": h["ACCOUNT_ID"],
-        }
-        instances.append(data)
+        # note: current limitation if 5000 rows
+        logging.info(f"Found {len(query)} rows")
+        if len(query) >= 5000:
+            logging.warn("Max rows retrieved - results will be tructed beyond 5000")
 
-    # pull a list of agent machine
-    query_name = "AGENTS"
-    query_text = f"""{query_name}{{
-            source {{LW_HE_MACHINES}}
-            filter {{TAGS:VmProvider = 'AWS'}}
-            return {{TAGS}}
-            }}
-            """
+        for h in query:
+            name: Any = [
+                item
+                for item in h["RESOURCE_CONFIG"].get("Tags", {})
+                if item["Key"] == "Name"
+            ]
 
-    logging.info("Retrieving a list of lacework agents...")
-    query = ExportHandler(
-        format=DataHandlerTypes.DICT,
-        results=QueryHandler(
-            client=lw,
-            type=common.ObjectTypes.Queries.value,
-            object=common.QueriesTypes.Execute.value,
-            lql_query=query_text,
-        ).execute(),
-    ).export()
+            if len(name) > 0:
+                name = name.pop().get("Value")
+            else:
+                name = None
 
-    # note: current limitation if 5000 rows
-    logging.info(f"Found {len(query)} rows")
-    if len(query) >= 5000:
-        logging.warn("Max rows retrieved - results will be tructed beyond 5000")
+            data = {
+                "name": name,
+                "imageId": h["RESOURCE_CONFIG"].get("ImageId"),
+                "instanceId": h["RESOURCE_CONFIG"].get("InstanceId"),
+                "state": h["RESOURCE_CONFIG"].get("State").get("Name"),
+                "accountId": f"aws:{h['ACCOUNT_ID']}",
+                "lwAccount": account["accountName"],
+            }
+            instances.append(data)
 
-    agents: typing.Any = []
-    for a in query:
-        data = {
-            "Name": a["TAGS"].get("Name"),
-            "ImageId": a["TAGS"].get("ImageId"),
-            "InstanceId": a["TAGS"].get("InstanceId"),
-            "State": "Unknown",
-            "Account": a["TAGS"].get("Account"),
-            "LwTokenShort": a["TAGS"].get("LwTokenShort"),
-        }
-        agents.append(data)
+        # pull a list of agent machine
+        query_name = "AGENTS"
+        query_text = f"""{query_name}{{
+                source {{LW_HE_MACHINES}}
+                filter {{TAGS:VmProvider = 'AWS'}}
+                return {{TAGS}}
+                }}
+                """
+
+        logging.info("Retrieving a list of lacework agents...")
+        query = ExportHandler(
+            format=DataHandlerTypes.DICT,
+            results=QueryHandler(
+                client=lw,
+                type=common.ObjectTypes.Queries.value,
+                object=common.QueriesTypes.Execute.value,
+                lql_query=query_text,
+            ).execute(),
+        ).export()
+
+        # note: current limitation if 5000 rows
+        logging.info(f"Found {len(query)} rows")
+        if len(query) >= 5000:
+            logging.warn("Max rows retrieved - results will be tructed beyond 5000")
+
+        for a in query:
+            data = {
+                "name": a["TAGS"].get("Name"),
+                "imageId": a["TAGS"].get("ImageId"),
+                "instanceId": a["TAGS"].get("InstanceId"),
+                "state": "Unknown",
+                "accountId": f"aws:{a['TAGS'].get('Account')}",
+                "lwTokenShort": a["TAGS"].get("LwTokenShort"),
+                "lwAccount": account["accountName"],
+            }
+            agents.append(data)
 
     logging.info("Building DICT from resultant data...")
     report = []
@@ -151,13 +171,13 @@ def html(
     # instances check for agent
     for i in instances:
         has_lacework = False
-        InstanceId = i["InstanceId"]
+        instanceId = i["instanceId"]
         record: typing.Any = [
-            item for item in agents if item["InstanceId"] == InstanceId
+            item for item in agents if item["instanceId"] == instanceId
         ]
 
         if len(record) > 0:
-            record = record.pop().get("LwTokenShort")
+            record = record.pop().get("lwTokenShort")
         else:
             record = None
 
@@ -165,14 +185,15 @@ def html(
             has_lacework = True
 
         row = {
-            "Name": i["Name"],
-            "ImageId": i["ImageId"],
-            "InstanceId": i["InstanceId"],
-            "State": i["State"],
-            "Account": i["Account"],
-            "Lacework": has_lacework,
-            "HasEC2InstanceConfig": True,
-            "LwTokenShort": record,
+            "name": i["name"],
+            "imageId": i["imageId"],
+            "instanceId": i["instanceId"],
+            "state": i["state"],
+            "accountId": i["accountId"],
+            "lacework": has_lacework,
+            "hasEC2InstanceConfig": True,
+            "lwTokenShort": record,
+            "lwAccount": i["lwAccount"],
         }
         report.append(row)
 
@@ -181,11 +202,11 @@ def html(
     missing_count = 0
     for i in agents:
         has_ec2_instance = True
-        InstanceId = i["InstanceId"]
-        record = [item for item in instances if item["InstanceId"] == InstanceId]
+        instanceId = i["instanceId"]
+        record = [item for item in instances if item["instanceId"] == instanceId]
 
         if len(record) > 0:
-            record = record.pop().get("InstanceId")
+            record = record.pop().get("instanceId")
         else:
             record = None
 
@@ -196,16 +217,54 @@ def html(
         if has_ec2_instance is False:
             missing_count += 1
             row = {
-                "Name": i["Name"],
-                "ImageId": i["ImageId"],
-                "InstanceId": i["InstanceId"],
-                "State": i["State"],
-                "Account": i["Account"],
-                "LwTokenShort": i["LwTokenShort"],
-                "Lacework": True,
-                "HasEC2InstanceConfig": has_ec2_instance,
+                "name": i["name"],
+                "imageId": i["imageId"],
+                "instanceId": i["instanceId"],
+                "state": i["state"],
+                "account": i["accountId"],
+                "lwTokenShort": i["lwTokenShort"],
+                "lwAccount": i["lwAccount"],
+                "lacework": True,
+                "hasEC2InstanceConfig": has_ec2_instance,
             }
             report.append(row)
+
+    # sync to sqlite to build stats
+    results = reportHelper.sqlite_sync_report(
+        report=report, table_name=db_table, queries=AgentQueries
+    )
+
+    if len(results["report"]) > 0:
+        report = results["report"]
+
+        # return additional stats under summary
+        stats = {}
+        for key in [x for x in results.keys() if x != "report"]:
+            stats[key] = results[key]
+
+        # write jinja template
+        ExportHandler(
+            format=DataHandlerTypes.JINJA2,
+            results=[
+                {
+                    "data": [
+                        {
+                            "name": db_table,
+                            "report": report,
+                            "summary": {
+                                "rows": len(report),
+                                "reportTitle": report_title,
+                                "stats": stats,
+                            },
+                        }
+                    ]
+                }
+            ],
+            template_path=template_path,
+            file_path=file_path,
+        ).export()
+    else:
+        logging.warn("No results found")
 
     if missing_count > 0:
         logging.warn(
@@ -213,74 +272,6 @@ def html(
         )
     else:
         logging.info("WOO HOO! No agents found with missing config")
-
-    # sync to sqlite to build stats
-    queries = {
-        "account_coverage": """
-                            SELECT 
-                                Account, 
-                                SUM(Lacework) AS Installed,
-                                COUNT(*) AS Total,
-                                SUM(Lacework)*100/COUNT(*) AS Percent
-                            FROM 
-                                :table_name 
-                            WHERE
-                                State = 'running'
-                            GROUP BY
-                                Account
-                            ORDER BY
-                                Account,
-                                Percent
-                            """,
-        "total_coverage": """
-                            SELECT  
-                                SUM(Lacework) AS Installed,
-                                COUNT(*)-SUM(Lacework) AS NotInstalled,
-                                COUNT(*) AS Total,
-                                SUM(Lacework)*100/COUNT(*) AS Percent
-                            FROM 
-                                :table_name 
-                            WHERE
-                                State = 'running'
-                            """,
-        "total_accounts": """
-                            SELECT  
-                                COUNT(DISTINCT ACCOUNT) AS Total
-                            FROM 
-                                :table_name
-                            """,
-    }
-    results = sqlite_sync_report(report=report, table_name=db_table, queries=queries)
-    stats = {}
-    stats["account_coverage"] = results["account_coverage"]
-    stats["total_coverage"] = results["total_coverage"]
-    stats["total_accounts"] = results["total_accounts"]
-
-    report_template = template_path
-    fileloader = jinja2.FileSystemLoader(searchpath=os.path.dirname(report_template))
-    env = jinja2.Environment(
-        loader=fileloader, extensions=["jinja2.ext.do"], autoescape=True
-    )
-    template = env.get_template(os.path.basename(report_template))
-
-    template_result = template.render(
-        datasets=[
-            {
-                "name": "agent_deployment",
-                "report": report,
-                "summary": {
-                    "rows": len(report),
-                    "reportTitle": report_title,
-                    "stats": stats,
-                },
-            }
-        ],
-        datetime=datetime,
-        timedelta=timedelta,
-        config=common.config,
-    )
-
-    Path(file_path).write_text(template_result)
 
 
 @app.command(name="csv", no_args_is_help=True, help="Generate CSV Report")
@@ -296,6 +287,16 @@ def csv_handler(
         formats=[common.ISO_FORMAT],
         help="End time for query period",
     ),
+    subaccounts: bool = typer.Option(
+        False,
+        help="Enumerate subaccounts",
+        envvar=common.LACEWORK_REPORTS_SUBACCOUNTS,
+    ),
+    summary_only: bool = typer.Option(
+        False,
+        help="Return only summary details",
+        envvar=common.LACEWORK_REPORTS_SUBACCOUNTS,
+    ),
     file_path: str = typer.Option(
         ...,
         help="Path to exported result",
@@ -305,148 +306,199 @@ def csv_handler(
     """
     Set the command context
     """
+
+    # connect the lacework client
     lw = common.config.connect()
 
-    # pull a list of ec2 instance details
-    query_name = "EC2S"
-    query_text = f"""{query_name}{{
-            source {{LW_CFG_AWS_EC2_INSTANCES}}
-            return {{RESOURCE_CONFIG, ACCOUNT_ID, RESOURCE_ID, RESOURCE_TYPE}}
-            }}
-            """
+    # report details
+    db_table = "agent_coverage"
+    reportHelper = ReportHelper()
 
-    query = ExportHandler(
-        format=DataHandlerTypes.DICT,
-        results=QueryHandler(
-            client=lw,
-            type=common.ObjectTypes.Queries.value,
-            object=common.QueriesTypes.Execute.value,
-            lql_query=query_text,
-        ).execute(),
-    ).export()
+    has_subaccounts = False
+    if subaccounts:
 
-    instances: typing_list[typing.Any] = []
-
-    # note: current limitation if 5000 rows
-    logging.info(f"Found {len(query)} rows")
-    if len(query) >= 5000:
-        logging.warn("Max rows retrieved - results will be tructed beyond 5000")
-
-    for h in query:
-        name: typing_dict[typing.Any, typing.Any] = [
-            item
-            for item in h["RESOURCE_CONFIG"].get("Tags", {})
-            if item["Key"] == "Name"
-        ].pop()
-
-        data = {
-            "Name": name.get("Value"),
-            "ImageId": h["RESOURCE_CONFIG"].get("ImageId"),
-            "InstanceId": h["RESOURCE_CONFIG"].get("InstanceId"),
-            "State": h["RESOURCE_CONFIG"].get("State").get("Name"),
-            "Account": h["ACCOUNT_ID"],
-        }
-        instances.append(data)
-
-    # pull a list of agent machine
-    query_name = "AGENTS"
-    query_text = f"""{query_name}{{
-            source {{LW_HE_MACHINES}}
-            filter {{TAGS:VmProvider = 'AWS'}}
-            return {{TAGS}}
-            }}
-            """
-
-    logging.info("Retrieving a list of lacework agents...")
-    query = ExportHandler(
-        format=DataHandlerTypes.DICT,
-        results=QueryHandler(
-            client=lw,
-            type=common.ObjectTypes.Queries.value,
-            object=common.QueriesTypes.Execute.value,
-            lql_query=query_text,
-        ).execute(),
-    ).export()
-
-    # note: current limitation if 5000 rows
-    logging.info(f"Found {len(query)} rows")
-    if len(query) >= 5000:
-        logging.warn("Max rows retrieved - results will be tructed beyond 5000")
+        accounts = reportHelper.get_subaccounts(client=lw)
+        if len(accounts) == 0:
+            logging.error("Subaccounts specificed but none found")
+            raise Exception("Subaccounts specificed but none found")
+        else:
+            has_subaccounts = True
+    else:
+        accounts = [{"accountName": lw._account}]
 
     agents = []
-    for a in query:
-        data = {
-            "Name": a["TAGS"].get("Name"),
-            "ImageId": a["TAGS"].get("ImageId"),
-            "InstanceId": a["TAGS"].get("InstanceId"),
-            "State": "Unknown",
-            "Account": a["TAGS"].get("Account"),
-            "LwTokenShort": a["TAGS"].get("LwTokenShort"),
-        }
-        agents.append(data)
+    instances = []
 
-    logging.info("Building CSV from resultant data...")
-    header = False
-    with open(file_path, "w", newline="") as csvfile:
-        writer = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
+    for account in accounts:
+        if has_subaccounts:
+            lw.set_subaccount(account["accountName"])
 
-        logging.info("Writing instances with agent status")
-        # instances check for agent
-        for i in instances:
-            has_lacework = False
-            InstanceId = i["InstanceId"]
-            record = [item for item in agents if item["InstanceId"] == InstanceId].pop()
+        # pull a list of ec2 instance details
+        query_name = "EC2S"
+        query_text = f"""{query_name}{{
+                source {{LW_CFG_AWS_EC2_INSTANCES}}
+                return {{RESOURCE_CONFIG, ACCOUNT_ID, RESOURCE_ID, RESOURCE_TYPE}}
+                }}
+                """
 
-            if record.get("LwTokenShort") is not None:
-                has_lacework = True
+        query = ExportHandler(
+            format=DataHandlerTypes.DICT,
+            results=QueryHandler(
+                client=lw,
+                type=common.ObjectTypes.Queries.value,
+                object=common.QueriesTypes.Execute.value,
+                lql_query=query_text,
+            ).execute(),
+        ).export()
 
-            row = {
-                "Name": i["Name"],
-                "ImageId": i["ImageId"],
-                "InstanceId": i["InstanceId"],
-                "State": i["State"],
-                "Account": i["Account"],
-                "Lacework": has_lacework,
-                "HasEC2InstanceConfig": True,
-                "LwTokenShort": record.get("LwTokenShort"),
+        # note: current limitation if 5000 rows
+        logging.info(f"Found {len(query)} rows")
+        if len(query) >= 5000:
+            logging.warn("Max rows retrieved - results will be tructed beyond 5000")
+
+        for h in query:
+            name: Any = [
+                item
+                for item in h["RESOURCE_CONFIG"].get("Tags", {})
+                if item["Key"] == "Name"
+            ]
+
+            if len(name) > 0:
+                name = name.pop().get("Value")
+            else:
+                name = None
+
+            data = {
+                "name": name,
+                "imageId": h["RESOURCE_CONFIG"].get("ImageId"),
+                "instanceId": h["RESOURCE_CONFIG"].get("InstanceId"),
+                "state": h["RESOURCE_CONFIG"].get("State").get("Name"),
+                "accountId": f"aws:{h['ACCOUNT_ID']}",
+                "lwAccount": account["accountName"],
             }
-            if not header:
-                writer.writerow(row.keys())
-                header = True
+            instances.append(data)
 
-            writer.writerow(row.values())
+        # pull a list of agent machine
+        query_name = "AGENTS"
+        query_text = f"""{query_name}{{
+                source {{LW_HE_MACHINES}}
+                filter {{TAGS:VmProvider = 'AWS'}}
+                return {{TAGS}}
+                }}
+                """
 
-        logging.info("Writing agents with no ec2 config")
-        # agents installed but not in ec2 instances
-        missing_count = 0
-        for i in agents:
+        logging.info("Retrieving a list of lacework agents...")
+        query = ExportHandler(
+            format=DataHandlerTypes.DICT,
+            results=QueryHandler(
+                client=lw,
+                type=common.ObjectTypes.Queries.value,
+                object=common.QueriesTypes.Execute.value,
+                lql_query=query_text,
+            ).execute(),
+        ).export()
+
+        # note: current limitation if 5000 rows
+        logging.info(f"Found {len(query)} rows")
+        if len(query) >= 5000:
+            logging.warn("Max rows retrieved - results will be tructed beyond 5000")
+
+        for a in query:
+            data = {
+                "name": a["TAGS"].get("Name"),
+                "imageId": a["TAGS"].get("ImageId"),
+                "instanceId": a["TAGS"].get("InstanceId"),
+                "state": "Unknown",
+                "accountId": f"aws:{a['TAGS'].get('Account')}",
+                "lwTokenShort": a["TAGS"].get("LwTokenShort"),
+                "lwAccount": account["accountName"],
+            }
+            agents.append(data)
+
+    logging.info("Building DICT from resultant data...")
+    report = []
+
+    logging.info("Adding instances with agent status")
+    # instances check for agent
+    for i in instances:
+        has_lacework = False
+        instanceId = i["instanceId"]
+        record: typing.Any = [
+            item for item in agents if item["instanceId"] == instanceId
+        ]
+
+        if len(record) > 0:
+            record = record.pop().get("lwTokenShort")
+        else:
+            record = None
+
+        if record is not None:
+            has_lacework = True
+
+        row = {
+            "name": i["name"],
+            "imageId": i["imageId"],
+            "instanceId": i["instanceId"],
+            "state": i["state"],
+            "account": i["accountId"],
+            "lacework": has_lacework,
+            "hasEC2InstanceConfig": True,
+            "lwTokenShort": record,
+            "lwAccount": i["lwAccount"],
+        }
+        report.append(row)
+
+    logging.info("Writing agents with no ec2 config")
+    # agents installed but not in ec2 instances
+    missing_count = 0
+    for i in agents:
+        has_ec2_instance = True
+        instanceId = i["instanceId"]
+        record = [item for item in instances if item["instanceId"] == instanceId]
+
+        if len(record) > 0:
+            record = record.pop().get("instanceId")
+        else:
+            record = None
+
+        if record is not None:
             has_ec2_instance = True
-            InstanceId = i["InstanceId"]
-            record = [
-                item for item in instances if item["InstanceId"] == InstanceId
-            ].pop()
 
-            if record.get("InstanceId") is not None:
-                has_ec2_instance = True
+        # if we have an agent but no ec2 log it
+        if has_ec2_instance is False:
+            missing_count += 1
+            row = {
+                "name": i["name"],
+                "imageId": i["imageId"],
+                "instanceId": i["instanceId"],
+                "state": i["state"],
+                "account": i["account"],
+                "lwTokenShort": i["lwTokenShort"],
+                "lwAccount": i["lwAccount"],
+                "lacework": True,
+                "hasEC2InstanceConfig": has_ec2_instance,
+            }
+            report.append(row)
 
-            # if we have an agent but no ec2 log it
-            if has_ec2_instance is False:
-                missing_count += 1
-                row = {
-                    "Name": i["Name"],
-                    "ImageId": i["ImageId"],
-                    "InstanceId": i["InstanceId"],
-                    "State": i["State"],
-                    "Account": i["Account"],
-                    "LwTokenShort": i["LwTokenShort"],
-                    "Lacework": True,
-                    "HasEC2InstanceConfig": has_ec2_instance,
-                }
-                if not header:
-                    writer.writerow(row.keys())
-                    header = True
+    # sync to sqlite to build stats
+    results = reportHelper.sqlite_sync_report(
+        report=report, table_name=db_table, queries=AgentQueries
+    )
 
-                writer.writerow(row.values())
+    if len(results["report"]) > 0:
+
+        report = results["report"]
+        if summary_only:
+            report = results["account_coverage"]
+
+        logging.info("Building CSV from resultant data...")
+        ExportHandler(
+            format=DataHandlerTypes.CSV,
+            results=[{"data": report}],
+            file_path=file_path,
+        ).export()
+    else:
+        logging.warn("No results found")
 
     if missing_count > 0:
         logging.warn(
