@@ -16,6 +16,13 @@ from laceworksdk import LaceworkClient
 from sqlalchemy import MetaData, Table, create_engine, text
 from sqlalchemy_utils.functions import create_database, database_exists
 
+from laceworkreports import common
+from laceworkreports.sdk.DataHandlers import (
+    DataHandlerTypes,
+    ExportHandler,
+    QueryHandler,
+)
+
 
 class ComplianceReportCSP(Enum):
     AWS = "AwsCfg"
@@ -220,7 +227,7 @@ class ReportHelper:
 
             # allow override of db path
             if db_path_override is not None:
-                db_path = Path("database.db")
+                db_path = Path(db_path_override)
             else:
                 db_path = Path(tmpdirname).joinpath("database.db")
 
@@ -426,6 +433,436 @@ class ReportHelper:
 
                 if not ignore_errors:
                     raise e
+
+        return result
+
+    def get_active_images(
+        self,
+        client: LaceworkClient,
+        account: Any,
+        cloud_account: Any,
+        ignore_errors=True,
+        use_sqlite=False,
+        db_table=None,
+        db_connection=None,
+    ):
+        report = []
+
+        # pull all machines using lql use as filter for MID in?
+
+        if use_sqlite:
+            format_type = DataHandlerTypes.SQLITE
+        else:
+            format_type = DataHandlerTypes.DICT
+
+        mids = "'{}'".format([1, 2, 3, 4, 5, 6, 7].join("'.'"))
+        lql_query = f"""
+                    Custom_HE_Container_1 {{
+                        source {{
+                            LW_HE_CONTAINERS
+                        }}
+                        filter {{
+                            MID in ({mids})
+                        }}
+                        return distinct {{
+                            IMAGE_ID,
+                            MID
+                        }}
+                    }}
+                    """
+
+        try:
+            report = ExportHandler(
+                format=format_type,
+                results=QueryHandler(
+                    client=client,
+                    type=common.ObjectTypes.Queries.value,
+                    object=common.QueriesTypes.Execute.value,
+                    lql_query=lql_query,
+                ).execute(),
+                field_map={"imageId": "IMAGE_ID", "mid": "MID"},
+                db_connection=db_connection,
+                db_table=db_table,
+            ).export()
+
+            # add the cloud account and lwaccount context
+            if use_sqlite:
+                db_engine = create_engine(db_connection)
+                if db_engine.has_table(db_table):
+                    conn = db_engine.connect()
+                    ddl = "SELECT * FROM {table_name} LIMIT 1"
+                    sql_command = ddl.format(table_name=db_table)
+                    result = conn.execute(text(sql_command)).fetchall()[0].keys()
+                    columns = [x for x in result]
+
+                    if "accountId" not in columns or "lwAccount" not in columns:
+                        for column in ["accountId", "lwAccount"]:
+                            ddl = "ALTER TABLE {table_name} ADD column {column_name} {column_type}"
+                            sql_command = text(
+                                ddl.format(
+                                    table_name=db_table,
+                                    column_name=column,
+                                    column_type="TEXT",
+                                )
+                            )
+                            conn.execute(sql_command)
+
+                    for column in ["accountId", "lwAccount"]:
+                        if column == "accountId":
+                            column_value = cloud_account
+                        elif column == "lwAccount":
+                            column_value = account["accountName"]
+
+                        ddl = "UPDATE {table_name} SET {column_name} = '{column_value}' WHERE {column_name} IS NULL"
+                        sql_command = text(
+                            ddl.format(
+                                table_name=db_table,
+                                column_name=column,
+                                column_value=column_value,
+                            )
+                        )
+                        conn.execute(sql_command)
+                else:
+                    logging.warn("Skipping update table")
+
+            else:
+                for r in report:
+                    r["accountId"] = cloud_account
+                    r["lwAccount"] = account["accountName"]
+                    result.append(r)
+
+        except laceworksdk.exceptions.ApiError as e:
+            logging.error(f"Lacework api returned: {e}")
+
+            if not ignore_errors:
+                raise e
+
+        return result
+
+    def get_active_machines(
+        self,
+        client: LaceworkClient,
+        account: Any,
+        cloud_account: Any,
+        ignore_errors=True,
+        use_sqlite=False,
+        db_table=None,
+        db_connection=None,
+    ):
+        result = []
+
+        if use_sqlite:
+            format_type = DataHandlerTypes.SQLITE
+        else:
+            format_type = DataHandlerTypes.DICT
+
+        cloud_account_details = cloud_account.split(":")
+        csp = cloud_account_details[0]
+
+        if csp == "aws":
+            csp, accountId = cloud_account_details
+            filter = f"TAGS:Account::String = '{accountId}' AND TAGS:VmProvider::String IN ('AWS')"
+        elif csp == "gcp":
+            csp, organziationId, projectId = cloud_account_details
+            filter = f"TAGS:ProjectId::String = '{projectId}' AND TAGS:VmProvider::String IN ('GCP')"
+        elif csp == "az":
+            csp, tenantId, subscriptionId = cloud_account_details
+            filter = f"TAGS:ProjectId::String = '{subscriptionId}' AND TAGS:VmProvider::String IN ('Machine Hv','Azure', 'Machine.Compute')"
+
+        lql_query = f"""
+                    Custom_HE_Machine_1 {{
+                        source {{
+                            LW_HE_MACHINES
+                        }}
+                        filter {{
+                            {filter}
+                        }}
+                        return distinct {{
+                            MID,
+                            TAGS
+                        }}
+                    }}
+                    """
+        try:
+            report = ExportHandler(
+                format=format_type,
+                results=QueryHandler(
+                    client=client,
+                    type=common.ObjectTypes.Queries.value,
+                    object=common.QueriesTypes.Execute.value,
+                    lql_query=lql_query,
+                ).execute(),
+                field_map={
+                    "mid": "MID",
+                    "tags": "TAGS",
+                    "instanceId": "TAGS.InstanceId",
+                    "VmProvider": "TAGS.InstanceId",
+                },
+                db_connection=db_connection,
+                db_table=db_table,
+            ).export()
+
+            # add the cloud account and lwaccount context
+            if use_sqlite:
+                db_engine = create_engine(db_connection)
+                if db_engine.has_table(db_table):
+                    conn = db_engine.connect()
+                    ddl = "SELECT * FROM {table_name} LIMIT 1"
+                    sql_command = ddl.format(table_name=db_table)
+                    result = conn.execute(text(sql_command)).fetchall()[0].keys()
+                    columns = [x for x in result]
+
+                    if "accountId" not in columns or "lwAccount" not in columns:
+                        for column in ["accountId", "lwAccount"]:
+                            ddl = "ALTER TABLE {table_name} ADD column {column_name} {column_type}"
+                            sql_command = text(
+                                ddl.format(
+                                    table_name=db_table,
+                                    column_name=column,
+                                    column_type="TEXT",
+                                )
+                            )
+                            conn.execute(sql_command)
+
+                    for column in ["accountId", "lwAccount"]:
+                        if column == "accountId":
+                            column_value = cloud_account
+                        elif column == "lwAccount":
+                            column_value = account["accountName"]
+
+                        ddl = "UPDATE {table_name} SET {column_name} = '{column_value}' WHERE {column_name} IS NULL"
+                        sql_command = text(
+                            ddl.format(
+                                table_name=db_table,
+                                column_name=column,
+                                column_value=column_value,
+                            )
+                        )
+                        conn.execute(sql_command)
+                else:
+                    logging.warn("Skipping update table")
+
+            else:
+                for r in report:
+                    r["accountId"] = cloud_account
+                    r["lwAccount"] = account["accountName"]
+                    result.append(r)
+
+        except laceworksdk.exceptions.ApiError as e:
+            logging.error(f"Lacework api returned: {e}")
+
+            if not ignore_errors:
+                raise e
+
+        return result
+
+    def get_vulnerability_report(
+        self,
+        client: LaceworkClient,
+        account: Any,
+        cloud_account: Any,
+        ignore_errors: bool,
+        fixable=True,
+        severity=None,
+        namespace=None,
+        start_time=None,
+        end_time=None,
+        cve=None,
+        use_sqlite=False,
+        db_table=None,
+        db_connection=None,
+    ) -> Any:
+        result = []
+
+        try:
+            fixable_val = 0
+            if fixable:
+                fixable_val = 1
+
+            filters = [
+                {"field": "status", "expression": "in", "values": ["New", "Active"]},
+                {
+                    "field": "severity",
+                    "expression": "in",
+                    "values": ["Critical", "High"],
+                },
+                {
+                    "field": "fixInfo.fix_available",
+                    "expression": "eq",
+                    "value": fixable_val,
+                },
+            ]
+
+            cloud_account_details = cloud_account.split(":")
+            csp = cloud_account_details[0]
+
+            if csp == "aws":
+                csp, accountId = cloud_account_details
+                filters.append(
+                    {
+                        "field": "machineTags.VmProvider",
+                        "expression": "in",
+                        "values": ["AWS", "ECS"],
+                    }
+                )
+                filters.append(
+                    {
+                        "field": "machineTags.Account",
+                        "expression": "eq",
+                        "value": accountId,
+                    }
+                )
+            elif csp == "gcp":
+                csp, orgId, projectId = cloud_account_details
+                filters.append(
+                    {
+                        "field": "machineTags.VmProvider",
+                        "expression": "eq",
+                        "value": "GCE",
+                    }
+                )
+                filters.append(
+                    {
+                        "field": "machineTags.ProjectId",
+                        "expression": "eq",
+                        "value": projectId,
+                    }
+                )
+                return result
+            elif csp == "az":
+                csp, tenantId, subscriptionId = cloud_account_details
+                filters.append(
+                    {
+                        "field": "machineTags.VmProvider",
+                        "expression": "in",
+                        "values": ["Microsoft Hv", "Azure", "Machine.Compute"],
+                    }
+                )
+                filters.append(
+                    {
+                        "field": "machineTags.ProjectId",
+                        "expression": "in",
+                        "values": [subscriptionId],
+                    }
+                )
+            if use_sqlite:
+                format_type = DataHandlerTypes.SQLITE
+            else:
+                format_type = DataHandlerTypes.DICT
+
+            # export results
+            report = ExportHandler(
+                format=format_type,
+                results=QueryHandler(
+                    client=client,
+                    type=common.ObjectTypes.Vulnerabilities.value,
+                    object=common.VulnerabilitiesTypes.Hosts.value,
+                    start_time=start_time,
+                    end_time=end_time,
+                    filters=filters,
+                    returns=[
+                        "startTime",
+                        "endTime",
+                        "severity",
+                        "status",
+                        "vulnId",
+                        "mid",
+                        "featureKey",
+                        "machineTags",
+                        "fixInfo",
+                        "cveProps",
+                    ],
+                ).execute(),
+                db_connection=db_connection,
+                db_table=db_table,
+            ).export()
+
+            # add the cloud account and lwaccount context
+            if use_sqlite:
+                db_engine = create_engine(db_connection)
+                if db_engine.has_table(db_table):
+                    conn = db_engine.connect()
+                    ddl = "SELECT * FROM {table_name} LIMIT 1"
+                    sql_command = ddl.format(table_name=db_table)
+                    result = conn.execute(text(sql_command)).fetchall()[0].keys()
+                    columns = [x for x in result]
+
+                    if "accountId" not in columns or "lwAccount" not in columns:
+                        for column in ["accountId", "lwAccount"]:
+                            ddl = "ALTER TABLE {table_name} ADD column {column_name} {column_type}"
+                            sql_command = text(
+                                ddl.format(
+                                    table_name=db_table,
+                                    column_name=column,
+                                    column_type="TEXT",
+                                )
+                            )
+                            conn.execute(sql_command)
+
+                    for column in ["accountId", "lwAccount"]:
+                        if column == "accountId":
+                            column_value = cloud_account
+                        elif column == "lwAccount":
+                            column_value = account["accountName"]
+
+                        ddl = "UPDATE {table_name} SET {column_name} = '{column_value}' WHERE {column_name} IS NULL"
+                        sql_command = text(
+                            ddl.format(
+                                table_name=db_table,
+                                column_name=column,
+                                column_value=column_value,
+                            )
+                        )
+                        conn.execute(sql_command)
+                else:
+                    logging.warn("Skipping update table")
+
+            else:
+                for r in report:
+                    r["accountId"] = cloud_account
+                    r["lwAccount"] = account["accountName"]
+                    result.append(r)
+
+        except laceworksdk.exceptions.ApiError as e:
+            logging.error(f"Lacework api returned: {e}")
+
+            if not ignore_errors:
+                raise e
+
+        return result
+
+    def get_vulnerability_v1_report(
+        self,
+        client: LaceworkClient,
+        cloud_account: Any,
+        account: Any,
+        ignore_errors: bool,
+        fixable=True,
+        severity=None,
+        namespace=None,
+        start_time=None,
+        end_time=None,
+        cve=None,
+    ) -> Any:
+        result = []
+        try:
+            report = client.vulnerabilities.get_host_vulnerabilities(
+                fixable=fixable,
+                severity=severity,
+                namespace=namespace,
+                start_time=start_time,
+                end_time=end_time,
+                cve=cve,
+            )
+            for r in report["data"]:
+                r["accountId"] = cloud_account
+                r["lwAccount"] = account["accountName"]
+                result.append(r)
+        except laceworksdk.exceptions.ApiError as e:
+            logging.error(f"Lacework api returned: {e}")
+
+            if not ignore_errors:
+                raise e
 
         return result
 
@@ -748,4 +1185,59 @@ ComplianceQueries = {
                     FROM
                         :table_name
                     """,
+}
+
+VulnerabilityQueries = {
+    "report": """
+                SELECT 
+                    *
+                FROM 
+                    :table_name                    
+                ORDER BY
+                    accountId,
+                    lwAccount
+                """
+}
+
+VulnerabilitV1Queries = {
+    "report": """
+                SELECT 
+                    accountId,
+                    lwAccount,
+                    cve_id,
+                    json_extract(json_pacakges.value, '$.name') AS package_name,
+                    json_extract(json_pacakges.value, '$.namespace') AS package_namespace,
+                    json_extract(json_pacakges.value, '$.version') AS version,
+                    json_extract(json_pacakges.value, '$.fixed_version') AS fixed_version,
+                    json_extract(json_pacakges.value, '$.fix_available') AS fix_available,
+                    json_extract(json_pacakges.value, '$.host_count') AS host_count,
+                    json_extract(json_pacakges.value, '$.severity') AS package_severity,
+                    (
+                        SELECT
+                            json_severity.key
+                        FROM
+                            json_each(json_extract(:table_name.summary, '$.severity')) AS json_severity
+                        LIMIT 1
+                    ) AS severity,
+                    json_extract(json_pacakges.value, '$.cve_link') AS cve_link,
+                    json_extract(json_pacakges.value, '$.cvss_score') AS cvss_score,
+                    json_extract(json_pacakges.value, '$.cvss_v3_score') AS cvss_v3_score,
+                    json_extract(json_pacakges.value, '$.cvss_v2_score') AS cvss_v2_score,
+                    json_extract(json_pacakges.value, '$.description') AS description,
+                    json_extract(json_pacakges.value, '$.status') AS status,
+                    json_extract(json_pacakges.value, '$.package_status') AS package_status,
+                    json_extract(json_pacakges.value, '$.last_updated_time') AS last_updated_time,
+                    json_extract(json_pacakges.value, '$.first_seen_time') AS first_seen_time,
+                    json_extract(:table_name.summary, '$.total_vulnerabilities') AS total_vulnerabilities,
+                    json_extract(:table_name.summary, '$.last_evaluation_time') AS last_evaluation_time,
+                    json_extract(:table_name.summary, '$.total_exception_vulnerabilities') AS total_exception_vulnerabilities
+                FROM 
+                    :table_name, 
+                    json_each(:table_name.packages) AS json_pacakges
+                WHERE
+                    state = 'Active'
+                ORDER BY
+                    accountId,
+                    lwAccount
+                """
 }
