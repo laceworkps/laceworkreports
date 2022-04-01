@@ -135,6 +135,10 @@ class ReportHelper:
         cloud_accounts = client.cloud_accounts.search(json={})
 
         accounts: typing_list[Any] = []
+        aws_accounts: typing_list[Any] = []
+        gcp_accounts: typing_list[Any] = []
+        azure_accounts: typing_list[Any] = []
+
         for row in cloud_accounts["data"]:
             if row["type"] == "GcpCfg":
                 projectIds = [
@@ -164,6 +168,7 @@ class ReportHelper:
                         "subscriptionIds": None,
                     }
                     accounts.append(data)
+                    gcp_accounts = gcp_accounts + projectIds
             elif row["type"] == "AwsCfg":
                 account = row["data"]["crossAccountCredentials"]["roleArn"].split(":")[
                     4
@@ -183,6 +188,7 @@ class ReportHelper:
                         "subscriptionIds": None,
                     }
                     accounts.append(data)
+                    aws_accounts.append(account)
             elif row["type"] == "AzureCfg":
                 subscriptionIds = [
                     x for x in row["state"]["details"]["subscriptionErrors"].keys()
@@ -209,8 +215,94 @@ class ReportHelper:
                         "subscriptionIds": subscriptionIds,
                     }
                 accounts.append(data)
+                azure_accounts = azure_accounts + subscriptionIds
 
         self.cloud_accounts = accounts
+
+        lql_query = """
+                    Custom_HE_Machine_1 {
+                        source {
+                            LW_HE_MACHINES m
+                        }
+                        return distinct {
+                            m.TAGS:InstanceId::String AS instanceId,
+                            m.TAGS:Account::String AS accountId,
+                            m.TAGS:ProjectId::String AS projectId,
+                            m.TAGS:VmProvider::String AS VmProvider
+                        }
+                    }
+                    """
+
+        machine_accounts = ExportHandler(
+            format=DataHandlerTypes.DICT,
+            results=QueryHandler(
+                client=client,
+                type=common.ObjectTypes.Queries.value,
+                object=common.QueriesTypes.Execute.value,
+                lql_query=lql_query,
+            ).execute(),
+        ).export()
+
+        for m in machine_accounts:
+            if (
+                m["ACCOUNTID"] is not None
+                and m["VMPROVIDER"] == "AWS"
+                and m["ACCOUNTID"] not in aws_accounts
+            ):
+                data = {
+                    "name": "LQL Discovered",
+                    "isOrg": None,
+                    "enabled": True,
+                    "state": None,
+                    "type": "AwsLql",
+                    "orgId": None,
+                    "projectIds": None,
+                    "account": m["ACCOUNTID"],
+                    "tenantId": None,
+                    "subscriptionIds": None,
+                }
+                self.cloud_accounts.append(data)
+                aws_accounts.append(m["ACCOUNTID"])
+
+            elif (
+                m["PROJECTID"] is not None
+                and m["VMPROVIDER"] == "GCE"
+                and m["PROJECTID"] not in gcp_accounts
+            ):
+                data = {
+                    "name": "LQL Discovered",
+                    "isOrg": None,
+                    "enabled": True,
+                    "state": None,
+                    "type": "GcpLql",
+                    "orgId": None,
+                    "projectIds": [m["PROJECTID"]],
+                    "account": None,
+                    "tenantId": None,
+                    "subscriptionIds": None,
+                }
+                self.cloud_accounts.append(data)
+                gcp_accounts.append(m["PROJECTID"])
+            elif (
+                m["PROJECTID"] is not None
+                and m["VMPROVIDER"] == "Azure"
+                and m["PROJECTID"] not in azure_accounts
+            ):
+                data = {
+                    "name": "LQL Discovered",
+                    "isOrg": None,
+                    "enabled": True,
+                    "state": None,
+                    "type": "AzureLql",
+                    "orgId": None,
+                    "projectIds": [m["PROJECTID"]],
+                    "account": None,
+                    "tenantId": None,
+                    "subscriptionIds": None,
+                }
+                self.cloud_accounts.append(data)
+                azure_accounts.append(m["PROJECTID"])
+
         return self.cloud_accounts
 
     def sqlite_sync_report(
@@ -323,11 +415,52 @@ class ReportHelper:
             logging.info("Queries complete")
             return results
 
+    def sqlite_queries(
+        self, queries: typing_dict[typing.Any, typing.Any], db_table, db_connection
+    ) -> typing_dict[typing.Any, typing.Any]:
+
+        logging.info("Generating query results")
+        engine = create_engine(db_connection)
+        conn = engine.connect()
+
+        results = {}
+        for query in queries.keys():
+            logging.info(f"Executing query: {query}")
+            df = pd.read_sql_query(
+                sql=queries[query].replace(":table_name", db_table),
+                con=conn,
+            )
+            results[query] = df.to_dict(orient="records")
+
+        logging.info("Queries complete")
+        return results
+
+    def sqlite_drop_table(self, db_table, db_connection):
+        logging.info(f"Attempting to drop table {db_table}...")
+        engine = create_engine(db_connection)
+        conn = engine.connect()
+
+        if engine.has_table(db_table):
+            logging.info(f"Dropping existing table {db_table}")
+            metadata = MetaData(bind=conn)
+            t = Table(db_table, metadata)
+            t.drop(conn, checkfirst=True)
+        else:
+            logging.info(f"Table {db_table} does not exist")
+
+        return True
+
     def cloud_accounts_format(self, cloud_account, organization=None):
         accounts = []
-        if cloud_account["type"] == "AwsCfg" and cloud_account["enabled"] == 1:
+        if (
+            cloud_account["type"] in ["AwsCfg", "AwsLql"]
+            and cloud_account["enabled"] == 1
+        ):
             accounts.append(f"aws:{cloud_account['account']}")
-        elif cloud_account["type"] == "GcpCfg" and cloud_account["enabled"] == 1:
+        elif (
+            cloud_account["type"] in ["GcpCfg", "GcpLql"]
+            and cloud_account["enabled"] == 1
+        ):
             # requires special case handling as there are cases where orgId is not available via API
             orgId = None
 
@@ -341,7 +474,10 @@ class ReportHelper:
 
             for projectId in cloud_account["projectIds"]:
                 accounts.append(f"gcp:{orgId}:{projectId}")
-        elif cloud_account["type"] == "AzureCfg" and cloud_account["enabled"] == 1:
+        elif (
+            cloud_account["type"] in ["AzureCfg", "AzureLql"]
+            and cloud_account["enabled"] == 1
+        ):
             for subscriptionId in cloud_account["subscriptionIds"]:
                 accounts.append(f"az:{cloud_account['tenantId']}:{subscriptionId}")
 
@@ -455,21 +591,29 @@ class ReportHelper:
         else:
             format_type = DataHandlerTypes.DICT
 
-        mids = "'{}'".format([1, 2, 3, 4, 5, 6, 7].join("'.'"))
-        lql_query = f"""
-                    Custom_HE_Container_1 {{
-                        source {{
-                            LW_HE_CONTAINERS
-                        }}
-                        filter {{
-                            MID in ({mids})
-                        }}
-                        return distinct {{
-                            IMAGE_ID,
-                            MID
-                        }}
-                    }}
+        lql_query = """
+                    Custom_HE_Machine_1 {
+                        source {
+                            LW_HE_MACHINES m
+                        }
+                        return distinct {
+                            m.TAGS:InstanceId::String AS instanceId,
+                            m.TAGS:Account::String AS accountId,
+                            m.TAGS:ProjectId::String AS projectId,
+                            m.TAGS:VmProvider::String AS VmProvider
+                        }
+                    }
                     """
+
+        machine_accounts = ExportHandler(
+            format=DataHandlerTypes.DICT,
+            results=QueryHandler(
+                client=client,
+                type=common.ObjectTypes.Queries.value,
+                object=common.QueriesTypes.Execute.value,
+                lql_query=lql_query,
+            ).execute(),
+        ).export()
 
         try:
             report = ExportHandler(
@@ -550,7 +694,6 @@ class ReportHelper:
         db_connection=None,
     ):
         result = []
-
         if use_sqlite:
             format_type = DataHandlerTypes.SQLITE
         else:
@@ -561,30 +704,34 @@ class ReportHelper:
 
         if csp == "aws":
             csp, accountId = cloud_account_details
-            filter = f"TAGS:Account::String = '{accountId}' AND TAGS:VmProvider::String IN ('AWS')"
+            filter = f"m.TAGS:Account::String = '{accountId}' AND m.TAGS:VmProvider::String IN ('AWS')"
         elif csp == "gcp":
             csp, organziationId, projectId = cloud_account_details
-            filter = f"TAGS:ProjectId::String = '{projectId}' AND TAGS:VmProvider::String IN ('GCP')"
+            filter = f"m.TAGS:ProjectId::String = '{projectId}' AND m.TAGS:VmProvider::String IN ('GCE')"
         elif csp == "az":
             csp, tenantId, subscriptionId = cloud_account_details
-            filter = f"TAGS:ProjectId::String = '{subscriptionId}' AND TAGS:VmProvider::String IN ('Machine Hv','Azure', 'Machine.Compute')"
+            filter = f"m.TAGS:ProjectId::String = '{subscriptionId}' AND m.TAGS:VmProvider::String IN ('Azure')"
 
         lql_query = f"""
                     Custom_HE_Machine_1 {{
                         source {{
-                            LW_HE_MACHINES
+                            LW_HE_MACHINES m
                         }}
                         filter {{
                             {filter}
                         }}
                         return distinct {{
-                            MID,
-                            TAGS
+                            '{account}' AS lwAccount,
+                            '{cloud_account}' AS accountId,
+                            m.TAGS:InstanceId::String AS tag_instanceId,
+                            m.TAGS:Account::String AS tag_accountId,
+                            m.TAGS:ProjectId::String AS tag_projectId,
+                            m.TAGS:VmProvider::String AS tag_VmProvider
                         }}
                     }}
                     """
         try:
-            report = ExportHandler(
+            result = ExportHandler(
                 format=format_type,
                 results=QueryHandler(
                     client=client,
@@ -592,61 +739,9 @@ class ReportHelper:
                     object=common.QueriesTypes.Execute.value,
                     lql_query=lql_query,
                 ).execute(),
-                field_map={
-                    "mid": "MID",
-                    "tags": "TAGS",
-                    "instanceId": "TAGS.InstanceId",
-                    "VmProvider": "TAGS.InstanceId",
-                },
                 db_connection=db_connection,
                 db_table=db_table,
             ).export()
-
-            # add the cloud account and lwaccount context
-            if use_sqlite:
-                db_engine = create_engine(db_connection)
-                if db_engine.has_table(db_table):
-                    conn = db_engine.connect()
-                    ddl = "SELECT * FROM {table_name} LIMIT 1"
-                    sql_command = ddl.format(table_name=db_table)
-                    result = conn.execute(text(sql_command)).fetchall()[0].keys()
-                    columns = [x for x in result]
-
-                    if "accountId" not in columns or "lwAccount" not in columns:
-                        for column in ["accountId", "lwAccount"]:
-                            ddl = "ALTER TABLE {table_name} ADD column {column_name} {column_type}"
-                            sql_command = text(
-                                ddl.format(
-                                    table_name=db_table,
-                                    column_name=column,
-                                    column_type="TEXT",
-                                )
-                            )
-                            conn.execute(sql_command)
-
-                    for column in ["accountId", "lwAccount"]:
-                        if column == "accountId":
-                            column_value = cloud_account
-                        elif column == "lwAccount":
-                            column_value = account["accountName"]
-
-                        ddl = "UPDATE {table_name} SET {column_name} = '{column_value}' WHERE {column_name} IS NULL"
-                        sql_command = text(
-                            ddl.format(
-                                table_name=db_table,
-                                column_name=column,
-                                column_value=column_value,
-                            )
-                        )
-                        conn.execute(sql_command)
-                else:
-                    logging.warn("Skipping update table")
-
-            else:
-                for r in report:
-                    r["accountId"] = cloud_account
-                    r["lwAccount"] = account["accountName"]
-                    result.append(r)
 
         except laceworksdk.exceptions.ApiError as e:
             logging.error(f"Lacework api returned: {e}")
@@ -680,7 +775,11 @@ class ReportHelper:
                 fixable_val = 1
 
             filters = [
-                {"field": "status", "expression": "in", "values": ["New", "Active"]},
+                {
+                    "field": "status",
+                    "expression": "in",
+                    "values": ["New", "Active", "Reopened"],
+                },
                 {
                     "field": "severity",
                     "expression": "in",
@@ -702,7 +801,7 @@ class ReportHelper:
                     {
                         "field": "machineTags.VmProvider",
                         "expression": "in",
-                        "values": ["AWS", "ECS"],
+                        "values": ["AWS"],
                     }
                 )
                 filters.append(
@@ -728,14 +827,13 @@ class ReportHelper:
                         "value": projectId,
                     }
                 )
-                return result
             elif csp == "az":
                 csp, tenantId, subscriptionId = cloud_account_details
                 filters.append(
                     {
                         "field": "machineTags.VmProvider",
                         "expression": "in",
-                        "values": ["Microsoft Hv", "Azure", "Machine.Compute"],
+                        "values": ["Azure"],
                     }
                 )
                 filters.append(
@@ -1189,14 +1287,225 @@ ComplianceQueries = {
 
 VulnerabilityQueries = {
     "report": """
-                SELECT 
-                    *
+                SELECT
+                    "accountId",
+                    "lwAccount",
+                    "startTime",
+                    "endTime",
+                    "mid",
+                    "vulnId",
+                    "status",
+                    "severity",
+                    json_extract(machineTags, '$.Hostname') AS hostname,
+                    json_extract(featureKey, '$.name') AS package_name,
+                    json_extract(featureKey, '$.namespace') AS package_namespace,
+                    json_extract(featureKey, '$.package_active') AS package_active,
+                    json_extract(fixInfo, '$.eval_status') AS package_status,
+                    json_extract(featureKey, '$.version_installed') AS version,
+                    json_extract(fixInfo, '$.fix_available') AS fix_available,
+                    json_extract(fixInfo, '$.fixed_version') AS fixed_version,
+                    json_extract(machineTags, '$.Account') AS account,
+                    json_extract(machineTags, '$.ProjectId') AS projectId,
+                    json_extract(machineTags, '$.InstanceId') AS instanceId,
+                    json_extract(machineTags, '$.AmiId') AS amiId,
+                    json_extract(machineTags, '$.Env') AS env,
+                    json_extract(machineTags, '$.ExternalIp') AS externalIp,
+                    json_extract(machineTags, '$.InternalIp') AS internalIp,
+                    json_extract(machineTags, '$.LwTokenShort') AS lwTokenShort,
+                    json_extract(machineTags, '$.SubnetId') AS subnetId,
+                    json_extract(machineTags, '$.VmInstanceType') AS vmInstanceType,
+                    json_extract(machineTags, '$.VmProvider') AS vmProvider,
+                    json_extract(machineTags, '$.VpcId') AS vpcId,
+                    json_extract(machineTags, '$.Zone') AS zone,
+                    json_extract(machineTags, '$.arch') AS arch,
+                    json_extract(machineTags, '$.os') AS os
                 FROM 
-                    :table_name                    
-                ORDER BY
-                    accountId,
-                    lwAccount
-                """
+                    :table_name
+                """,
+    "account_coverage": """
+                        SELECT 
+                            t.accountId,
+                            t.lwAccount,
+                            (
+                                100-CAST(COUNT(DISTINCT json_extract(machineTags, '$.InstanceId'))*100/m.machine_count AS INTEGER)
+                            ) AS total_coverage,
+                            COUNT(DISTINCT json_extract(machineTags, '$.InstanceId')) AS total_resources_in_violation_count,
+                            m.machine_count AS total_assessed_resource_count,
+                            COUNT(*) AS total_violation_count,
+                            SUM(
+                                CASE
+                                    WHEN severity = 'Critical' THEN 1
+                                    ELSE 0
+                                END
+                            ) AS critical,
+                            SUM(
+                                CASE
+                                    WHEN severity = 'High' THEN 1
+                                    ELSE 0
+                                END
+                            ) AS high,
+                            SUM(
+                                CASE
+                                    WHEN severity = 'Medium' THEN 1
+                                    ELSE 0
+                                END
+                            ) AS medium,
+                            SUM(
+                                CASE
+                                    WHEN severity = 'Low' THEN 1
+                                    ELSE 0
+                                END
+                            ) AS low,
+                            SUM(
+                                CASE
+                                    WHEN severity = 'Info' THEN 1
+                                    ELSE 0
+                                END
+                            ) AS info
+                        FROM
+                            :table_name as t
+                        JOIN (
+                            SELECT 
+                                    lwAccount, 
+                                    accountId,
+                                    count(*) AS machine_count
+                            FROM 
+                                    machines 
+                            GROUP BY
+                                    lwAccount, 
+                                    accountId
+                            ) as m 
+                            ON 
+                                    t.accountId = m.ACCOUNTID 
+                                    AND 
+                                    t.lwAccount = m.LWACCOUNT
+                        GROUP BY
+                            t.accountId,
+                            t.lwAccount
+                        ORDER BY
+                            t.accountId,
+                            t.lwAccount,
+                            total_coverage
+                        """,
+    "total_summary": """
+                        SELECT
+                            'Any' AS lwAccount,
+                            COUNT(DISTINCT t.accountId) AS total_accounts,
+                            (
+                                100-CAST(COUNT(DISTINCT json_extract(machineTags, '$.InstanceId'))*100/(
+                                    SELECT 
+                                        lwAccount, 
+                                        accountId,
+                                        count(*) AS machine_count
+                                    FROM 
+                                        machines
+                                ) AS INTEGER)
+                            ) AS total_coverage,
+                            COUNT(DISTINCT json_extract(machineTags, '$.InstanceId')) AS total_resources_in_violation_count,
+                            (
+                                    SELECT 
+                                        lwAccount, 
+                                        accountId,
+                                        count(*) AS machine_count
+                                    FROM 
+                                        machines
+                            ) AS total_assessed_resource_count,
+                            COUNT(*) AS total_violation_count,
+                            SUM(
+                                CASE
+                                    WHEN severity = 'Critical' THEN 1
+                                    ELSE 0
+                                END
+                            ) AS critical,
+                            SUM(
+                                CASE
+                                    WHEN severity = 'High' THEN 1
+                                    ELSE 0
+                                END
+                            ) AS high,
+                            SUM(
+                                CASE
+                                    WHEN severity = 'Medium' THEN 1
+                                    ELSE 0
+                                END
+                            ) AS medium,
+                            SUM(
+                                CASE
+                                    WHEN severity = 'Low' THEN 1
+                                    ELSE 0
+                                END
+                            ) AS low,
+                            SUM(
+                                CASE
+                                    WHEN severity = 'Info' THEN 1
+                                    ELSE 0
+                                END
+                            ) AS info
+                        FROM 
+                            :table_name as t                             
+                        """,
+    "lwaccount_summary": """
+                            SELECT
+                                t.lwAccount,
+                                COUNT(DISTINCT t.accountId) AS total_accounts,
+                                (
+                                    100-CAST(COUNT(DISTINCT json_extract(machineTags, '$.InstanceId'))*100/m.machine_count AS INTEGER)
+                                ) AS total_coverage,
+                                COUNT(DISTINCT json_extract(machineTags, '$.InstanceId')) AS total_resources_in_violation_count,
+                                m.machine_count AS total_assessed_resource_count,
+                                COUNT(*) AS total_violation_count,
+                                SUM(
+                                    CASE
+                                        WHEN severity = 'Critical' THEN 1
+                                        ELSE 0
+                                    END
+                                ) AS critical,
+                                SUM(
+                                    CASE
+                                        WHEN severity = 'High' THEN 1
+                                        ELSE 0
+                                    END
+                                ) AS high,
+                                SUM(
+                                    CASE
+                                        WHEN severity = 'Medium' THEN 1
+                                        ELSE 0
+                                    END
+                                ) AS medium,
+                                SUM(
+                                    CASE
+                                        WHEN severity = 'Low' THEN 1
+                                        ELSE 0
+                                    END
+                                ) AS low,
+                                SUM(
+                                    CASE
+                                        WHEN severity = 'Info' THEN 1
+                                        ELSE 0
+                                    END
+                                ) AS info
+                            FROM 
+                                :table_name as t
+                            JOIN (
+                                SELECT 
+                                        lwAccount, 
+                                        count(*) AS machine_count
+                                FROM 
+                                        machines 
+                                GROUP BY
+                                        lwAccount
+                                ) as m 
+                                ON 
+                                        t.lwAccount = m.LWACCOUNT
+                            GROUP BY
+                                t.lwAccount
+                            """,
+    "lwaccount": """
+                    SELECT 
+                        DISTINCT lwaccount
+                    FROM
+                        :table_name
+                    """,
 }
 
 VulnerabilitV1Queries = {
