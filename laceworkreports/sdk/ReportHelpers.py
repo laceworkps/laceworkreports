@@ -6,6 +6,7 @@ from typing import List as typing_list
 import logging
 import re
 import tempfile
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 
@@ -416,7 +417,10 @@ class ReportHelper:
             return results
 
     def sqlite_queries(
-        self, queries: typing_dict[typing.Any, typing.Any], db_table, db_connection
+        self,
+        queries: typing_dict[typing.Any, typing.Any],
+        db_table: typing.Any,
+        db_connection: typing.Any,
     ) -> typing_dict[typing.Any, typing.Any]:
 
         logging.info("Generating query results")
@@ -435,7 +439,9 @@ class ReportHelper:
         logging.info("Queries complete")
         return results
 
-    def sqlite_drop_table(self, db_table, db_connection):
+    def sqlite_drop_table(
+        self, db_table: typing.Any, db_connection: typing.Any
+    ) -> bool:
         logging.info(f"Attempting to drop table {db_table}...")
         engine = create_engine(db_connection)
         conn = engine.connect()
@@ -450,7 +456,9 @@ class ReportHelper:
 
         return True
 
-    def cloud_accounts_format(self, cloud_account, organization=None):
+    def cloud_accounts_format(
+        self, cloud_account: typing.Any, organization: typing.Any = None
+    ) -> typing_list[Any]:
         accounts = []
         if (
             cloud_account["type"] in ["AwsCfg", "AwsLql"]
@@ -486,11 +494,11 @@ class ReportHelper:
     def get_compliance_report(
         self,
         client: LaceworkClient,
-        cloud_account: Any,
-        account: Any,
+        cloud_account: typing.Any,
+        account: typing.Any,
         ignore_errors: bool,
-        organization: Any = None,
-    ) -> Any:
+        organization: typing.Any = None,
+    ) -> typing.Any:
         result = []
         cloud_account_details = cloud_account.split(":")
         csp = cloud_account_details[0]
@@ -572,127 +580,16 @@ class ReportHelper:
 
         return result
 
-    def get_active_images(
-        self,
-        client: LaceworkClient,
-        account: Any,
-        cloud_account: Any,
-        ignore_errors=True,
-        use_sqlite=False,
-        db_table=None,
-        db_connection=None,
-    ):
-        report = []
-
-        # pull all machines using lql use as filter for MID in?
-
-        if use_sqlite:
-            format_type = DataHandlerTypes.SQLITE
-        else:
-            format_type = DataHandlerTypes.DICT
-
-        lql_query = """
-                    Custom_HE_Machine_1 {
-                        source {
-                            LW_HE_MACHINES m
-                        }
-                        return distinct {
-                            m.TAGS:InstanceId::String AS instanceId,
-                            m.TAGS:Account::String AS accountId,
-                            m.TAGS:ProjectId::String AS projectId,
-                            m.TAGS:VmProvider::String AS VmProvider
-                        }
-                    }
-                    """
-
-        machine_accounts = ExportHandler(
-            format=DataHandlerTypes.DICT,
-            results=QueryHandler(
-                client=client,
-                type=common.ObjectTypes.Queries.value,
-                object=common.QueriesTypes.Execute.value,
-                lql_query=lql_query,
-            ).execute(),
-        ).export()
-
-        try:
-            report = ExportHandler(
-                format=format_type,
-                results=QueryHandler(
-                    client=client,
-                    type=common.ObjectTypes.Queries.value,
-                    object=common.QueriesTypes.Execute.value,
-                    lql_query=lql_query,
-                ).execute(),
-                field_map={"imageId": "IMAGE_ID", "mid": "MID"},
-                db_connection=db_connection,
-                db_table=db_table,
-            ).export()
-
-            # add the cloud account and lwaccount context
-            if use_sqlite:
-                db_engine = create_engine(db_connection)
-                if db_engine.has_table(db_table):
-                    conn = db_engine.connect()
-                    ddl = "SELECT * FROM {table_name} LIMIT 1"
-                    sql_command = ddl.format(table_name=db_table)
-                    result = conn.execute(text(sql_command)).fetchall()[0].keys()
-                    columns = [x for x in result]
-
-                    if "accountId" not in columns or "lwAccount" not in columns:
-                        for column in ["accountId", "lwAccount"]:
-                            ddl = "ALTER TABLE {table_name} ADD column {column_name} {column_type}"
-                            sql_command = text(
-                                ddl.format(
-                                    table_name=db_table,
-                                    column_name=column,
-                                    column_type="TEXT",
-                                )
-                            )
-                            conn.execute(sql_command)
-
-                    for column in ["accountId", "lwAccount"]:
-                        if column == "accountId":
-                            column_value = cloud_account
-                        elif column == "lwAccount":
-                            column_value = account["accountName"]
-
-                        ddl = "UPDATE {table_name} SET {column_name} = '{column_value}' WHERE {column_name} IS NULL"
-                        sql_command = text(
-                            ddl.format(
-                                table_name=db_table,
-                                column_name=column,
-                                column_value=column_value,
-                            )
-                        )
-                        conn.execute(sql_command)
-                else:
-                    logging.warn("Skipping update table")
-
-            else:
-                for r in report:
-                    r["accountId"] = cloud_account
-                    r["lwAccount"] = account["accountName"]
-                    result.append(r)
-
-        except laceworksdk.exceptions.ApiError as e:
-            logging.error(f"Lacework api returned: {e}")
-
-            if not ignore_errors:
-                raise e
-
-        return result
-
     def get_active_machines(
         self,
         client: LaceworkClient,
-        account: Any,
-        cloud_account: Any,
-        ignore_errors=True,
-        use_sqlite=False,
-        db_table=None,
-        db_connection=None,
-    ):
+        account: typing.Any,
+        cloud_account: typing.Any,
+        ignore_errors: bool = True,
+        use_sqlite: bool = False,
+        db_table: typing.Any = None,
+        db_connection: typing.Any = None,
+    ) -> typing_list[typing.Any]:
         result = []
         if use_sqlite:
             format_type = DataHandlerTypes.SQLITE
@@ -754,19 +651,19 @@ class ReportHelper:
     def get_vulnerability_report(
         self,
         client: LaceworkClient,
-        account: Any,
-        cloud_account: Any,
+        account: typing.Any,
+        cloud_account: typing.Any,
         ignore_errors: bool,
-        fixable=True,
-        severity=None,
-        namespace=None,
-        start_time=None,
-        end_time=None,
-        cve=None,
-        use_sqlite=False,
-        db_table=None,
-        db_connection=None,
-    ) -> Any:
+        fixable: bool = True,
+        severity: typing.Any = None,
+        namespace: typing.Any = None,
+        start_time: typing.Any = None,
+        end_time: typing.Any = None,
+        cve: typing.Any = None,
+        use_sqlite: bool = False,
+        db_table: typing.Any = None,
+        db_connection: typing.Any = None,
+    ) -> typing.Any:
         result = []
 
         try:
@@ -932,16 +829,16 @@ class ReportHelper:
     def get_vulnerability_v1_report(
         self,
         client: LaceworkClient,
-        cloud_account: Any,
-        account: Any,
+        cloud_account: typing.Any,
+        account: typing.Any,
         ignore_errors: bool,
-        fixable=True,
-        severity=None,
-        namespace=None,
-        start_time=None,
-        end_time=None,
-        cve=None,
-    ) -> Any:
+        fixable: bool = True,
+        severity: typing.Any = None,
+        namespace: typing.Any = None,
+        start_time: typing.Any = None,
+        end_time: typing.Any = None,
+        cve: typing.Any = None,
+    ) -> typing.Any:
         result = []
         try:
             report = client.vulnerabilities.get_host_vulnerabilities(
@@ -1394,8 +1291,6 @@ VulnerabilityQueries = {
                             (
                                 100-CAST(COUNT(DISTINCT json_extract(machineTags, '$.InstanceId'))*100/(
                                     SELECT 
-                                        lwAccount, 
-                                        accountId,
                                         count(*) AS machine_count
                                     FROM 
                                         machines
@@ -1404,8 +1299,6 @@ VulnerabilityQueries = {
                             COUNT(DISTINCT json_extract(machineTags, '$.InstanceId')) AS total_resources_in_violation_count,
                             (
                                     SELECT 
-                                        lwAccount, 
-                                        accountId,
                                         count(*) AS machine_count
                                     FROM 
                                         machines

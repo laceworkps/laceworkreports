@@ -46,19 +46,20 @@ SQLAlchemy = "^1.4.32"
 psycopg2-binary = "^2.9.3"
 SQLAlchemy-Utils = "^0.38.2"
 Jinja2 = "^3.0.3"
+click = "^8.1.2"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.4"
-black = { version = "^21.10b0", allow-prereleases = true }
+black = {version = "^22.3.0", allow-prereleases = true}
 darglint = "^1.8.1"
-isort = { extras = ["colors"], version = "^5.10.1" }
+isort = {extras = ["colors"], version = "^5.10.1"}
 mypy = "^0.942"
 mypy-extensions = "^0.4.3"
 pre-commit = "^2.17.0"
 pydocstyle = "^6.1.1"
-pylint = "^2.13.0"
+pylint = "^2.13.4"
 pytest = "^7.1.1"
-pyupgrade = "^2.31.0"
+pyupgrade = "^2.31.1"
 safety = "^1.10.3"
 coverage = "^6.3.2"
 coverage-badge = "^1.1.0"

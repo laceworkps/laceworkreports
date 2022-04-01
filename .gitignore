@@ -618,4 +618,5 @@ MigrationBackup/
 /*.csv
 /*.json
 /*.html
-/*.db
+/*.db*
+laceworkreports/sdk/ReportHelpers.py
