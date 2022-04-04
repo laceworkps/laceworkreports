@@ -391,7 +391,7 @@ class DataHandler:
                 for column in df.columns:
                     rows = self.conn.execute(
                         text(
-                            "SELECT column_name FROM information_schema.columns WHERE table_name=:table_name and column_name=:column_name"
+                            "SELECT column_name FROM information_schema.columns WHERE table_name=:db_table and column_name=:column_name"
                         ),
                         table_name=self.db_table,
                         column_name=column,
@@ -403,7 +403,7 @@ class DataHandler:
                         )
                         self.conn.execute(
                             text(
-                                "ALTER TABLE :table_name ADD COLUMN :column_name :column_type"
+                                "ALTER TABLE :db_table ADD COLUMN :column_name :column_type"
                             ),
                             table_name=self.db_table,
                             column_name=column,

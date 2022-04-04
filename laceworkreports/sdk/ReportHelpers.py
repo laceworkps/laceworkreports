@@ -6,7 +6,7 @@ from typing import List as typing_list
 import logging
 import re
 import tempfile
-from datetime import datetime
+from cgitb import enable
 from enum import Enum
 from pathlib import Path
 
@@ -91,7 +91,6 @@ class ReportHelper:
     def __init__(self) -> None:
         self.reports: typing_list[Any] = []
         self.subaccounts: typing_list[Any] = []
-        self.cloud_accounts: typing_list[Any] = []
 
     def report_callback(self, future):
         report = future.result()
@@ -132,7 +131,13 @@ class ReportHelper:
         self.subaccounts = subaccounts
         return self.subaccounts
 
-    def get_cloud_accounts(self, client: LaceworkClient = None) -> typing_list[Any]:
+    def get_cloud_accounts(
+        self,
+        client: LaceworkClient,
+        lwAccount: Any,
+        organization: typing.Any = None,
+    ) -> typing_list[Any]:
+
         cloud_accounts = client.cloud_accounts.search(json={})
 
         accounts: typing_list[Any] = []
@@ -150,88 +155,80 @@ class ReportHelper:
                     if row["data"]["idType"] == "ORGANIZATION"
                     else None
                 )
-                exists = [
-                    x
-                    for x in accounts
-                    if x["orgId"] == orgId and x["projectIds"] == projectIds
-                ]
-                if len(exists) == 0:
+
+                # allow override of organization - hack for non org integrated accounts
+                if (
+                    organization is not None and orgId is not None
+                ) or orgId is not None:
+                    orgId = orgId
+                elif organization is not None:
+                    orgId = organization
+
+                for projectId in projectIds:
+                    accountId = f"gcp:{orgId}:{projectId}"
                     data = {
+                        "lwAccount": lwAccount,
+                        "accountId": accountId,
                         "name": row["name"],
                         "isOrg": row["isOrg"],
                         "enabled": row["enabled"],
                         "state": row["state"]["ok"],
                         "type": row["type"],
-                        "orgId": orgId,
-                        "projectIds": projectIds,
-                        "account": None,
-                        "tenantId": None,
-                        "subscriptionIds": None,
                     }
-                    accounts.append(data)
-                    gcp_accounts = gcp_accounts + projectIds
+                    if projectId not in gcp_accounts:
+                        accounts.append(data)
+                        gcp_accounts.append(projectId)
             elif row["type"] == "AwsCfg":
                 account = row["data"]["crossAccountCredentials"]["roleArn"].split(":")[
                     4
                 ]
-                exists = [x for x in accounts if x["account"] == account]
-                if len(exists) == 0:
-                    data = {
-                        "name": row["name"],
-                        "isOrg": row["isOrg"],
-                        "enabled": row["enabled"],
-                        "state": row["state"]["ok"],
-                        "type": row["type"],
-                        "orgId": None,
-                        "projectIds": None,
-                        "account": account,
-                        "tenantId": None,
-                        "subscriptionIds": None,
-                    }
+                accountId = f"aws:{account}"
+                data = {
+                    "lwAccount": lwAccount,
+                    "accountId": accountId,
+                    "name": row["name"],
+                    "isOrg": row["isOrg"],
+                    "enabled": row["enabled"],
+                    "state": row["state"]["ok"],
+                    "type": row["type"],
+                }
+                if account not in aws_accounts:
                     accounts.append(data)
                     aws_accounts.append(account)
             elif row["type"] == "AzureCfg":
                 subscriptionIds = [
                     x for x in row["state"]["details"]["subscriptionErrors"].keys()
                 ]
-                tennantId = row["data"]["tenantId"]
+                tenantId = row["data"]["tenantId"]
 
-                exists = [
-                    x
-                    for x in accounts
-                    if x["tenantId"] == tennantId
-                    and x["subscriptionIds"] == subscriptionIds
-                ]
-                if len(exists) == 0:
+                for subscriptionId in subscriptionIds:
+                    accountId = f"az:{tenantId}:{subscriptionId}"
                     data = {
+                        "lwAccount": lwAccount,
+                        "accountId": accountId,
                         "name": row["name"],
                         "isOrg": row["isOrg"],
                         "enabled": row["enabled"],
                         "state": row["state"]["ok"],
                         "type": row["type"],
-                        "orgId": None,
-                        "projectIds": None,
-                        "account": None,
-                        "tenantId": tennantId,
-                        "subscriptionIds": subscriptionIds,
                     }
-                accounts.append(data)
-                azure_accounts = azure_accounts + subscriptionIds
+                    if subscriptionId not in azure_accounts:
+                        accounts.append(data)
+                        azure_accounts.append(subscriptionId)
 
-        self.cloud_accounts = accounts
-
-        lql_query = """
-                    Custom_HE_Machine_1 {
-                        source {
+        lql_query = f"""
+                    Custom_HE_Machine_1 {{
+                        source {{
                             LW_HE_MACHINES m
-                        }
-                        return distinct {
+                        }}
+                        return distinct {{
+                            '{lwAccount}' AS lwAccount,
                             m.TAGS:InstanceId::String AS instanceId,
                             m.TAGS:Account::String AS accountId,
                             m.TAGS:ProjectId::String AS projectId,
                             m.TAGS:VmProvider::String AS VmProvider
-                        }
-                    }
+                        }}
+                    }}
                     """
 
         machine_accounts = ExportHandler(
@@ -250,61 +247,58 @@ class ReportHelper:
                 and m["VMPROVIDER"] == "AWS"
                 and m["ACCOUNTID"] not in aws_accounts
             ):
+                accountId = f"aws:{m['ACCOUNTID']}"
                 data = {
+                    "lwAccount": lwAccount,
+                    "accountId": accountId,
                     "name": "LQL Discovered",
                     "isOrg": None,
                     "enabled": True,
                     "state": None,
                     "type": "AwsLql",
-                    "orgId": None,
-                    "projectIds": None,
-                    "account": m["ACCOUNTID"],
-                    "tenantId": None,
-                    "subscriptionIds": None,
                 }
-                self.cloud_accounts.append(data)
-                aws_accounts.append(m["ACCOUNTID"])
+                if accountId.split(":")[-1] not in aws_accounts:
+                    accounts.append(data)
+                    aws_accounts.append(m["ACCOUNTID"])
 
             elif (
                 m["PROJECTID"] is not None
                 and m["VMPROVIDER"] == "GCE"
                 and m["PROJECTID"] not in gcp_accounts
             ):
+                accountId = f"gcp::{m['PROJECTID']}"
                 data = {
+                    "lwAccount": lwAccount,
+                    "accountId": accountId,
                     "name": "LQL Discovered",
                     "isOrg": None,
                     "enabled": True,
                     "state": None,
                     "type": "GcpLql",
-                    "orgId": None,
-                    "projectIds": [m["PROJECTID"]],
-                    "account": None,
-                    "tenantId": None,
-                    "subscriptionIds": None,
                 }
-                self.cloud_accounts.append(data)
-                gcp_accounts.append(m["PROJECTID"])
+                if accountId.split(":")[-1] not in gcp_accounts:
+                    accounts.append(data)
+                    gcp_accounts.append(m["PROJECTID"])
             elif (
                 m["PROJECTID"] is not None
                 and m["VMPROVIDER"] == "Azure"
                 and m["PROJECTID"] not in azure_accounts
             ):
+                accountId = f"az::{m['PROJECTID']}"
                 data = {
+                    "lwAccount": lwAccount,
+                    "accountId": accountId,
                     "name": "LQL Discovered",
                     "isOrg": None,
                     "enabled": True,
                     "state": None,
                     "type": "AzureLql",
-                    "orgId": None,
-                    "projectIds": [m["PROJECTID"]],
-                    "account": None,
-                    "tenantId": None,
-                    "subscriptionIds": None,
                 }
-                self.cloud_accounts.append(data)
-                azure_accounts.append(m["PROJECTID"])
+                if accountId.split(":")[-1] not in azure_accounts:
+                    accounts.append(data)
+                    azure_accounts.append(m["PROJECTID"])
 
-        return self.cloud_accounts
+        return accounts
 
     def sqlite_sync_report(
         self,
@@ -408,7 +402,7 @@ class ReportHelper:
             for query in queries.keys():
                 logging.info(f"Executing query: {query}")
                 df = pd.read_sql_query(
-                    sql=queries[query].replace(":table_name", table_name),
+                    sql=queries[query].replace(":db_table", table_name),
                     con=con,
                 )
                 results[query] = df.to_dict(orient="records")
@@ -431,7 +425,7 @@ class ReportHelper:
         for query in queries.keys():
             logging.info(f"Executing query: {query}")
             df = pd.read_sql_query(
-                sql=queries[query].replace(":table_name", db_table),
+                sql=queries[query].replace(":db_table", db_table),
                 con=conn,
             )
             results[query] = df.to_dict(orient="records")
@@ -456,46 +450,11 @@ class ReportHelper:
 
         return True
 
-    def cloud_accounts_format(
-        self, cloud_account: typing.Any, organization: typing.Any = None
-    ) -> typing_list[Any]:
-        accounts = []
-        if (
-            cloud_account["type"] in ["AwsCfg", "AwsLql"]
-            and cloud_account["enabled"] == 1
-        ):
-            accounts.append(f"aws:{cloud_account['account']}")
-        elif (
-            cloud_account["type"] in ["GcpCfg", "GcpLql"]
-            and cloud_account["enabled"] == 1
-        ):
-            # requires special case handling as there are cases where orgId is not available via API
-            orgId = None
-
-            # when org is available use it
-            if (
-                organization is not None and cloud_account["orgId"] is not None
-            ) or cloud_account["orgId"] is not None:
-                orgId = cloud_account["orgId"]
-            elif organization is not None:
-                orgId = organization
-
-            for projectId in cloud_account["projectIds"]:
-                accounts.append(f"gcp:{orgId}:{projectId}")
-        elif (
-            cloud_account["type"] in ["AzureCfg", "AzureLql"]
-            and cloud_account["enabled"] == 1
-        ):
-            for subscriptionId in cloud_account["subscriptionIds"]:
-                accounts.append(f"az:{cloud_account['tenantId']}:{subscriptionId}")
-
-        return accounts
-
     def get_compliance_report(
         self,
         client: LaceworkClient,
+        lwAccount: typing.Any,
         cloud_account: typing.Any,
-        account: typing.Any,
         ignore_errors: bool,
         organization: typing.Any = None,
     ) -> typing.Any:
@@ -512,7 +471,7 @@ class ReportHelper:
                 )
                 r = report["data"].pop()
                 r["accountId"] = cloud_account
-                r["lwAccount"] = account["accountName"]
+                r["lwAccount"] = lwAccount
                 result.append(r)
             except laceworksdk.exceptions.ApiError as e:
                 logging.error(f"Lacework api returned: {e}")
@@ -548,7 +507,7 @@ class ReportHelper:
                     )
                     r = report["data"].pop()
                     r["accountId"] = cloud_account
-                    r["lwAccount"] = account["accountName"]
+                    r["lwAccount"] = lwAccount
                     r.pop("organizationId")
                     r.pop("projectId")
                     result.append(r)
@@ -568,7 +527,7 @@ class ReportHelper:
                 )
                 r = report["data"].pop()
                 r["accountId"] = cloud_account
-                r["lwAccount"] = account["accountName"]
+                r["lwAccount"] = lwAccount
                 r.pop("tenantId")
                 r.pop("subscriptionId")
                 result.append(r)
@@ -583,7 +542,7 @@ class ReportHelper:
     def get_active_machines(
         self,
         client: LaceworkClient,
-        account: typing.Any,
+        lwAccount: typing.Any,
         cloud_account: typing.Any,
         ignore_errors: bool = True,
         use_sqlite: bool = False,
@@ -601,13 +560,25 @@ class ReportHelper:
 
         if csp == "aws":
             csp, accountId = cloud_account_details
-            filter = f"m.TAGS:Account::String = '{accountId}' AND m.TAGS:VmProvider::String IN ('AWS')"
+            if accountId != "*":
+                filter = f"m.TAGS:Account::String = '{accountId}' AND m.TAGS:VmProvider::String IN ('AWS')"
+            else:
+                filter = None
+            accountId = "'aws:' || m.TAGS:Account::String AS accountId,"
         elif csp == "gcp":
-            csp, organziationId, projectId = cloud_account_details
-            filter = f"m.TAGS:ProjectId::String = '{projectId}' AND m.TAGS:VmProvider::String IN ('GCE')"
+            csp, organizationId, projectId = cloud_account_details
+            if projectId != "*":
+                filter = f"m.TAGS:ProjectId::String = '{projectId}' AND m.TAGS:VmProvider::String IN ('GCE')"
+            else:
+                filter = None
+            accountId = f"'gcp:' || '{organizationId}' || ':' ||  m.TAGS:ProjectId::String AS accountId,"
         elif csp == "az":
             csp, tenantId, subscriptionId = cloud_account_details
-            filter = f"m.TAGS:ProjectId::String = '{subscriptionId}' AND m.TAGS:VmProvider::String IN ('Azure')"
+            if subscriptionId != "*":
+                filter = f"m.TAGS:ProjectId::String = '{subscriptionId}' AND m.TAGS:VmProvider::String IN ('Azure')"
+            else:
+                filter = None
+            accountId = f"'az:' || '{tenantId}' || ':' ||  m.TAGS:ProjectId::String AS accountId,"
 
         lql_query = f"""
                     Custom_HE_Machine_1 {{
@@ -618,8 +589,8 @@ class ReportHelper:
                             {filter}
                         }}
                         return distinct {{
-                            '{account}' AS lwAccount,
-                            '{cloud_account}' AS accountId,
+                            '{lwAccount}' AS lwAccount,
+                            {accountId}
                             m.TAGS:InstanceId::String AS tag_instanceId,
                             m.TAGS:Account::String AS tag_accountId,
                             m.TAGS:ProjectId::String AS tag_projectId,
@@ -648,10 +619,206 @@ class ReportHelper:
 
         return result
 
+    def get_active_cloud_accounts(
+        self,
+        client: LaceworkClient,
+        lwAccount: typing.Any,
+        ignore_errors: bool = True,
+        use_sqlite: bool = False,
+        db_table: typing.Any = None,
+        db_connection: typing.Any = None,
+    ) -> typing_list[typing.Any]:
+        results = []
+        if use_sqlite:
+            format_type = DataHandlerTypes.SQLITE
+        else:
+            format_type = DataHandlerTypes.DICT
+
+        for csp in ["aws", "gcp", "az"]:
+            if csp == "aws":
+                filter = f"m.TAGS:VmProvider::String IN ('AWS')"
+                accountId = "'aws:' || m.TAGS:Account::String AS accountId"
+            elif csp == "gcp":
+                filter = "m.TAGS:VmProvider::String IN ('GCE')"
+                accountId = f"'gcp:' ||  m.TAGS:ProjectId::String AS accountId"
+            elif csp == "az":
+                filter = "m.TAGS:VmProvider::String IN ('Azure')"
+                accountId = f"'az:' ||  m.TAGS:ProjectId::String AS accountId"
+
+            lql_query = f"""
+                        Custom_HE_Machine_1 {{
+                            source {{
+                                LW_HE_MACHINES m
+                            }}
+                            filter {{
+                                {filter}
+                            }}
+                            return distinct {{
+                                '{lwAccount}' AS lwAccount,
+                                {accountId}
+                            }}
+                        }}
+                        """
+            try:
+                result = ExportHandler(
+                    format=format_type,
+                    results=QueryHandler(
+                        client=client,
+                        type=common.ObjectTypes.Queries.value,
+                        object=common.QueriesTypes.Execute.value,
+                        lql_query=lql_query,
+                    ).execute(),
+                    db_connection=db_connection,
+                    db_table=db_table,
+                ).export()
+                results = results + result
+
+            except laceworksdk.exceptions.ApiError as e:
+                logging.error(f"Lacework api returned: {e}")
+
+                if not ignore_errors:
+                    raise e
+
+        return results
+
+    def get_discovered_machines(
+        self,
+        client: LaceworkClient,
+        lwAccount: typing.Any,
+        cloud_account: typing.Any,
+        ignore_errors: bool = True,
+        use_sqlite: bool = False,
+        db_table: typing.Any = None,
+        db_connection: typing.Any = None,
+    ) -> typing_list[typing.Any]:
+        result = []
+        if use_sqlite:
+            format_type = DataHandlerTypes.SQLITE
+        else:
+            format_type = DataHandlerTypes.DICT
+
+        cloud_account_details = cloud_account.split(":")
+        csp = cloud_account_details[0]
+        lql_query = ""
+
+        if csp == "aws":
+            csp, accountId = cloud_account_details
+
+            # skip account filter with wildcard
+            if accountId == "*":
+                filter = None
+            else:
+                filter = f"ACCOUNT_ID = '{accountId}'"
+
+            lql_query = f"""ECS {{
+                            source {{LW_CFG_AWS_EC2_INSTANCES m}}
+                            filter {{ {filter} }}
+                            return distinct {{ 
+                                    '{lwAccount}' AS lwAccount,
+                                    'aws:' || m.ACCOUNT_ID AS accountId, 
+                                    m.RESOURCE_ID AS instanceId,
+                                    m.RESOURCE_CONFIG:State.Name::String AS state
+                                }}
+                            }}
+                            """
+        elif csp == "gcp":
+            csp, organizationId, projectId = cloud_account_details
+
+            # skip organization and project filter with wildcard
+            if organizationId == "*" and projectId == "*":
+                filter = None
+            # filter both organization and project
+            elif organizationId != "*" and projectId != "*":
+                filter = f"""
+                                AND ORGANIZATION = {organizationId}
+                                AND CONTAINS(m.URN, '://compute.googleapis.com/projects/{projectId}/')
+                            """
+            # filter only organization
+            elif organizationId != "*" and projectId == "*":
+                filter = f"""
+                                AND ORGANIZATION = {organizationId}
+                            """
+            # filter only project
+            elif organizationId == "*" and projectId != "*":
+                filter = f"""
+                                AND CONTAINS(m.URN, '://compute.googleapis.com/projects/{projectId}/')
+                            """
+
+            lql_query = f"""
+                            GCE {{
+                                source {{
+                                    LW_CFG_GCP_ALL m
+                                }}
+                                filter {{
+                                    m.SERVICE = 'compute'
+                                    AND m.API_KEY = 'resource'
+                                    AND KEY_EXISTS(m.RESOURCE_CONFIG:status)
+                                    AND KEY_EXISTS(m.RESOURCE_CONFIG:machineType)
+                                    {filter}
+                                }}
+                                return distinct {{ 
+                                    '{lwAccount}' AS lwAccount,
+                                    'gcp:' || ORGANIZATION::String || ':' || SUBSTRING(
+                                        SUBSTRING(
+                                            m.URN,
+                                            CHAR_INDEX(
+                                                '/', 
+                                                m.URN
+                                            )+34,
+                                            LENGTH(m.URN)
+                                        ),
+                                        0,
+                                        CHAR_INDEX(
+                                            '/zones/',
+                                            SUBSTRING(
+                                                m.URN,
+                                                CHAR_INDEX(
+                                                    '/', 
+                                                    m.URN
+                                                )+35,
+                                                LENGTH(m.URN)
+                                            )
+                                        )
+                                    ) AS accountId,
+                                    m.RESOURCE_CONFIG:id::string AS instanceId,
+                                    m.RESOURCE_CONFIG:status::String AS state
+                                }}
+                            }}
+                            """
+        # elif csp == "az":
+        #     csp, tenantId, subscriptionId = cloud_account_details
+        #     filter = f"m.TAGS:ProjectId::String = '{subscriptionId}' AND m.TAGS:VmProvider::String IN ('Azure')"
+
+        # pull a list of ec2 instance details for the current account
+        else:
+            logging.warn(f"Unsupported cloud provider type: {cloud_account}")
+            return
+
+        try:
+            result = ExportHandler(
+                format=format_type,
+                results=QueryHandler(
+                    client=client,
+                    type=common.ObjectTypes.Queries.value,
+                    object=common.QueriesTypes.Execute.value,
+                    lql_query=lql_query,
+                ).execute(),
+                db_connection=db_connection,
+                db_table=db_table,
+            ).export()
+
+        except laceworksdk.exceptions.ApiError as e:
+            logging.error(f"Lacework api returned: {e}")
+
+            if not ignore_errors:
+                raise e
+
+        return result
+
     def get_vulnerability_report(
         self,
         client: LaceworkClient,
-        account: typing.Any,
+        lwAccount: typing.Any,
         cloud_account: typing.Any,
         ignore_errors: bool,
         fixable: bool = True,
@@ -798,7 +965,7 @@ class ReportHelper:
                         if column == "accountId":
                             column_value = cloud_account
                         elif column == "lwAccount":
-                            column_value = account["accountName"]
+                            column_value = lwAccount
 
                         ddl = "UPDATE {table_name} SET {column_name} = '{column_value}' WHERE {column_name} IS NULL"
                         sql_command = text(
@@ -815,44 +982,9 @@ class ReportHelper:
             else:
                 for r in report:
                     r["accountId"] = cloud_account
-                    r["lwAccount"] = account["accountName"]
+                    r["lwAccount"] = lwAccount
                     result.append(r)
 
-        except laceworksdk.exceptions.ApiError as e:
-            logging.error(f"Lacework api returned: {e}")
-
-            if not ignore_errors:
-                raise e
-
-        return result
-
-    def get_vulnerability_v1_report(
-        self,
-        client: LaceworkClient,
-        cloud_account: typing.Any,
-        account: typing.Any,
-        ignore_errors: bool,
-        fixable: bool = True,
-        severity: typing.Any = None,
-        namespace: typing.Any = None,
-        start_time: typing.Any = None,
-        end_time: typing.Any = None,
-        cve: typing.Any = None,
-    ) -> typing.Any:
-        result = []
-        try:
-            report = client.vulnerabilities.get_host_vulnerabilities(
-                fixable=fixable,
-                severity=severity,
-                namespace=namespace,
-                start_time=start_time,
-                end_time=end_time,
-                cve=cve,
-            )
-            for r in report["data"]:
-                r["accountId"] = cloud_account
-                r["lwAccount"] = account["accountName"]
-                result.append(r)
         except laceworksdk.exceptions.ApiError as e:
             logging.error(f"Lacework api returned: {e}")
 
@@ -867,7 +999,7 @@ AgentQueries = {
                 SELECT 
                     * 
                 FROM 
-                    :table_name
+                    :db_table
                 WHERE
                     State = 'running'
                 ORDER BY
@@ -882,7 +1014,7 @@ AgentQueries = {
                             COUNT(*) AS total,
                             SUM(lacework)*100/COUNT(*) AS total_coverage
                         FROM 
-                            :table_name 
+                            :db_table 
                         WHERE
                             State = 'running'
                         GROUP BY
@@ -901,7 +1033,7 @@ AgentQueries = {
                             COUNT(*) AS total,
                             SUM(lacework)*100/COUNT(*) AS total_coverage
                         FROM 
-                            :table_name 
+                            :db_table 
                         WHERE
                             State = 'running'
                         """,
@@ -914,7 +1046,7 @@ AgentQueries = {
                             COUNT(*) AS total,
                             SUM(lacework)*100/COUNT(*) AS total_coverage
                         FROM 
-                            :table_name 
+                            :db_table 
                         WHERE
                             State = 'running'
                         GROUP BY
@@ -925,7 +1057,7 @@ AgentQueries = {
                         DISTINCT 
                         lwAccount
                     FROM
-                        :table_name
+                        :db_table
                     """,
 }
 
@@ -962,8 +1094,8 @@ ComplianceQueries = {
                         ELSE CAST(100-cast(json_array_length(json_extract(json_recommendations.value, '$.VIOLATIONS')) AS FLOAT)*100/json_extract(json_recommendations.value, '$.ASSESSED_RESOURCE_COUNT') AS INTEGER)
                     END AS percent
                 from 
-                    :table_name, 
-                    json_each(:table_name.recommendations) AS json_recommendations
+                    :db_table, 
+                    json_each(:db_table.recommendations) AS json_recommendations
                 where
                     percent < 100 AND status != 'Compliant'
                 order by
@@ -1032,8 +1164,8 @@ ComplianceQueries = {
                                 END AS severity,
                                 json_extract(json_recommendations.value, '$.SEVERITY') AS severity_number
                             FROM
-                                :table_name,
-                                json_each(:table_name.recommendations) AS json_recommendations
+                                :db_table,
+                                json_each(:db_table.recommendations) AS json_recommendations
                             ) as t
                         GROUP BY
                             accountId,
@@ -1103,8 +1235,8 @@ ComplianceQueries = {
                                 END AS severity,
                                 json_extract(json_recommendations.value, '$.SEVERITY') AS severity_number
                             FROM
-                                :table_name,
-                                json_each(:table_name.recommendations) AS json_recommendations
+                                :db_table,
+                                json_each(:db_table.recommendations) AS json_recommendations
                         ) as t
                         """,
     "lwaccount_summary": """
@@ -1168,8 +1300,8 @@ ComplianceQueries = {
                                     END AS severity,
                                     json_extract(json_recommendations.value, '$.SEVERITY') AS severity_number
                                 FROM
-                                    :table_name,
-                                    json_each(:table_name.recommendations) AS json_recommendations
+                                    :db_table,
+                                    json_each(:db_table.recommendations) AS json_recommendations
                             ) as t
                             GROUP BY
                                 lwAccount
@@ -1178,7 +1310,7 @@ ComplianceQueries = {
                     SELECT 
                         DISTINCT lwaccount
                     FROM
-                        :table_name
+                        :db_table
                     """,
 }
 
@@ -1217,7 +1349,7 @@ VulnerabilityQueries = {
                     json_extract(machineTags, '$.arch') AS arch,
                     json_extract(machineTags, '$.os') AS os
                 FROM 
-                    :table_name
+                    :db_table
                 """,
     "account_coverage": """
                         SELECT 
@@ -1260,7 +1392,7 @@ VulnerabilityQueries = {
                                 END
                             ) AS info
                         FROM
-                            :table_name as t
+                            :db_table as t
                         JOIN (
                             SELECT 
                                     lwAccount, 
@@ -1335,7 +1467,7 @@ VulnerabilityQueries = {
                                 END
                             ) AS info
                         FROM 
-                            :table_name as t                             
+                            :db_table as t                             
                         """,
     "lwaccount_summary": """
                             SELECT
@@ -1378,7 +1510,7 @@ VulnerabilityQueries = {
                                     END
                                 ) AS info
                             FROM 
-                                :table_name as t
+                                :db_table as t
                             JOIN (
                                 SELECT 
                                         lwAccount, 
@@ -1397,49 +1529,6 @@ VulnerabilityQueries = {
                     SELECT 
                         DISTINCT lwaccount
                     FROM
-                        :table_name
+                        :db_table
                     """,
-}
-
-VulnerabilitV1Queries = {
-    "report": """
-                SELECT 
-                    accountId,
-                    lwAccount,
-                    cve_id,
-                    json_extract(json_pacakges.value, '$.name') AS package_name,
-                    json_extract(json_pacakges.value, '$.namespace') AS package_namespace,
-                    json_extract(json_pacakges.value, '$.version') AS version,
-                    json_extract(json_pacakges.value, '$.fixed_version') AS fixed_version,
-                    json_extract(json_pacakges.value, '$.fix_available') AS fix_available,
-                    json_extract(json_pacakges.value, '$.host_count') AS host_count,
-                    json_extract(json_pacakges.value, '$.severity') AS package_severity,
-                    (
-                        SELECT
-                            json_severity.key
-                        FROM
-                            json_each(json_extract(:table_name.summary, '$.severity')) AS json_severity
-                        LIMIT 1
-                    ) AS severity,
-                    json_extract(json_pacakges.value, '$.cve_link') AS cve_link,
-                    json_extract(json_pacakges.value, '$.cvss_score') AS cvss_score,
-                    json_extract(json_pacakges.value, '$.cvss_v3_score') AS cvss_v3_score,
-                    json_extract(json_pacakges.value, '$.cvss_v2_score') AS cvss_v2_score,
-                    json_extract(json_pacakges.value, '$.description') AS description,
-                    json_extract(json_pacakges.value, '$.status') AS status,
-                    json_extract(json_pacakges.value, '$.package_status') AS package_status,
-                    json_extract(json_pacakges.value, '$.last_updated_time') AS last_updated_time,
-                    json_extract(json_pacakges.value, '$.first_seen_time') AS first_seen_time,
-                    json_extract(:table_name.summary, '$.total_vulnerabilities') AS total_vulnerabilities,
-                    json_extract(:table_name.summary, '$.last_evaluation_time') AS last_evaluation_time,
-                    json_extract(:table_name.summary, '$.total_exception_vulnerabilities') AS total_exception_vulnerabilities
-                FROM 
-                    :table_name, 
-                    json_each(:table_name.packages) AS json_pacakges
-                WHERE
-                    state = 'Active'
-                ORDER BY
-                    accountId,
-                    lwAccount
-                """
 }

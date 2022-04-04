@@ -26,7 +26,7 @@ app = typer.Typer(no_args_is_help=True)
 def html(
     ctx: typer.Context,
     start_time: datetime = typer.Option(
-        (datetime.utcnow() - timedelta(days=1)).strftime(common.ISO_FORMAT),
+        (datetime.utcnow() - timedelta(hours=25)).strftime(common.ISO_FORMAT),
         formats=[common.ISO_FORMAT],
         help="Start time for query period",
     ),
@@ -86,7 +86,7 @@ def html(
         query_name = "EC2S"
         query_text = f"""{query_name}{{
                 source {{LW_CFG_AWS_EC2_INSTANCES}}
-                return {{RESOURCE_CONFIG, ACCOUNT_ID, RESOURCE_ID, RESOURCE_TYPE}}
+                return distinct {{RESOURCE_CONFIG, ACCOUNT_ID, RESOURCE_ID, RESOURCE_TYPE}}
                 }}
                 """
 
@@ -278,7 +278,7 @@ def html(
 def csv_handler(
     ctx: typer.Context,
     start_time: datetime = typer.Option(
-        (datetime.utcnow() - timedelta(days=1)).strftime(common.ISO_FORMAT),
+        (datetime.utcnow() - timedelta(hours=25)).strftime(common.ISO_FORMAT),
         formats=[common.ISO_FORMAT],
         help="Start time for query period",
     ),
