@@ -5,14 +5,19 @@ Report Handler
 from typing import Optional
 
 import logging
-from datetime import datetime, timedelta
 from pathlib import Path
 
 import typer
 
 from laceworkreports import common
 from laceworkreports.sdk.DataHandlers import DataHandlerTypes, ExportHandler
-from laceworkreports.sdk.ReportHelpers import ComplianceQueries, ReportHelper
+from laceworkreports.sdk.ReportHelpers import (
+    AWSComplianceTypes,
+    AzureComplianceTypes,
+    ComplianceQueries,
+    GCPComplianceTypes,
+    ReportHelper,
+)
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -20,15 +25,28 @@ app = typer.Typer(no_args_is_help=True)
 @app.command(no_args_is_help=True, help="Generate HTML report")
 def html(
     ctx: typer.Context,
-    start_time: datetime = typer.Option(
-        (datetime.utcnow() - timedelta(days=1)).strftime(common.ISO_FORMAT),
-        formats=[common.ISO_FORMAT],
-        help="Start time for query period",
+    # current compliance reports do not support time range queries
+    # start_time: datetime = typer.Option(
+    #     (datetime.utcnow() - timedelta(hours=25)).strftime(common.ISO_FORMAT),
+    #     formats=[common.ISO_FORMAT],
+    #     help="Start time for query period",
+    # ),
+    # end_time: datetime = typer.Option(
+    #     (datetime.utcnow()).strftime(common.ISO_FORMAT),
+    #     formats=[common.ISO_FORMAT],
+    #     help="End time for query period",
+    # ),
+    aws_compliance: AWSComplianceTypes = typer.Option(
+        AWSComplianceTypes.AWS_CIS_S3.value,
+        help="AWS compliance framework",
     ),
-    end_time: datetime = typer.Option(
-        (datetime.utcnow()).strftime(common.ISO_FORMAT),
-        formats=[common.ISO_FORMAT],
-        help="End time for query period",
+    gcp_compliance: GCPComplianceTypes = typer.Option(
+        GCPComplianceTypes.GCP_CIS12.value,
+        help="GCP compliance framework",
+    ),
+    azure_compliance: AzureComplianceTypes = typer.Option(
+        AzureComplianceTypes.AZURE_CIS_131.value,
+        help="Azure compliance framework",
     ),
     organization: Optional[str] = typer.Option(
         None,
@@ -57,6 +75,7 @@ def html(
     """
     Set the command context
     """
+    missing_cloud_accounts = []
 
     # connect lacework client
     lw = common.config.connect()
@@ -64,60 +83,77 @@ def html(
     # report details
     report_title = "Compliance Coverage"
     db_table = "compliance_coverage"
+
     reportHelper = ReportHelper()
+    db_path = Path("database.db")
+    # db_path.unlink(missing_ok=True)
+    db_connection = f"sqlite:///{db_path.absolute()}?check_same_thread=False"
+
+    reportHelper.sqlite_drop_table(db_table, db_connection)
+    reportHelper.sqlite_drop_table("cloud_accounts", db_connection)
 
     has_subaccounts = False
     if subaccounts:
-        accounts = reportHelper.get_subaccounts(client=lw)
-        if len(accounts) == 0:
+        lwAccounts = reportHelper.get_subaccounts(client=lw)
+        if len(lwAccounts) == 0:
             logging.error("Subaccounts specificed but none found")
             raise Exception("Subaccounts specificed but none found")
         else:
             has_subaccounts = True
     else:
-        accounts = [{"accountName": lw._account}]
+        lwAccounts = [{"accountName": lw._account}]
 
-    lacework_account_count = 0
-    cloud_account_count = 0
-    missing_cloud_accounts = []
-    reports = []
-    for account in accounts:
-        lacework_account_count += 1
+    for lwAccount in lwAccounts:
         if has_subaccounts:
-            logging.info(f"Switching to subaccount context: {account['accountName']}")
-            lw.set_subaccount(account["accountName"])
+            logging.info(f"Switching to subaccount context: {lwAccount['accountName']}")
+            lw.set_subaccount(lwAccount["accountName"])
 
-        for cloud_account in reportHelper.get_cloud_accounts(client=lw):
-            # get a list of formatted enabled cloud accounts
-            for ca in reportHelper.cloud_accounts_format(
-                cloud_account=cloud_account, organization=organization
-            ):
-                cloud_account_count += 1
-                logging.info(f"Enumerating {account['accountName']}:{ca}")
-                report = reportHelper.get_compliance_report(
-                    client=lw,
-                    cloud_account=ca,
-                    account=account,
-                    ignore_errors=ignore_errors,
-                    organization=organization,
-                )
+        # get cloud accounts and sync to sqlite
+        cloud_accounts = reportHelper.get_cloud_accounts(
+            client=lw, lwAccount=lwAccount["accountName"], organization=organization
+        )
+        ExportHandler(
+            format=DataHandlerTypes.SQLITE,
+            results=[{"data": cloud_accounts}],
+            file_path=file_path,
+            db_table="cloud_accounts",
+            db_connection=db_connection,
+        ).export()
 
-                if len(report) > 0:
-                    reports.append(report[0])
-                else:
-                    missing_cloud_accounts.append(ca)
+        for cloud_account in cloud_accounts:
+            logging.info(
+                f"Enumerating {lwAccount['accountName']}:{cloud_account['accountId']}"
+            )
+            report = reportHelper.get_compliance_report(
+                client=lw,
+                cloud_account=cloud_account["accountId"],
+                lwAccount=lwAccount["accountName"],
+                aws_compliance=aws_compliance,
+                gcp_compliance=gcp_compliance,
+                azure_compliance=azure_compliance,
+                ignore_errors=ignore_errors,
+                organization=organization,
+            )
+
+            if len(report) > 0:
+                ExportHandler(
+                    format=DataHandlerTypes.SQLITE,
+                    results=[{"data": report}],
+                    file_path=file_path,
+                    db_table=db_table,
+                    db_connection=db_connection,
+                ).export()
+            else:
+                missing_cloud_accounts.append(cloud_account["accountId"])
 
     for miss in missing_cloud_accounts:
         logging.warn(f"missing report for : {miss}")
 
     # use sqlite query to generate final result
-    results = reportHelper.sqlite_sync_report(
-        report=reports,
-        table_name=db_table,
-        queries=ComplianceQueries,
-        # bypass temporary storage - testing only
-        # db_path_override="database.db",
+    results = reportHelper.sqlite_queries(
+        queries=ComplianceQueries, db_table=db_table, db_connection=db_connection
     )
+
     if len(results["report"]) > 0:
         report = results["report"]
 
@@ -154,15 +190,28 @@ def html(
 @app.command(name="csv", no_args_is_help=True, help="Generate CSV Report")
 def csv_handler(
     ctx: typer.Context,
-    start_time: datetime = typer.Option(
-        (datetime.utcnow() - timedelta(days=1)).strftime(common.ISO_FORMAT),
-        formats=[common.ISO_FORMAT],
-        help="Start time for query period",
+    # current compliance reports do not support time range queries
+    # start_time: datetime = typer.Option(
+    #     (datetime.utcnow() - timedelta(hours=25)).strftime(common.ISO_FORMAT),
+    #     formats=[common.ISO_FORMAT],
+    #     help="Start time for query period",
+    # ),
+    # end_time: datetime = typer.Option(
+    #     (datetime.utcnow()).strftime(common.ISO_FORMAT),
+    #     formats=[common.ISO_FORMAT],
+    #     help="End time for query period",
+    # ),
+    aws_compliance: AWSComplianceTypes = typer.Option(
+        AWSComplianceTypes.AWS_CIS_S3.value,
+        help="AWS compliance framework",
     ),
-    end_time: datetime = typer.Option(
-        (datetime.utcnow()).strftime(common.ISO_FORMAT),
-        formats=[common.ISO_FORMAT],
-        help="End time for query period",
+    gcp_compliance: GCPComplianceTypes = typer.Option(
+        GCPComplianceTypes.GCP_CIS12.value,
+        help="GCP compliance framework",
+    ),
+    azure_compliance: AzureComplianceTypes = typer.Option(
+        AzureComplianceTypes.AZURE_CIS_131.value,
+        help="Azure compliance framework",
     ),
     organization: Optional[str] = typer.Option(
         None,
@@ -191,70 +240,87 @@ def csv_handler(
     """
     Set the command context
     """
+    missing_cloud_accounts = []
 
     # connect lacework client
     lw = common.config.connect()
 
     # report details
     db_table = "compliance_coverage"
+
     reportHelper = ReportHelper()
+    db_path = Path("database.db")
+    # db_path.unlink(missing_ok=True)
+    db_connection = f"sqlite:///{db_path.absolute()}?check_same_thread=False"
+
+    reportHelper.sqlite_drop_table(db_table, db_connection)
+    reportHelper.sqlite_drop_table("cloud_accounts", db_connection)
 
     has_subaccounts = False
     if subaccounts:
-        accounts = reportHelper.get_subaccounts(client=lw)
-        if len(accounts) == 0:
+        lwAccounts = reportHelper.get_subaccounts(client=lw)
+        if len(lwAccounts) == 0:
             logging.error("Subaccounts specificed but none found")
             raise Exception("Subaccounts specificed but none found")
         else:
             has_subaccounts = True
     else:
-        accounts = [{"accountName": lw._account}]
+        lwAccounts = [{"accountName": lw._account}]
 
-    lacework_account_count = 0
-    cloud_account_count = 0
-    missing_cloud_accounts = []
-    reports = []
-    for account in accounts:
-        lacework_account_count += 1
+    for lwAccount in lwAccounts:
         if has_subaccounts:
-            logging.info(f"Switching to subaccount context: {account['accountName']}")
-            lw.set_subaccount(account["accountName"])
+            logging.info(f"Switching to subaccount context: {lwAccount['accountName']}")
+            lw.set_subaccount(lwAccount["accountName"])
 
-        for cloud_account in reportHelper.get_cloud_accounts(client=lw):
-            # get a list of formatted enabled cloud accounts
-            for ca in reportHelper.cloud_accounts_format(
-                cloud_account=cloud_account, organization=organization
-            ):
-                cloud_account_count += 1
-                logging.info(f"Enumerating {account['accountName']}:{ca}")
-                report = reportHelper.get_compliance_report(
-                    client=lw,
-                    cloud_account=ca,
-                    account=account,
-                    ignore_errors=ignore_errors,
-                    organization=organization,
-                )
+        # get cloud accounts and sync to sqlite
+        cloud_accounts = reportHelper.get_cloud_accounts(
+            client=lw, lwAccount=lwAccount["accountName"], organization=organization
+        )
+        ExportHandler(
+            format=DataHandlerTypes.SQLITE,
+            results=[{"data": cloud_accounts}],
+            file_path=file_path,
+            db_table="cloud_accounts",
+            db_connection=db_connection,
+        ).export()
 
-                if len(report) > 0:
-                    reports.append(report[0])
-                else:
-                    missing_cloud_accounts.append(ca)
+        for cloud_account in cloud_accounts:
+            logging.info(
+                f"Enumerating {lwAccount['accountName']}:{cloud_account['accountId']}"
+            )
+            report = reportHelper.get_compliance_report(
+                client=lw,
+                cloud_account=cloud_account["accountId"],
+                lwAccount=lwAccount["accountName"],
+                aws_compliance=aws_compliance,
+                gcp_compliance=gcp_compliance,
+                azure_compliance=azure_compliance,
+                ignore_errors=ignore_errors,
+                organization=organization,
+            )
+
+            if len(report) > 0:
+                ExportHandler(
+                    format=DataHandlerTypes.SQLITE,
+                    results=[{"data": report}],
+                    file_path=file_path,
+                    db_table=db_table,
+                    db_connection=db_connection,
+                ).export()
+            else:
+                missing_cloud_accounts.append(cloud_account["accountId"])
 
     for miss in missing_cloud_accounts:
         logging.warn(f"missing report for : {miss}")
 
     # use sqlite query to generate final result
-    results = reportHelper.sqlite_sync_report(
-        report=reports,
-        table_name=db_table,
-        queries=ComplianceQueries,
-        # bypass temporary storage - testing only
-        db_path_override="test.db",
+    results = reportHelper.sqlite_queries(
+        queries=ComplianceQueries, db_table=db_table, db_connection=db_connection
     )
 
     if len(results["report"]) > 0:
         if summary_only:
-            report = results["account_coverage_severity"]
+            report = results["account_coverage"]
         else:
             report = results["report"]
 

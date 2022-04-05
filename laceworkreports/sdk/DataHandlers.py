@@ -2,6 +2,7 @@
 Example script showing how to use the LaceworkClient class.
 """
 
+import base64
 import csv
 import json
 import logging
@@ -37,6 +38,7 @@ MAX_PSQL_COLUMN_NAME_LENGTH = 63
 
 class DataHandlerTypes(Enum):
     POSTGRES = "postgres"
+    SQLITE = "sqlite"
     PANDAS = "pandas"
     DICT = "dict"
     CSV = "csv"
@@ -50,6 +52,7 @@ class DataHandlerTypes(Enum):
 
 class DataHandlerCliTypes(Enum):
     POSTGRES = "postgres"
+    SQLITE = "sqlite"
     CSV = "csv"
     JSON = "json"
     JINJA2 = "jinja2"
@@ -150,6 +153,11 @@ class DataHandler:
                 raise ValueError(f"db_connection required for {self.format} type")
             if db_table is None:
                 raise ValueError(f"db_table required for {self.format} type")
+        elif self.format in [DataHandlerTypes.SQLITE, DataHandlerCliTypes.SQLITE]:
+            if db_connection is None:
+                raise ValueError(f"db_connection required for {self.format} type")
+            if db_table is None:
+                raise ValueError(f"db_table required for {self.format} type")
 
         self.dataset = []
         self.reader = None
@@ -242,6 +250,39 @@ class DataHandler:
             metadata = MetaData(bind=self.conn)
 
             # if we are replacing drop the table first
+            if self.db_if_exists == common.DBInsertTypes.Replace.value:
+                t = Table(self.db_table, metadata)
+                t.drop(self.conn, checkfirst=True)
+            elif (
+                self.db_if_exists == common.DBInsertTypes.Fail
+                and self.db_engine.has_table(self.db_table)
+            ):
+                logging.error("Table already exists and db_if_exists=fail")
+                raise Exception("Table already exists and db_if_exists=fail")
+            elif (
+                self.db_if_exists == common.DBInsertTypes.Append.value
+                and not self.db_engine.has_table(self.db_table)
+            ):
+                logging.warning(
+                    "Database table does not exist and db_if_exists=replace: Table will be created"
+                )
+        elif self.format in [DataHandlerTypes.SQLITE, DataHandlerCliTypes.SQLITE]:
+
+            # connect to the db
+            logging.info(f"Connecting: {self.db_connection}")
+            self.db_engine = create_engine(self.db_connection, echo=False)
+
+            # if db doesn't exist create it
+            if not database_exists(self.db_engine.url):
+                create_database(self.db_engine.url)
+
+            # connect to the database
+            self.conn = self.db_engine.connect()
+
+            # drop table if it exists
+            metadata = MetaData(bind=self.conn)
+
+            # if we are replacing drop the table first
             if self.db_if_exists == common.DBInsertTypes.Replace:
                 t = Table(self.db_table, metadata)
                 t.drop(self.conn, checkfirst=True)
@@ -279,6 +320,8 @@ class DataHandler:
                 datetime=datetime,
                 timedelta=timedelta,
                 config=common.config,
+                pandas=pd,
+                base64=base64,
             )
 
             Path(self.file_path).write_text(result)
@@ -351,7 +394,7 @@ class DataHandler:
                 for column in df.columns:
                     rows = self.conn.execute(
                         text(
-                            "SELECT column_name FROM information_schema.columns WHERE table_name=:table_name and column_name=:column_name"
+                            "SELECT column_name FROM information_schema.columns WHERE table_name=:db_table and column_name=:column_name"
                         ),
                         table_name=self.db_table,
                         column_name=column,
@@ -363,7 +406,7 @@ class DataHandler:
                         )
                         self.conn.execute(
                             text(
-                                "ALTER TABLE :table_name ADD COLUMN :column_name :column_type"
+                                "ALTER TABLE :db_table ADD COLUMN :column_name :column_type"
                             ),
                             table_name=self.db_table,
                             column_name=column,
@@ -380,6 +423,69 @@ class DataHandler:
                     method=None,
                     con=self.conn,
                 )
+        elif self.format in [DataHandlerTypes.SQLITE, DataHandlerCliTypes.SQLITE]:
+            # sync each row of the report to the database
+            df = pd.DataFrame([row])
+            # determine special column handling for json data
+            if not self.dtypes:
+                dtypes = {}
+                for k in row.keys():
+                    if isinstance(row[k], dict) or isinstance(row[k], list):
+                        dtypes[k] = sqlalchemy.types.JSON
+            else:
+                dtypes = self.dtypes
+
+            try:
+                df.to_sql(
+                    name=self.db_table,
+                    con=self.conn,
+                    index=False,
+                    if_exists=common.DBInsertTypes.Append.value,
+                    dtype=dtypes,
+                )
+            # handle cases where json data has inconsistent rows (add missing here)
+            except sqlalchemy.exc.OperationalError as e:
+                if re.search(r" table \S+ has no column named", str(e)):
+                    ddl = "SELECT * FROM {table_name} LIMIT 1"
+                    sql_command = ddl.format(table_name=self.db_table)
+                    result = self.conn.execute(text(sql_command)).fetchall()[0].keys()
+                    columns = [x for x in result]
+                    missing_columns = [x for x in row.keys() if str(x) not in columns]
+                    for column in missing_columns:
+                        logging.debug(
+                            f"Unable to find column during insert: {column}; Updating table..."
+                        )
+
+                        # determine the column type
+                        if isinstance(row[column], list) or isinstance(
+                            row[column], dict
+                        ):
+                            column_type = "JSON"
+                        elif isinstance(row[column], int):
+                            column_type = "INTEGER"
+                        else:
+                            column_type = "TEXT"
+
+                        ddl = "ALTER TABLE {table_name} ADD column {column_name} {column_type}"
+                        sql_command = text(
+                            ddl.format(
+                                table_name=self.db_table,
+                                column_name=column,
+                                column_type=column_type,
+                            )
+                        )
+                        self.conn.execute(sql_command)
+
+                    # retry adding row
+                    df.to_sql(
+                        name=self.db_table,
+                        con=self.conn,
+                        index=False,
+                        if_exists=common.DBInsertTypes.Append.value,
+                        dtype=dtypes,
+                    )
+            except Exception as e:
+                logging.critical(e)
         else:
             logging.error(f"Unkown format type: {self.format}")
 

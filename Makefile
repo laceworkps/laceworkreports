@@ -68,7 +68,7 @@ update-dev-deps:
 	poetry add -D --allow-prereleases black@latest
 
 #* Docker
-# Example: make docker-build VERSION=latest
+# Example: make docker-bbuild VERSION=latest
 # Example: make docker-build IMAGE=some_name VERSION=0.1.0
 .PHONY: docker-build
 docker-build:

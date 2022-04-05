@@ -21,7 +21,7 @@ app = typer.Typer()
 def csv(
     ctx: typer.Context,
     start_time: datetime = typer.Option(
-        (datetime.utcnow() - timedelta(days=1)).strftime(common.ISO_FORMAT),
+        (datetime.utcnow() - timedelta(hours=25)).strftime(common.ISO_FORMAT),
         formats=[common.ISO_FORMAT],
         help="Start time for query period",
     ),
@@ -78,7 +78,7 @@ def csv(
 def json_type(
     ctx: typer.Context,
     start_time: datetime = typer.Option(
-        (datetime.utcnow() - timedelta(days=1)).strftime(common.ISO_FORMAT),
+        (datetime.utcnow() - timedelta(hours=25)).strftime(common.ISO_FORMAT),
         formats=[common.ISO_FORMAT],
         help="Start time for query period",
     ),
@@ -131,7 +131,7 @@ def json_type(
 def postgres(
     ctx: typer.Context,
     start_time: datetime = typer.Option(
-        (datetime.utcnow() - timedelta(days=1)).strftime(common.ISO_FORMAT),
+        (datetime.utcnow() - timedelta(hours=25)).strftime(common.ISO_FORMAT),
         formats=[common.ISO_FORMAT],
         help="Start time for query period",
     ),
@@ -203,7 +203,7 @@ def postgres(
 def jinja2(
     ctx: typer.Context,
     start_time: datetime = typer.Option(
-        (datetime.utcnow() - timedelta(days=1)).strftime(common.ISO_FORMAT),
+        (datetime.utcnow() - timedelta(hours=25)).strftime(common.ISO_FORMAT),
         formats=[common.ISO_FORMAT],
         help="Start time for query period",
     ),
