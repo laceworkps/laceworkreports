@@ -8,6 +8,6 @@ default_context:
   minimal_python_version: 3.8
   github_name: "laceworkps"
   email: "jamie.mcmurray@lacework.net"
-  version: "1.3.23"
+  version: "1.3.24"
   line_length: "88"
   create_example_template: "cli"

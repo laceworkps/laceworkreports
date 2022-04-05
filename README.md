@@ -88,18 +88,28 @@ poetry run laceworkreports --help
 or run with `docker`:
 
 ```bash
+docker run --rm -it --name laceworkreports \
+    -v ~/.lacework.toml:/home/user/.lacework.toml -v $(pwd)/reports:/app/reports \
+    laceworkps/laceworkreports:latest --help
+```
+
+or run with `docker` and start a shell:
+
+```bash
+docker run --rm --entrypoint="/bin/bash" -it --name laceworkreports \
+    -v ~/.lacework.toml:/home/user/.lacework.toml -v $(pwd)/reports:/app/reports \
+    laceworkps/laceworkreports:latest --help
+```
+
+or run with `docker` and force uid:gid on the volume mount (may be required for write permissions):
+
+```bash
 docker run --rm -it \
-    `# name of the container` \
     --name laceworkreports \
-    `# mount credentials and configuration` \
     -v ~/.lacework.toml:/home/user/.lacework.toml \
     -v $(pwd)/reports:/app/reports \
-    `# override the uid to allow docker write through to output volume (optional)` \
     --env=HOME=/home/user \
     --user $UID:$GID \
-    `# start in bash` \
-    --entrypoint="/bin/bash" \
-    `# run the report script` \
     laceworkps/laceworkreports:latest
 ```
 
