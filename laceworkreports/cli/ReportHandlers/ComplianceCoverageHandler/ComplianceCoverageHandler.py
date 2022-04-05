@@ -5,14 +5,19 @@ Report Handler
 from typing import Optional
 
 import logging
-from datetime import datetime, timedelta
 from pathlib import Path
 
 import typer
 
 from laceworkreports import common
 from laceworkreports.sdk.DataHandlers import DataHandlerTypes, ExportHandler
-from laceworkreports.sdk.ReportHelpers import ComplianceQueries, ReportHelper
+from laceworkreports.sdk.ReportHelpers import (
+    AWSComplianceTypes,
+    AzureComplianceTypes,
+    ComplianceQueries,
+    GCPComplianceTypes,
+    ReportHelper,
+)
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -20,15 +25,28 @@ app = typer.Typer(no_args_is_help=True)
 @app.command(no_args_is_help=True, help="Generate HTML report")
 def html(
     ctx: typer.Context,
-    start_time: datetime = typer.Option(
-        (datetime.utcnow() - timedelta(hours=25)).strftime(common.ISO_FORMAT),
-        formats=[common.ISO_FORMAT],
-        help="Start time for query period",
+    # current compliance reports do not support time range queries
+    # start_time: datetime = typer.Option(
+    #     (datetime.utcnow() - timedelta(hours=25)).strftime(common.ISO_FORMAT),
+    #     formats=[common.ISO_FORMAT],
+    #     help="Start time for query period",
+    # ),
+    # end_time: datetime = typer.Option(
+    #     (datetime.utcnow()).strftime(common.ISO_FORMAT),
+    #     formats=[common.ISO_FORMAT],
+    #     help="End time for query period",
+    # ),
+    aws_compliance: AWSComplianceTypes = typer.Option(
+        AWSComplianceTypes.AWS_CIS_S3.value,
+        help="AWS compliance framework",
     ),
-    end_time: datetime = typer.Option(
-        (datetime.utcnow()).strftime(common.ISO_FORMAT),
-        formats=[common.ISO_FORMAT],
-        help="End time for query period",
+    gcp_compliance: GCPComplianceTypes = typer.Option(
+        GCPComplianceTypes.GCP_CIS12.value,
+        help="GCP compliance framework",
+    ),
+    azure_compliance: AzureComplianceTypes = typer.Option(
+        AzureComplianceTypes.AZURE_CIS_131.value,
+        help="Azure compliance framework",
     ),
     organization: Optional[str] = typer.Option(
         None,
@@ -110,6 +128,9 @@ def html(
                 client=lw,
                 cloud_account=cloud_account["accountId"],
                 lwAccount=lwAccount["accountName"],
+                aws_compliance=aws_compliance,
+                gcp_compliance=gcp_compliance,
+                azure_compliance=azure_compliance,
                 ignore_errors=ignore_errors,
                 organization=organization,
             )
@@ -169,15 +190,28 @@ def html(
 @app.command(name="csv", no_args_is_help=True, help="Generate CSV Report")
 def csv_handler(
     ctx: typer.Context,
-    start_time: datetime = typer.Option(
-        (datetime.utcnow() - timedelta(hours=25)).strftime(common.ISO_FORMAT),
-        formats=[common.ISO_FORMAT],
-        help="Start time for query period",
+    # current compliance reports do not support time range queries
+    # start_time: datetime = typer.Option(
+    #     (datetime.utcnow() - timedelta(hours=25)).strftime(common.ISO_FORMAT),
+    #     formats=[common.ISO_FORMAT],
+    #     help="Start time for query period",
+    # ),
+    # end_time: datetime = typer.Option(
+    #     (datetime.utcnow()).strftime(common.ISO_FORMAT),
+    #     formats=[common.ISO_FORMAT],
+    #     help="End time for query period",
+    # ),
+    aws_compliance: AWSComplianceTypes = typer.Option(
+        AWSComplianceTypes.AWS_CIS_S3.value,
+        help="AWS compliance framework",
     ),
-    end_time: datetime = typer.Option(
-        (datetime.utcnow()).strftime(common.ISO_FORMAT),
-        formats=[common.ISO_FORMAT],
-        help="End time for query period",
+    gcp_compliance: GCPComplianceTypes = typer.Option(
+        GCPComplianceTypes.GCP_CIS12.value,
+        help="GCP compliance framework",
+    ),
+    azure_compliance: AzureComplianceTypes = typer.Option(
+        AzureComplianceTypes.AZURE_CIS_131.value,
+        help="Azure compliance framework",
     ),
     organization: Optional[str] = typer.Option(
         None,
@@ -258,6 +292,9 @@ def csv_handler(
                 client=lw,
                 cloud_account=cloud_account["accountId"],
                 lwAccount=lwAccount["accountName"],
+                aws_compliance=aws_compliance,
+                gcp_compliance=gcp_compliance,
+                azure_compliance=azure_compliance,
                 ignore_errors=ignore_errors,
                 organization=organization,
             )

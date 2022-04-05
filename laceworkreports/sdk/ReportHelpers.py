@@ -6,7 +6,7 @@ from typing import List as typing_list
 import logging
 import re
 import tempfile
-from cgitb import enable
+from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 
@@ -136,6 +136,8 @@ class ReportHelper:
         self,
         client: LaceworkClient,
         lwAccount: Any,
+        start_time: datetime = (datetime.utcnow() - timedelta(hours=25)),
+        end_time: datetime = (datetime.utcnow()),
         organization: typing.Any = None,
     ) -> typing_list[Any]:
 
@@ -236,6 +238,8 @@ class ReportHelper:
             format=DataHandlerTypes.DICT,
             results=QueryHandler(
                 client=client,
+                start_time=start_time,
+                end_time=end_time,
                 type=common.ObjectTypes.Queries.value,
                 object=common.QueriesTypes.Execute.value,
                 lql_query=lql_query,
@@ -456,7 +460,12 @@ class ReportHelper:
         client: LaceworkClient,
         lwAccount: typing.Any,
         cloud_account: typing.Any,
-        ignore_errors: bool,
+        # start_time: datetime = (datetime.utcnow() - timedelta(hours=25)),
+        # end_time: datetime = (datetime.utcnow()),
+        aws_compliance: AWSComplianceTypes = AWSComplianceTypes.AWS_CIS_S3,
+        gcp_compliance: GCPComplianceTypes = GCPComplianceTypes.GCP_CIS12,
+        azure_compliance: AzureComplianceTypes = AzureComplianceTypes.AZURE_CIS_131,
+        ignore_errors: bool = True,
         organization: typing.Any = None,
     ) -> typing.Any:
         result = []
@@ -468,7 +477,7 @@ class ReportHelper:
                 report = client.compliance.get_latest_aws_report(
                     aws_account_id=accountId,
                     file_format="json",
-                    report_type=None,
+                    report_type=aws_compliance.value,
                 )
                 r = report["data"].pop()
                 r["accountId"] = cloud_account
@@ -504,7 +513,7 @@ class ReportHelper:
                         gcp_organization_id=orgId,
                         gcp_project_id=projectId,
                         file_format="json",
-                        report_type=None,
+                        report_type=gcp_compliance.value,
                     )
                     r = report["data"].pop()
                     r["accountId"] = cloud_account
@@ -524,7 +533,7 @@ class ReportHelper:
                     azure_tenant_id=tenantId,
                     azure_subscription_id=subscriptionId,
                     file_format="json",
-                    report_type=None,
+                    report_type=azure_compliance.value,
                 )
                 r = report["data"].pop()
                 r["accountId"] = cloud_account
@@ -546,6 +555,8 @@ class ReportHelper:
         client: LaceworkClient,
         lwAccount: typing.Any,
         cloud_account: typing.Any,
+        start_time: datetime = (datetime.utcnow() - timedelta(hours=25)),
+        end_time: datetime = (datetime.utcnow()),
         ignore_errors: bool = True,
         use_sqlite: bool = False,
         db_table: typing.Any = None,
@@ -606,6 +617,8 @@ class ReportHelper:
                 format=format_type,
                 results=QueryHandler(
                     client=client,
+                    start_time=start_time,
+                    end_time=end_time,
                     type=common.ObjectTypes.Queries.value,
                     object=common.QueriesTypes.Execute.value,
                     lql_query=lql_query,
@@ -627,6 +640,8 @@ class ReportHelper:
         self,
         client: LaceworkClient,
         lwAccount: typing.Any,
+        start_time: datetime = (datetime.utcnow() - timedelta(hours=25)),
+        end_time: datetime = (datetime.utcnow()),
         ignore_errors: bool = True,
         use_sqlite: bool = False,
         db_table: typing.Any = None,
@@ -653,6 +668,8 @@ class ReportHelper:
                 format=format_type,
                 results=QueryHandler(
                     client=client,
+                    start_time=start_time,
+                    end_time=end_time,
                     type=common.ObjectTypes.Queries.value,
                     object=common.QueriesTypes.Execute.value,
                     lql_query=lql_query,
@@ -712,6 +729,8 @@ class ReportHelper:
                 format=format_type,
                 results=QueryHandler(
                     client=client,
+                    start_time=start_time,
+                    end_time=end_time,
                     type=common.ObjectTypes.Queries.value,
                     object=common.QueriesTypes.Execute.value,
                     lql_query=lql_query,
@@ -733,6 +752,8 @@ class ReportHelper:
         self,
         client: LaceworkClient,
         lwAccount: typing.Any,
+        start_time: datetime = (datetime.utcnow() - timedelta(hours=25)),
+        end_time: datetime = (datetime.utcnow()),
         ignore_errors: bool = True,
         use_sqlite: bool = False,
         db_table: typing.Any = None,
@@ -774,6 +795,8 @@ class ReportHelper:
                     format=format_type,
                     results=QueryHandler(
                         client=client,
+                        start_time=start_time,
+                        end_time=end_time,
                         type=common.ObjectTypes.Queries.value,
                         object=common.QueriesTypes.Execute.value,
                         lql_query=lql_query,
@@ -796,6 +819,8 @@ class ReportHelper:
         client: LaceworkClient,
         lwAccount: typing.Any,
         cloud_account: typing.Any,
+        start_time: datetime = (datetime.utcnow() - timedelta(hours=25)),
+        end_time: datetime = (datetime.utcnow()),
         ignore_errors: bool = True,
         use_sqlite: bool = False,
         db_table: typing.Any = None,
@@ -909,6 +934,8 @@ class ReportHelper:
                 format=format_type,
                 results=QueryHandler(
                     client=client,
+                    start_time=start_time,
+                    end_time=end_time,
                     type=common.ObjectTypes.Queries.value,
                     object=common.QueriesTypes.Execute.value,
                     lql_query=lql_query,
@@ -930,7 +957,7 @@ class ReportHelper:
         client: LaceworkClient,
         lwAccount: typing.Any,
         cloud_account: typing.Any,
-        ignore_errors: bool,
+        ignore_errors: bool = True,
         fixable: bool = True,
         severity: typing.Any = None,
         namespace: typing.Any = None,
@@ -957,7 +984,7 @@ class ReportHelper:
                 {
                     "field": "severity",
                     "expression": "in",
-                    "values": ["Critical", "High"],
+                    "values": ["Critical", "High", "Medium"],
                 },
                 {
                     "field": "fixInfo.fix_available",
