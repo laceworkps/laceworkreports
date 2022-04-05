@@ -2,15 +2,15 @@ anaconda==0.0.1.1
 bleach==4.1.0; python_version >= "3.6"
 certifi==2021.10.8; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.6.0"
 charset-normalizer==2.0.12; python_full_version >= "3.6.0" and python_version >= "3"
-click==8.1.2; python_version >= "3.7"
-colorama==0.4.4; python_version >= "3.7" and python_full_version < "3.0.0" and platform_system == "Windows" or python_version >= "3.7" and python_full_version >= "3.5.0" and platform_system == "Windows"
+click==8.0.4; python_version >= "3.6"
+colorama==0.4.4; python_version >= "3.6" and python_full_version < "3.0.0" and platform_system == "Windows" or python_version >= "3.6" and python_full_version >= "3.5.0" and platform_system == "Windows"
 commonmark==0.9.1; python_full_version >= "3.6.3" and python_full_version < "4.0.0"
 configparser==5.2.0; python_version >= "3.6"
 greenlet==1.1.2; python_version >= "3" and python_full_version < "3.0.0" and (platform_machine == "aarch64" or platform_machine == "ppc64le" or platform_machine == "x86_64" or platform_machine == "amd64" or platform_machine == "AMD64" or platform_machine == "win32" or platform_machine == "WIN32") and (python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.6.0") and (python_version >= "3.4" and python_full_version < "3.0.0" and python_version < "4.0" or python_version >= "3.4" and python_version < "4.0" and python_full_version >= "3.6.0") or python_version >= "3" and (platform_machine == "aarch64" or platform_machine == "ppc64le" or platform_machine == "x86_64" or platform_machine == "amd64" or platform_machine == "AMD64" or platform_machine == "win32" or platform_machine == "WIN32") and (python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.6.0") and python_full_version >= "3.5.0" and (python_version >= "3.4" and python_full_version < "3.0.0" and python_version < "4.0" or python_version >= "3.4" and python_version < "4.0" and python_full_version >= "3.6.0")
 idna==3.3; python_version >= "3.5" and python_full_version < "3.0.0" or python_full_version >= "3.6.0" and python_version >= "3.5"
 importlib-metadata==4.11.3; python_version >= "3.7"
 jinja2==3.1.1; python_version >= "3.7"
-laceworksdk==1.1.0
+laceworksdk==1.2.0
 markupsafe==2.1.1; python_version >= "3.7"
 numpy==1.22.3
 packaging==21.3; python_version >= "3.6"
