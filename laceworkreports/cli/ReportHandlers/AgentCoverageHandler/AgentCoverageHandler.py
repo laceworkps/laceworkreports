@@ -2,8 +2,7 @@
 Report Handler
 """
 
-import typing
-from typing import Any, Optional
+from typing import Optional
 
 import logging
 from datetime import datetime, timedelta
@@ -12,11 +11,7 @@ from pathlib import Path
 import typer
 
 from laceworkreports import common
-from laceworkreports.sdk.DataHandlers import (
-    DataHandlerTypes,
-    ExportHandler,
-    QueryHandler,
-)
+from laceworkreports.sdk.DataHandlers import DataHandlerTypes, ExportHandler
 from laceworkreports.sdk.ReportHelpers import AgentQueries, ReportHelper
 
 app = typer.Typer(no_args_is_help=True)
@@ -256,6 +251,7 @@ def csv_handler(
     lw = common.config.connect()
 
     # report details
+    # trunk-ignore(flake8/F841)
     report_title = "Agent Coverage"
     db_table = "discovered_machines"
 
