@@ -87,6 +87,18 @@ class AzureComplianceTypes(Enum):
         return value in cls._value2member_map_
 
 
+class ReportSeverityTypes(Enum):
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+    INFO = "info"
+
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
+
+
 class ReportHelper:
     def __init__(self) -> None:
         self.reports: typing_list[Any] = []
@@ -959,7 +971,7 @@ class ReportHelper:
         cloud_account: typing.Any,
         ignore_errors: bool = True,
         fixable: bool = True,
-        severity: typing.Any = None,
+        severity: ReportSeverityTypes = ReportSeverityTypes.HIGH,
         namespace: typing.Any = None,
         start_time: typing.Any = None,
         end_time: typing.Any = None,
@@ -975,6 +987,17 @@ class ReportHelper:
             if fixable:
                 fixable_val = 1
 
+            if severity.value == ReportSeverityTypes.CRITICAL.value:
+                severity_types = ["Critical"]
+            elif severity.value == ReportSeverityTypes.HIGH.value:
+                severity_types = ["Critical", "High"]
+            elif severity.value == ReportSeverityTypes.MEDIUM.value:
+                severity_types = ["Critical", "High", "Medium"]
+            elif severity.value == ReportSeverityTypes.LOW.value:
+                severity_types = ["Critical", "High", "Medium", "Low"]
+            elif severity.value == ReportSeverityTypes.INFO.value:
+                severity_types = ["Critical", "High", "Medium", "Low", "Info"]
+
             filters = [
                 {
                     "field": "status",
@@ -984,7 +1007,7 @@ class ReportHelper:
                 {
                     "field": "severity",
                     "expression": "in",
-                    "values": ["Critical", "High", "Medium"],
+                    "values": severity_types,
                 },
                 {
                     "field": "fixInfo.fix_available",
@@ -992,6 +1015,18 @@ class ReportHelper:
                     "value": fixable_val,
                 },
             ]
+
+            if namespace is not None:
+                filters.append(
+                    {
+                        "field": "featureKey.namespace",
+                        "expression": "rlike",
+                        "value": namespace,
+                    }
+                )
+
+            if cve is not None:
+                filters.append({"field": "vulnId", "expression": "rlike", "value": cve})
 
             cloud_account_details = cloud_account.split(":")
             csp = cloud_account_details[0]
