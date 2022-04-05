@@ -71,8 +71,10 @@ def html(
     db_connection = f"sqlite:///{db_path.absolute()}?check_same_thread=False"
 
     reportHelper.sqlite_drop_table(db_table, db_connection)
+    reportHelper.sqlite_drop_table("active_cloud_accounts", db_connection)
     reportHelper.sqlite_drop_table("machines", db_connection)
     reportHelper.sqlite_drop_table("cloud_accounts", db_connection)
+    reportHelper.sqlite_drop_table("instances", db_connection)
 
     has_subaccounts = False
     if subaccounts:
@@ -85,15 +87,18 @@ def html(
     else:
         lwAccounts = [{"accountName": lw._account}]
 
-    lacework_account_count = 0
-    cloud_account_count = 0
-    missing_cloud_accounts = []
-    reports = []
     for lwAccount in lwAccounts:
-        lacework_account_count += 1
         if has_subaccounts:
             logging.info(f"Switching to subaccount context: {lwAccount['accountName']}")
             lw.set_subaccount(lwAccount["accountName"])
+
+        reportHelper.get_active_cloud_accounts(
+            client=lw,
+            lwAccount=lwAccount["accountName"],
+            use_sqlite=True,
+            db_connection=db_connection,
+            db_table="active_cloud_accounts",
+        )
 
         for cloud_account in reportHelper.get_cloud_accounts(client=lw):
             cloud_account_count += 1

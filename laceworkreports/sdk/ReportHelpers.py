@@ -131,6 +131,7 @@ class ReportHelper:
         self.subaccounts = subaccounts
         return self.subaccounts
 
+    # get cloud accounts from integrations list
     def get_cloud_accounts(
         self,
         client: LaceworkClient,
@@ -539,6 +540,7 @@ class ReportHelper:
 
         return result
 
+    # machines with agents
     def get_active_machines(
         self,
         client: LaceworkClient,
@@ -594,7 +596,8 @@ class ReportHelper:
                             m.TAGS:InstanceId::String AS tag_instanceId,
                             m.TAGS:Account::String AS tag_accountId,
                             m.TAGS:ProjectId::String AS tag_projectId,
-                            m.TAGS:VmProvider::String AS tag_VmProvider
+                            m.TAGS:VmProvider::String AS tag_VmProvider,
+                            m.TAGS:LwTokenShort::String AS lwTokenShort
                         }}
                     }}
                     """
@@ -619,6 +622,113 @@ class ReportHelper:
 
         return result
 
+    # cloud accounts with ec2 or gce instances
+    def get_discovered_cloud_accounts(
+        self,
+        client: LaceworkClient,
+        lwAccount: typing.Any,
+        ignore_errors: bool = True,
+        use_sqlite: bool = False,
+        db_table: typing.Any = None,
+        db_connection: typing.Any = None,
+    ) -> typing_list[typing.Any]:
+        results = []
+        if use_sqlite:
+            format_type = DataHandlerTypes.SQLITE
+        else:
+            format_type = DataHandlerTypes.DICT
+
+        # get distinct cloud accounts with ec2 instances
+        lql_query = f"""ECS {{
+                        source {{LW_CFG_AWS_EC2_INSTANCES m}}
+                        return distinct {{ 
+                                '{lwAccount}' AS lwAccount,
+                                'aws:' || m.ACCOUNT_ID AS accountId
+                            }}
+                        }}
+                        """
+        # sync results
+        try:
+            result = ExportHandler(
+                format=format_type,
+                results=QueryHandler(
+                    client=client,
+                    type=common.ObjectTypes.Queries.value,
+                    object=common.QueriesTypes.Execute.value,
+                    lql_query=lql_query,
+                ).execute(),
+                db_connection=db_connection,
+                db_table=db_table,
+            ).export()
+            results = results + result
+        except laceworksdk.exceptions.ApiError as e:
+            logging.error(f"Lacework api returned: {e}")
+
+            if not ignore_errors:
+                raise e
+
+        # get distinct cloud accounts with gce instances
+        lql_query = f"""
+                        GCE {{
+                            source {{
+                                LW_CFG_GCP_ALL m
+                            }}
+                            filter {{
+                                m.SERVICE = 'compute'
+                                AND m.API_KEY = 'resource'
+                                AND KEY_EXISTS(m.RESOURCE_CONFIG:status)
+                                AND KEY_EXISTS(m.RESOURCE_CONFIG:machineType)
+                            }}
+                            return distinct {{ 
+                                '{lwAccount}' AS lwAccount,
+                                'gcp:' || ORGANIZATION::String || ':' || SUBSTRING(
+                                    SUBSTRING(
+                                        m.URN,
+                                        CHAR_INDEX(
+                                            '/', 
+                                            m.URN
+                                        )+34,
+                                        LENGTH(m.URN)
+                                    ),
+                                    0,
+                                    CHAR_INDEX(
+                                        '/zones/',
+                                        SUBSTRING(
+                                            m.URN,
+                                            CHAR_INDEX(
+                                                '/', 
+                                                m.URN
+                                            )+35,
+                                            LENGTH(m.URN)
+                                        )
+                                    )
+                                ) AS accountId
+                            }}
+                        }}
+                        """
+        # sync results
+        try:
+            result = ExportHandler(
+                format=format_type,
+                results=QueryHandler(
+                    client=client,
+                    type=common.ObjectTypes.Queries.value,
+                    object=common.QueriesTypes.Execute.value,
+                    lql_query=lql_query,
+                ).execute(),
+                db_connection=db_connection,
+                db_table=db_table,
+            ).export()
+            results = results + result
+        except laceworksdk.exceptions.ApiError as e:
+            logging.error(f"Lacework api returned: {e}")
+
+            if not ignore_errors:
+                raise e
+
+        return results
+
+    # cloud accounts with agents deployed
     def get_active_cloud_accounts(
         self,
         client: LaceworkClient,
@@ -997,67 +1107,110 @@ class ReportHelper:
 AgentQueries = {
     "report": """
                 SELECT 
-                    * 
+                    LWACCOUNT AS lwAccount,
+                    ACCOUNTID AS accountId,
+                    INSTANCEID AS InstanceId,
+                    LOWER(STATE) AS state,
+                    (SELECT COUNT(*) FROM machines AS m WHERE m.TAG_INSTANCEID = dm.INSTANCEID) AS has_agent,
+                    (SELECT LWTOKENSHORT FROM machines AS m WHERE m.TAG_INSTANCEID = dm.INSTANCEID) AS lwTokenShort
                 FROM 
-                    :db_table
-                WHERE
-                    State = 'running'
+                    :db_table AS dm
                 ORDER BY
-                    accountId,
-                    lwAccount
+                    LWACCOUNT,
+                    ACCOUNTID
                 """,
     "account_coverage": """
                         SELECT 
-                            lwAccount,
-                            accountId,
-                            SUM(lacework) AS total_installed,
+                            LWACCOUNT AS lwAccount,
+                            ACCOUNTID AS accountId,
+                            SUM(HAS_AGENT) AS total_installed,
                             COUNT(*) AS total,
-                            SUM(lacework)*100/COUNT(*) AS total_coverage
+                            SUM(HAS_AGENT)*100/COUNT(*) AS total_coverage
                         FROM 
-                            :db_table 
+                            (
+                                SELECT 
+                                    LWACCOUNT,
+                                    ACCOUNTID,
+                                    INSTANCEID,
+                                    LOWER(STATE) AS STATE,
+                                    (SELECT COUNT(*) FROM machines AS m WHERE m.TAG_INSTANCEID = dm.INSTANCEID) AS HAS_AGENT,
+                                    (SELECT LWTOKENSHORT FROM machines AS m WHERE m.TAG_INSTANCEID = dm.INSTANCEID) AS LWTOKENSHORT
+                                FROM 
+                                    :db_table AS dm
+                            ) AS t
                         WHERE
-                            State = 'running'
+                            STATE = 'running'
                         GROUP BY
-                            accountId,
-                            lwAccount
+                            LWACCOUNT,
+                            ACCOUNTID
                         ORDER BY
-                            accountId,
-                            total_coverage
+                            LWACCOUNT,
+                            ACCOUNTID
                         """,
     "total_summary": """
                         SELECT  
                             'Any' AS lwAccount,
-                            COUNT(DISTINCT accountId) AS total_accounts,
-                            SUM(lacework) AS total_installed,
-                            COUNT(*)-SUM(lacework) AS total_not_installed,
+                            COUNT(DISTINCT ACCOUNTID) AS total_accounts,
+                            SUM(HAS_AGENT) AS total_installed,
+                            COUNT(*)-SUM(HAS_AGENT) AS total_not_installed,
                             COUNT(*) AS total,
-                            SUM(lacework)*100/COUNT(*) AS total_coverage
+                            SUM(HAS_AGENT)*100/COUNT(*) AS total_coverage
                         FROM 
-                            :db_table 
+                            (
+                                SELECT 
+                                    LWACCOUNT,
+                                    ACCOUNTID,
+                                    INSTANCEID,
+                                    LOWER(STATE) AS STATE,
+                                    (SELECT COUNT(*) FROM machines AS m WHERE m.TAG_INSTANCEID = dm.INSTANCEID) AS HAS_AGENT,
+                                    (SELECT LWTOKENSHORT FROM machines AS m WHERE m.TAG_INSTANCEID = dm.INSTANCEID) AS LWTOKENSHORT
+                                FROM 
+                                    :db_table AS dm
+                            ) AS t 
                         WHERE
-                            State = 'running'
+                            STATE = 'running'
                         """,
     "lwaccount_summary": """
                         SELECT  
-                            lwAccount,
-                            COUNT(DISTINCT accountId) AS total_accounts,
-                            SUM(lacework) AS total_installed,
-                            COUNT(*)-SUM(lacework) AS total_not_installed,
+                            LWACCOUNT AS lwAccount,
+                            COUNT(DISTINCT ACCOUNTID) AS total_accounts,
+                            SUM(HAS_AGENT) AS total_installed,
+                            COUNT(*)-SUM(HAS_AGENT) AS total_not_installed,
                             COUNT(*) AS total,
-                            SUM(lacework)*100/COUNT(*) AS total_coverage
+                            SUM(HAS_AGENT)*100/COUNT(*) AS total_coverage
                         FROM 
-                            :db_table 
+                            (
+                                SELECT 
+                                    LWACCOUNT,
+                                    ACCOUNTID,
+                                    INSTANCEID,
+                                    LOWER(STATE) AS STATE,
+                                    (SELECT COUNT(*) FROM machines AS m WHERE m.TAG_INSTANCEID = dm.INSTANCEID) AS HAS_AGENT,
+                                    (SELECT LWTOKENSHORT FROM machines AS m WHERE m.TAG_INSTANCEID = dm.INSTANCEID) AS LWTOKENSHORT
+                                FROM 
+                                    :db_table AS dm
+                            ) AS t  
                         WHERE
-                            State = 'running'
+                            STATE = 'running'
                         GROUP BY
-                            lwAccount
+                            LWACCOUNT
                         """,
     "lwaccount": """
                     SELECT 
                         DISTINCT 
-                        lwAccount
+                        LWACCOUNT AS lwAccount
                     FROM
-                        :db_table
+                        (
+                            SELECT 
+                                LWACCOUNT,
+                                ACCOUNTID,
+                                INSTANCEID,
+                                LOWER(STATE) AS STATE,
+                                (SELECT COUNT(*) FROM machines AS m WHERE m.TAG_INSTANCEID = dm.INSTANCEID) AS HAS_AGENT,
+                                (SELECT LWTOKENSHORT FROM machines AS m WHERE m.TAG_INSTANCEID = dm.INSTANCEID) AS LWTOKENSHORT
+                            FROM 
+                                :db_table AS dm
+                        ) AS t 
                     """,
 }
 
