@@ -57,13 +57,14 @@ def html(
     """
     Set the command context
     """
+    missing_cloud_accounts = []
 
     # connect lacework client
     lw = common.config.connect()
 
     # report details
     report_title = "Compliance Coverage"
-    db_table = "vulnerability_coverage"
+    db_table = "compliance_coverage"
 
     reportHelper = ReportHelper()
     db_path = Path("database.db")
@@ -71,10 +72,7 @@ def html(
     db_connection = f"sqlite:///{db_path.absolute()}?check_same_thread=False"
 
     reportHelper.sqlite_drop_table(db_table, db_connection)
-    reportHelper.sqlite_drop_table("active_cloud_accounts", db_connection)
-    reportHelper.sqlite_drop_table("machines", db_connection)
     reportHelper.sqlite_drop_table("cloud_accounts", db_connection)
-    reportHelper.sqlite_drop_table("instances", db_connection)
 
     has_subaccounts = False
     if subaccounts:
@@ -92,23 +90,26 @@ def html(
             logging.info(f"Switching to subaccount context: {lwAccount['accountName']}")
             lw.set_subaccount(lwAccount["accountName"])
 
-        reportHelper.get_active_cloud_accounts(
-            client=lw,
-            lwAccount=lwAccount["accountName"],
-            use_sqlite=True,
-            db_connection=db_connection,
-            db_table="active_cloud_accounts",
+        # get cloud accounts and sync to sqlite
+        cloud_accounts = reportHelper.get_cloud_accounts(
+            client=lw, lwAccount=lwAccount["accountName"], organization=organization
         )
+        ExportHandler(
+            format=DataHandlerTypes.SQLITE,
+            results=[{"data": cloud_accounts}],
+            file_path=file_path,
+            db_table="cloud_accounts",
+            db_connection=db_connection,
+        ).export()
 
-        for cloud_account in reportHelper.get_cloud_accounts(client=lw):
-            cloud_account_count += 1
+        for cloud_account in cloud_accounts:
             logging.info(
                 f"Enumerating {lwAccount['accountName']}:{cloud_account['accountId']}"
             )
             report = reportHelper.get_compliance_report(
                 client=lw,
                 cloud_account=cloud_account["accountId"],
-                account=lwAccount["accountName"],
+                lwAccount=lwAccount["accountName"],
                 ignore_errors=ignore_errors,
                 organization=organization,
             )
@@ -121,7 +122,6 @@ def html(
                     db_table=db_table,
                     db_connection=db_connection,
                 ).export()
-                reports.append(report[0])
             else:
                 missing_cloud_accounts.append(cloud_account["accountId"])
 
@@ -206,12 +206,13 @@ def csv_handler(
     """
     Set the command context
     """
+    missing_cloud_accounts = []
 
     # connect lacework client
     lw = common.config.connect()
 
     # report details
-    db_table = "vulnerability_coverage"
+    db_table = "compliance_coverage"
 
     reportHelper = ReportHelper()
     db_path = Path("database.db")
@@ -219,7 +220,6 @@ def csv_handler(
     db_connection = f"sqlite:///{db_path.absolute()}?check_same_thread=False"
 
     reportHelper.sqlite_drop_table(db_table, db_connection)
-    reportHelper.sqlite_drop_table("machines", db_connection)
     reportHelper.sqlite_drop_table("cloud_accounts", db_connection)
 
     has_subaccounts = False
@@ -233,25 +233,31 @@ def csv_handler(
     else:
         lwAccounts = [{"accountName": lw._account}]
 
-    lacework_account_count = 0
-    cloud_account_count = 0
-    missing_cloud_accounts = []
-    reports = []
     for lwAccount in lwAccounts:
-        lacework_account_count += 1
         if has_subaccounts:
             logging.info(f"Switching to subaccount context: {lwAccount['accountName']}")
             lw.set_subaccount(lwAccount["accountName"])
 
-        for cloud_account in reportHelper.get_cloud_accounts(client=lw):
-            cloud_account_count += 1
+        # get cloud accounts and sync to sqlite
+        cloud_accounts = reportHelper.get_cloud_accounts(
+            client=lw, lwAccount=lwAccount["accountName"], organization=organization
+        )
+        ExportHandler(
+            format=DataHandlerTypes.SQLITE,
+            results=[{"data": cloud_accounts}],
+            file_path=file_path,
+            db_table="cloud_accounts",
+            db_connection=db_connection,
+        ).export()
+
+        for cloud_account in cloud_accounts:
             logging.info(
                 f"Enumerating {lwAccount['accountName']}:{cloud_account['accountId']}"
             )
             report = reportHelper.get_compliance_report(
                 client=lw,
                 cloud_account=cloud_account["accountId"],
-                account=lwAccount["accountName"],
+                lwAccount=lwAccount["accountName"],
                 ignore_errors=ignore_errors,
                 organization=organization,
             )
@@ -264,7 +270,6 @@ def csv_handler(
                     db_table=db_table,
                     db_connection=db_connection,
                 ).export()
-                reports.append(report[0])
             else:
                 missing_cloud_accounts.append(cloud_account["accountId"])
 
