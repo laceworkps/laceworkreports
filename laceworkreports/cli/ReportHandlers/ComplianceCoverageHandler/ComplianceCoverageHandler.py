@@ -320,7 +320,7 @@ def csv_handler(
 
     if len(results["report"]) > 0:
         if summary_only:
-            report = results["account_coverage_severity"]
+            report = results["account_coverage"]
         else:
             report = results["report"]
 
