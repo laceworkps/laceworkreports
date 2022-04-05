@@ -2,6 +2,7 @@
 Example script showing how to use the LaceworkClient class.
 """
 
+import base64
 import csv
 import json
 import logging
@@ -319,6 +320,8 @@ class DataHandler:
                 datetime=datetime,
                 timedelta=timedelta,
                 config=common.config,
+                pandas=pd,
+                base64=base64,
             )
 
             Path(self.file_path).write_text(result)
