@@ -659,7 +659,7 @@ class ReportHelper:
         db_table: typing.Any = None,
         db_connection: typing.Any = None,
     ) -> typing_list[typing.Any]:
-        results = []
+        results: typing_list[typing.Any] = []
         if use_sqlite:
             format_type = DataHandlerTypes.SQLITE
         else:
@@ -771,7 +771,7 @@ class ReportHelper:
         db_table: typing.Any = None,
         db_connection: typing.Any = None,
     ) -> typing_list[typing.Any]:
-        results = []
+        results: typing_list[typing.Any] = []
         if use_sqlite:
             format_type = DataHandlerTypes.SQLITE
         else:
@@ -838,7 +838,7 @@ class ReportHelper:
         db_table: typing.Any = None,
         db_connection: typing.Any = None,
     ) -> typing_list[typing.Any]:
-        result = []
+        result: typing_list[typing.Any] = []
         if use_sqlite:
             format_type = DataHandlerTypes.SQLITE
         else:
@@ -939,7 +939,7 @@ class ReportHelper:
         # pull a list of ec2 instance details for the current account
         else:
             logging.warn(f"Unsupported cloud provider type: {cloud_account}")
-            return
+            return result
 
         try:
             result = ExportHandler(
