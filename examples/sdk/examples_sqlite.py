@@ -33,7 +33,7 @@ db_connection = f"sqlite:///{db_path.absolute()}?check_same_thread=False"
 #     db_connection=db_connection,
 # ).export()
 
-# gcp:468396503088://compute.googleapis.com/projects/model-gearing-425/zones/us-central1-a/instances/analytics-kafka-2
+# gcp:xxx://compute.googleapis.com/projects/xxx/zones/us-central1-a/instances/xxx
 lql_query = """
                 GCE {
                     source {
