@@ -217,7 +217,7 @@ class ReportHelper:
                 tenantId = row["data"]["tenantId"]
 
                 for subscriptionId in subscriptionIds:
-                    accountId = f"az:{tenantId}:{subscriptionId}"
+                    accountId = f"az:{tenantId}:{subscriptionId.upper()}"
                     data = {
                         "lwAccount": lwAccount,
                         "accountId": accountId,
@@ -227,9 +227,9 @@ class ReportHelper:
                         "state": row["state"]["ok"],
                         "type": row["type"],
                     }
-                    if subscriptionId not in azure_accounts:
+                    if subscriptionId.upper() not in azure_accounts:
                         accounts.append(data)
-                        azure_accounts.append(subscriptionId)
+                        azure_accounts.append(subscriptionId.upper())
 
         lql_query = f"""
                     Custom_HE_Machine_1 {{
