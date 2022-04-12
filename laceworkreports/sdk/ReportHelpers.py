@@ -454,7 +454,7 @@ class ReportHelper:
         self,
         query: typing.Any,
         db_connection: typing.Any,
-    ) -> typing_dict[typing.Any, typing.Any]:
+    ) -> typing.Any:
 
         logging.info("Generating query results")
         engine = create_engine(db_connection)
