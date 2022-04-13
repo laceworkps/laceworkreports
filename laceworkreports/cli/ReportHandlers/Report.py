@@ -4,6 +4,7 @@ from laceworkreports import common
 
 from .AgentCoverageHandler import AgentCoverageHandler
 from .ComplianceCoverageHandler import ComplianceCoverageHandler
+from .ContainerVulnerabilityCoverageHandler import ContainerVulnerabilityCoverageHandler
 from .VulnerabilityCoverageHandler import VulnerabilityCoverageHandler
 
 app = typer.Typer(no_args_is_help=True)
@@ -17,6 +18,10 @@ commands = [
     {
         "command_name": "vulnerability-coverage",
         "command_type": VulnerabilityCoverageHandler.app,
+    },
+    {
+        "command_name": "container-vulnerability-coverage",
+        "command_type": ContainerVulnerabilityCoverageHandler.app,
     },
 ]
 
