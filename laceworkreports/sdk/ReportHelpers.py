@@ -1318,11 +1318,11 @@ class ReportHelper:
         try:
             # need to have a list of active container ids to filter vulnerabilities list
             logging.info("Retrieving active containers from local cache...")
-
+            query_string = "SELECT DISTINCT(IMAGE_ID) FROM containers WHERE lwAccount = ':lwAccount' AND accountId = ':cloud_account'"
+            query_string.replace(":lwAccount", lwAccount)
+            query_string.replace(":cloud_account", cloud_account)
             query = self.sqlite_queries(
-                {
-                    "image_ids": f"SELECT DISTINCT(IMAGE_ID) FROM containers WHERE lwAccount = '{lwAccount}' AND accountId = '{cloud_account}'"
-                },
+                {"image_ids": query_string},
                 db_table=db_table,
                 db_connection=db_connection,
             )
@@ -2563,84 +2563,61 @@ VulnerabilityQueries = {
 ContainerVulnerabilityQueries = {
     "report": """
                 SELECT
-                    *
-                FROM
-                    :db_table
-                """,
-    "report2": """
-                SELECT
                     t2.lwAccount,
                     t2.accountId,
-                    t2.hostname,
-                    t2.instanceId,
-                    t2.amiId,
+                    t2.image_id,
+                    t2.image_registry,
+                    t2.import_repo,
                     t2.vulnId,
                     t2.status,
                     t2.severity,
-                    SUM(t2._vulncount) OVER (PARTITION BY t2.instanceId) AS total_violation_count,
-                    SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_critical,
-                    SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_high,
-                    SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_medium,
-                    SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_low,
-                    SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_info,
+                    SUM(t2._vulncount) OVER (PARTITION BY t2.image_id) AS total_violation_count,
+                    SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_critical,
+                    SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_high,
+                    SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_medium,
+                    SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_low,
+                    SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_info,
                     CASE
-                        WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 0 -- F
-                        WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 5 -- F
-                        WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 0 THEN 9 -- F
-                        WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 40 -- D
-                        WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 45 -- D
-                        WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 0 THEN 49 -- D
-                        WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 60 -- C
-                        WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 65 -- C
-                        WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 0 THEN 69 -- C
-                        WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 70 -- B
-                        WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 75 -- B
-                        WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 0 THEN 79 -- B
-                        WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 95
-                        WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 90
-                        WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.instanceId) = 0 THEN 100
+                        WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 0 -- F
+                        WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 5 -- F
+                        WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 9 -- F
+                        WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 40 -- D
+                        WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 45 -- D
+                        WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 49 -- D
+                        WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 60 -- C
+                        WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 65 -- C
+                        WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 69 -- C
+                        WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 70 -- B
+                        WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 75 -- B
+                        WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 79 -- B
+                        WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 95
+                        WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 90
+                        WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) = 0 THEN 100
                     END AS total_coverage,
                     t2.package_name,
                     t2.package_namespace,
-                    t2.package_active,
-                    t2.package_status,
                     t2.version,
                     t2.fix_available,
-                    t2.fixed_version,
-                    t2.account,
-                    t2.projectId,
-                    t2.env,
-                    t2.externalIp,
-                    t2.internalIp,
-                    t2.lwTokenShort,
-                    t2.subnetId,
-                    t2.vmInstanceType,
-                    t2.vmProvider,
-                    t2.vpcId,
-                    t2.zone,
-                    t2.arch,
-                    t2.os,
-                    t2.tags
+                    t2.fixed_version
                 FROM (
                     SELECT
                         t.accountId,
                         t.lwAccount,
                         t.startTime,
                         t.endTime,
-                        t.mid,
-                        json_extract(t.machineTags, '$.Hostname') AS hostname,
-                        json_extract(t.machineTags, '$.InstanceId') AS instanceId,
-                        json_extract(t.machineTags, '$.AmiId') AS amiId,
+                        t.image_id,
+                        t.image_registry,
+                        t.image_repo,
                         t.vulnId,
                         t.status,
                         t.severity,
                         (CASE WHEN ROW_NUMBER() OVER (
-                            PARTITION BY json_extract(t.machineTags, '$.InstanceId'), t.vulnId)=1
+                            PARTITION BY image_id, t.vulnId)=1
                         THEN 1
                         ELSE 0
                         END) AS _vulncount,
                         (CASE WHEN ROW_NUMBER() OVER (
-                            PARTITION BY json_extract(t.machineTags, '$.InstanceId'))=1
+                            PARTITION BY image_id)=1
                         THEN 1
                         ELSE 0
                         END) AS _instcount,
@@ -2673,36 +2650,16 @@ ContainerVulnerabilityQueries = {
                                 ELSE 0
                             END
                         ) AS info,
-                        json_extract(t.featureKey, '$.name') AS package_name,
-                        json_extract(t.featureKey, '$.namespace') AS package_namespace,
-                        json_extract(t.featureKey, '$.package_active') AS package_active,
-                        json_extract(t.fixInfo, '$.eval_status') AS package_status,
-                        json_extract(t.featureKey, '$.version_installed') AS version,
-                        json_extract(t.fixInfo, '$.fix_available') AS fix_available,
-                        json_extract(t.fixInfo, '$.fixed_version') AS fixed_version,
-                        json_extract(t.machineTags, '$.Account') AS account,
-                        json_extract(t.machineTags, '$.ProjectId') AS projectId,
-                        (CASE
-                            WHEN json_extract(t.machineTags, '$.Env') IS NOT NULL THEN json_extract(t.machineTags, '$.Env')
-                            WHEN json_extract(t.machineTags, '$.Environment') IS NOT NULL THEN json_extract(t.machineTags, '$.Environment')
-                            ELSE NULL
-                        END) AS env,
-                        json_extract(t.machineTags, '$.ExternalIp') AS externalIp,
-                        json_extract(t.machineTags, '$.InternalIp') AS internalIp,
-                        json_extract(t.machineTags, '$.LwTokenShort') AS lwTokenShort,
-                        json_extract(t.machineTags, '$.SubnetId') AS subnetId,
-                        json_extract(t.machineTags, '$.VmInstanceType') AS vmInstanceType,
-                        json_extract(t.machineTags, '$.VmProvider') AS vmProvider,
-                        json_extract(t.machineTags, '$.VpcId') AS vpcId,
-                        json_extract(t.machineTags, '$.Zone') AS zone,
-                        json_extract(t.machineTags, '$.arch') AS arch,
-                        json_extract(t.machineTags, '$.os') AS os,
-                        json_extract(t.machineTags, '$') AS tags
+                        t.package_name,
+                        t.package_namespace,
+                        t.version,
+                        t.fix_available,
+                        t.fixed_version
                     FROM 
                         :db_table as t
                     WHERE
-                        json_extract(t.machineTags, '$.InstanceId') IN (
-                            SELECT DISTINCT TAG_INSTANCEID from machines
+                        image_id IN (
+                            SELECT DISTINCT IMAGE_ID from containers
                         )
                 ) AS t2
                 """,
@@ -2745,77 +2702,59 @@ ContainerVulnerabilityQueries = {
                             SELECT
                                 t2.lwAccount,
                                 t2.accountId,
-                                t2.hostname,
-                                t2.instanceId,
-                                t2.amiId,
+                                t2.image_id,
+                                t2.image_registry,
+                                t2.import_repo,
                                 t2.vulnId,
                                 t2.status,
                                 t2.severity,
-                                t2._instcount,
-                                SUM(t2._vulncount) OVER (PARTITION BY t2.instanceId) AS total_violation_count,
-                                SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_critical,
-                                SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_high,
-                                SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_medium,
-                                SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_low,
-                                SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_info,
+                                SUM(t2._vulncount) OVER (PARTITION BY t2.image_id) AS total_violation_count,
+                                SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_critical,
+                                SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_high,
+                                SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_medium,
+                                SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_low,
+                                SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_info,
                                 CASE
-                                    WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 0 -- F
-                                    WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 5 -- F
-                                    WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 0 THEN 9 -- F
-                                    WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 40 -- D
-                                    WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 45 -- D
-                                    WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 0 THEN 49 -- D
-                                    WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 60 -- C
-                                    WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 65 -- C
-                                    WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 0 THEN 69 -- C
-                                    WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 70 -- B
-                                    WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 75 -- B
-                                    WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 0 THEN 79 -- B
-                                    WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 95
-                                    WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 90
-                                    WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.instanceId) = 0 THEN 100
+                                    WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 0 -- F
+                                    WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 5 -- F
+                                    WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 9 -- F
+                                    WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 40 -- D
+                                    WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 45 -- D
+                                    WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 49 -- D
+                                    WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 60 -- C
+                                    WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 65 -- C
+                                    WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 69 -- C
+                                    WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 70 -- B
+                                    WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 75 -- B
+                                    WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 79 -- B
+                                    WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 95
+                                    WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 90
+                                    WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) = 0 THEN 100
                                 END AS total_coverage,
                                 t2.package_name,
                                 t2.package_namespace,
-                                t2.package_active,
-                                t2.package_status,
                                 t2.version,
                                 t2.fix_available,
-                                t2.fixed_version,
-                                t2.account,
-                                t2.projectId,
-                                t2.env,
-                                t2.externalIp,
-                                t2.internalIp,
-                                t2.lwTokenShort,
-                                t2.subnetId,
-                                t2.vmInstanceType,
-                                t2.vmProvider,
-                                t2.vpcId,
-                                t2.zone,
-                                t2.arch,
-                                t2.os,
-                                t2.tags
+                                t2.fixed_version
                             FROM (
                                 SELECT
                                     t.accountId,
                                     t.lwAccount,
                                     t.startTime,
                                     t.endTime,
-                                    t.mid,
-                                    json_extract(t.machineTags, '$.Hostname') AS hostname,
-                                    json_extract(t.machineTags, '$.InstanceId') AS instanceId,
-                                    json_extract(t.machineTags, '$.AmiId') AS amiId,
+                                    t.image_id,
+                                    t.image_registry,
+                                    t.image_repo,
                                     t.vulnId,
                                     t.status,
                                     t.severity,
                                     (CASE WHEN ROW_NUMBER() OVER (
-                                        PARTITION BY json_extract(t.machineTags, '$.InstanceId'), t.vulnId)=1
+                                        PARTITION BY image_id, t.vulnId)=1
                                     THEN 1
                                     ELSE 0
                                     END) AS _vulncount,
                                     (CASE WHEN ROW_NUMBER() OVER (
-                                        PARTITION BY json_extract(t.machineTags, '$.InstanceId'))=1
+                                        PARTITION BY image_id)=1
                                     THEN 1
                                     ELSE 0
                                     END) AS _instcount,
@@ -2848,36 +2787,16 @@ ContainerVulnerabilityQueries = {
                                             ELSE 0
                                         END
                                     ) AS info,
-                                    json_extract(t.featureKey, '$.name') AS package_name,
-                                    json_extract(t.featureKey, '$.namespace') AS package_namespace,
-                                    json_extract(t.featureKey, '$.package_active') AS package_active,
-                                    json_extract(t.fixInfo, '$.eval_status') AS package_status,
-                                    json_extract(t.featureKey, '$.version_installed') AS version,
-                                    json_extract(t.fixInfo, '$.fix_available') AS fix_available,
-                                    json_extract(t.fixInfo, '$.fixed_version') AS fixed_version,
-                                    json_extract(t.machineTags, '$.Account') AS account,
-                                    json_extract(t.machineTags, '$.ProjectId') AS projectId,
-                                    (CASE
-                                        WHEN json_extract(t.machineTags, '$.Env') IS NOT NULL THEN json_extract(t.machineTags, '$.Env')
-                                        WHEN json_extract(t.machineTags, '$.Environment') IS NOT NULL THEN json_extract(t.machineTags, '$.Environment')
-                                        ELSE NULL
-                                    END) AS env,
-                                    json_extract(t.machineTags, '$.ExternalIp') AS externalIp,
-                                    json_extract(t.machineTags, '$.InternalIp') AS internalIp,
-                                    json_extract(t.machineTags, '$.LwTokenShort') AS lwTokenShort,
-                                    json_extract(t.machineTags, '$.SubnetId') AS subnetId,
-                                    json_extract(t.machineTags, '$.VmInstanceType') AS vmInstanceType,
-                                    json_extract(t.machineTags, '$.VmProvider') AS vmProvider,
-                                    json_extract(t.machineTags, '$.VpcId') AS vpcId,
-                                    json_extract(t.machineTags, '$.Zone') AS zone,
-                                    json_extract(t.machineTags, '$.arch') AS arch,
-                                    json_extract(t.machineTags, '$.os') AS os,
-                                    json_extract(t.machineTags, '$') AS tags
+                                    t.package_name,
+                                    t.package_namespace,
+                                    t.version,
+                                    t.fix_available,
+                                    t.fixed_version
                                 FROM 
                                     :db_table as t
                                 WHERE
-                                    json_extract(t.machineTags, '$.InstanceId') IN (
-                                        SELECT DISTINCT TAG_INSTANCEID from machines
+                                    image_id IN (
+                                        SELECT DISTINCT IMAGE_ID from containers
                                     )
                             ) AS t2
                         ) AS t3
@@ -2937,77 +2856,59 @@ ContainerVulnerabilityQueries = {
                                 SELECT
                                     t2.lwAccount,
                                     t2.accountId,
-                                    t2.hostname,
-                                    t2.instanceId,
-                                    t2.amiId,
+                                    t2.image_id,
+                                    t2.image_registry,
+                                    t2.import_repo,
                                     t2.vulnId,
                                     t2.status,
                                     t2.severity,
-                                    t2._instcount,
-                                    SUM(t2._vulncount) OVER (PARTITION BY t2.instanceId) AS total_violation_count,
-                                    SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_critical,
-                                    SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_high,
-                                    SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_medium,
-                                    SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_low,
-                                    SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_info,
+                                    SUM(t2._vulncount) OVER (PARTITION BY t2.image_id) AS total_violation_count,
+                                    SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_critical,
+                                    SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_high,
+                                    SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_medium,
+                                    SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_low,
+                                    SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_info,
                                     CASE
-                                        WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 0 -- F
-                                        WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 5 -- F
-                                        WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 0 THEN 9 -- F
-                                        WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 40 -- D
-                                        WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 45 -- D
-                                        WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 0 THEN 49 -- D
-                                        WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 60 -- C
-                                        WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 65 -- C
-                                        WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 0 THEN 69 -- C
-                                        WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 70 -- B
-                                        WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 75 -- B
-                                        WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 0 THEN 79 -- B
-                                        WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 95
-                                        WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 90
-                                        WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.instanceId) = 0 THEN 100
+                                        WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 0 -- F
+                                        WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 5 -- F
+                                        WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 9 -- F
+                                        WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 40 -- D
+                                        WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 45 -- D
+                                        WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 49 -- D
+                                        WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 60 -- C
+                                        WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 65 -- C
+                                        WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 69 -- C
+                                        WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 70 -- B
+                                        WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 75 -- B
+                                        WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 79 -- B
+                                        WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 95
+                                        WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 90
+                                        WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) = 0 THEN 100
                                     END AS total_coverage,
                                     t2.package_name,
                                     t2.package_namespace,
-                                    t2.package_active,
-                                    t2.package_status,
                                     t2.version,
                                     t2.fix_available,
-                                    t2.fixed_version,
-                                    t2.account,
-                                    t2.projectId,
-                                    t2.env,
-                                    t2.externalIp,
-                                    t2.internalIp,
-                                    t2.lwTokenShort,
-                                    t2.subnetId,
-                                    t2.vmInstanceType,
-                                    t2.vmProvider,
-                                    t2.vpcId,
-                                    t2.zone,
-                                    t2.arch,
-                                    t2.os,
-                                    t2.tags
+                                    t2.fixed_version
                                 FROM (
                                     SELECT
                                         t.accountId,
                                         t.lwAccount,
                                         t.startTime,
                                         t.endTime,
-                                        t.mid,
-                                        json_extract(t.machineTags, '$.Hostname') AS hostname,
-                                        json_extract(t.machineTags, '$.InstanceId') AS instanceId,
-                                        json_extract(t.machineTags, '$.AmiId') AS amiId,
+                                        t.image_id,
+                                        t.image_registry,
+                                        t.image_repo,
                                         t.vulnId,
                                         t.status,
                                         t.severity,
                                         (CASE WHEN ROW_NUMBER() OVER (
-                                            PARTITION BY json_extract(t.machineTags, '$.InstanceId'), t.vulnId)=1
+                                            PARTITION BY image_id, t.vulnId)=1
                                         THEN 1
                                         ELSE 0
                                         END) AS _vulncount,
                                         (CASE WHEN ROW_NUMBER() OVER (
-                                            PARTITION BY json_extract(t.machineTags, '$.InstanceId'))=1
+                                            PARTITION BY image_id)=1
                                         THEN 1
                                         ELSE 0
                                         END) AS _instcount,
@@ -3040,36 +2941,16 @@ ContainerVulnerabilityQueries = {
                                                 ELSE 0
                                             END
                                         ) AS info,
-                                        json_extract(t.featureKey, '$.name') AS package_name,
-                                        json_extract(t.featureKey, '$.namespace') AS package_namespace,
-                                        json_extract(t.featureKey, '$.package_active') AS package_active,
-                                        json_extract(t.fixInfo, '$.eval_status') AS package_status,
-                                        json_extract(t.featureKey, '$.version_installed') AS version,
-                                        json_extract(t.fixInfo, '$.fix_available') AS fix_available,
-                                        json_extract(t.fixInfo, '$.fixed_version') AS fixed_version,
-                                        json_extract(t.machineTags, '$.Account') AS account,
-                                        json_extract(t.machineTags, '$.ProjectId') AS projectId,
-                                        (CASE
-                                            WHEN json_extract(t.machineTags, '$.Env') IS NOT NULL THEN json_extract(t.machineTags, '$.Env')
-                                            WHEN json_extract(t.machineTags, '$.Environment') IS NOT NULL THEN json_extract(t.machineTags, '$.Environment')
-                                            ELSE NULL
-                                        END) AS env,
-                                        json_extract(t.machineTags, '$.ExternalIp') AS externalIp,
-                                        json_extract(t.machineTags, '$.InternalIp') AS internalIp,
-                                        json_extract(t.machineTags, '$.LwTokenShort') AS lwTokenShort,
-                                        json_extract(t.machineTags, '$.SubnetId') AS subnetId,
-                                        json_extract(t.machineTags, '$.VmInstanceType') AS vmInstanceType,
-                                        json_extract(t.machineTags, '$.VmProvider') AS vmProvider,
-                                        json_extract(t.machineTags, '$.VpcId') AS vpcId,
-                                        json_extract(t.machineTags, '$.Zone') AS zone,
-                                        json_extract(t.machineTags, '$.arch') AS arch,
-                                        json_extract(t.machineTags, '$.os') AS os,
-                                        json_extract(t.machineTags, '$') AS tags
+                                        t.package_name,
+                                        t.package_namespace,
+                                        t.version,
+                                        t.fix_available,
+                                        t.fixed_version
                                     FROM 
                                         :db_table as t
                                     WHERE
-                                        json_extract(t.machineTags, '$.InstanceId') IN (
-                                            SELECT DISTINCT TAG_INSTANCEID from machines
+                                        image_id IN (
+                                            SELECT DISTINCT IMAGE_ID from containers
                                         )
                                 ) AS t2
                             ) AS t3
@@ -3095,12 +2976,12 @@ ContainerVulnerabilityQueries = {
                                 SELECT
                                     lwAccount,
                                     accountId,
-                                    COUNT(DISTINCT instanceId) AS total_assets_in_violation,
+                                    COUNT(DISTINCT image_id) AS total_assets_in_violation,
                                     (
                                         SELECT 
-                                            COUNT(DISTINCT TAG_INSTANCEID) 
+                                            COUNT(DISTINCT image_id) 
                                         FROM 
-                                            machines
+                                            containers
                                         WHERE t3.lwAccount = lwAccount AND t3.accountId = accountId
                                     ) AS total_assets,
                                     SUM(_instcount*total_critical) AS critical,
@@ -3112,17 +2993,17 @@ ContainerVulnerabilityQueries = {
                                     (
                                     (((
                                             SELECT 
-                                                COUNT(DISTINCT TAG_INSTANCEID) 
+                                                COUNT(DISTINCT IMAGE_ID) 
                                             FROM 
-                                                machines
+                                                containers
                                             WHERE t3.lwAccount = lwAccount AND t3.accountId = accountId
-                                        ) - COUNT(DISTINCT instanceId))*100
+                                        ) - COUNT(DISTINCT image_id))*100
                                         + SUM(_instcount*total_coverage))
                                         /(
                                             SELECT 
-                                                COUNT(DISTINCT TAG_INSTANCEID) 
+                                                COUNT(DISTINCT IMAGE_ID) 
                                             FROM 
-                                                machines
+                                                containers
                                             WHERE t3.lwAccount = lwAccount AND t3.accountId = accountId
                                         )
                                     ) AS total_coverage
@@ -3130,77 +3011,59 @@ ContainerVulnerabilityQueries = {
                                     SELECT
                                         t2.lwAccount,
                                         t2.accountId,
-                                        t2.hostname,
-                                        t2.instanceId,
-                                        t2.amiId,
+                                        t2.image_id,
+                                        t2.image_registry,
+                                        t2.import_repo,
                                         t2.vulnId,
                                         t2.status,
                                         t2.severity,
-                                        t2._instcount,
-                                        SUM(t2._vulncount) OVER (PARTITION BY t2.instanceId) AS total_violation_count,
-                                        SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_critical,
-                                        SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_high,
-                                        SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_medium,
-                                        SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_low,
-                                        SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.instanceId) AS total_info,
+                                        SUM(t2._vulncount) OVER (PARTITION BY t2.image_id) AS total_violation_count,
+                                        SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_critical,
+                                        SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_high,
+                                        SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_medium,
+                                        SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_low,
+                                        SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_info,
                                         CASE
-                                            WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 0 -- F
-                                            WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 5 -- F
-                                            WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 0 THEN 9 -- F
-                                            WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 40 -- D
-                                            WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 45 -- D
-                                            WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 0 THEN 49 -- D
-                                            WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 60 -- C
-                                            WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 65 -- C
-                                            WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 0 THEN 69 -- C
-                                            WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 70 -- B
-                                            WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 75 -- B
-                                            WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 0 THEN 79 -- B
-                                            WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 10 THEN 95
-                                            WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.instanceId) > 5 THEN 90
-                                            WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.instanceId) = 0 THEN 100
+                                            WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 0 -- F
+                                            WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 5 -- F
+                                            WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 9 -- F
+                                            WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 40 -- D
+                                            WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 45 -- D
+                                            WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 49 -- D
+                                            WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 60 -- C
+                                            WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 65 -- C
+                                            WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 69 -- C
+                                            WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 70 -- B
+                                            WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 75 -- B
+                                            WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 79 -- B
+                                            WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 95
+                                            WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 90
+                                            WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) = 0 THEN 100
                                         END AS total_coverage,
                                         t2.package_name,
                                         t2.package_namespace,
-                                        t2.package_active,
-                                        t2.package_status,
                                         t2.version,
                                         t2.fix_available,
-                                        t2.fixed_version,
-                                        t2.account,
-                                        t2.projectId,
-                                        t2.env,
-                                        t2.externalIp,
-                                        t2.internalIp,
-                                        t2.lwTokenShort,
-                                        t2.subnetId,
-                                        t2.vmInstanceType,
-                                        t2.vmProvider,
-                                        t2.vpcId,
-                                        t2.zone,
-                                        t2.arch,
-                                        t2.os,
-                                        t2.tags
+                                        t2.fixed_version
                                     FROM (
                                         SELECT
                                             t.accountId,
                                             t.lwAccount,
                                             t.startTime,
                                             t.endTime,
-                                            t.mid,
-                                            json_extract(t.machineTags, '$.Hostname') AS hostname,
-                                            json_extract(t.machineTags, '$.InstanceId') AS instanceId,
-                                            json_extract(t.machineTags, '$.AmiId') AS amiId,
+                                            t.image_id,
+                                            t.image_registry,
+                                            t.image_repo,
                                             t.vulnId,
                                             t.status,
                                             t.severity,
                                             (CASE WHEN ROW_NUMBER() OVER (
-                                                PARTITION BY json_extract(t.machineTags, '$.InstanceId'), t.vulnId)=1
+                                                PARTITION BY image_id, t.vulnId)=1
                                             THEN 1
                                             ELSE 0
                                             END) AS _vulncount,
                                             (CASE WHEN ROW_NUMBER() OVER (
-                                                PARTITION BY json_extract(t.machineTags, '$.InstanceId'))=1
+                                                PARTITION BY image_id)=1
                                             THEN 1
                                             ELSE 0
                                             END) AS _instcount,
@@ -3233,36 +3096,16 @@ ContainerVulnerabilityQueries = {
                                                     ELSE 0
                                                 END
                                             ) AS info,
-                                            json_extract(t.featureKey, '$.name') AS package_name,
-                                            json_extract(t.featureKey, '$.namespace') AS package_namespace,
-                                            json_extract(t.featureKey, '$.package_active') AS package_active,
-                                            json_extract(t.fixInfo, '$.eval_status') AS package_status,
-                                            json_extract(t.featureKey, '$.version_installed') AS version,
-                                            json_extract(t.fixInfo, '$.fix_available') AS fix_available,
-                                            json_extract(t.fixInfo, '$.fixed_version') AS fixed_version,
-                                            json_extract(t.machineTags, '$.Account') AS account,
-                                            json_extract(t.machineTags, '$.ProjectId') AS projectId,
-                                            (CASE
-                                                WHEN json_extract(t.machineTags, '$.Env') IS NOT NULL THEN json_extract(t.machineTags, '$.Env')
-                                                WHEN json_extract(t.machineTags, '$.Environment') IS NOT NULL THEN json_extract(t.machineTags, '$.Environment')
-                                                ELSE NULL
-                                            END) AS env,
-                                            json_extract(t.machineTags, '$.ExternalIp') AS externalIp,
-                                            json_extract(t.machineTags, '$.InternalIp') AS internalIp,
-                                            json_extract(t.machineTags, '$.LwTokenShort') AS lwTokenShort,
-                                            json_extract(t.machineTags, '$.SubnetId') AS subnetId,
-                                            json_extract(t.machineTags, '$.VmInstanceType') AS vmInstanceType,
-                                            json_extract(t.machineTags, '$.VmProvider') AS vmProvider,
-                                            json_extract(t.machineTags, '$.VpcId') AS vpcId,
-                                            json_extract(t.machineTags, '$.Zone') AS zone,
-                                            json_extract(t.machineTags, '$.arch') AS arch,
-                                            json_extract(t.machineTags, '$.os') AS os,
-                                            json_extract(t.machineTags, '$') AS tags
+                                            t.package_name,
+                                            t.package_namespace,
+                                            t.version,
+                                            t.fix_available,
+                                            t.fixed_version
                                         FROM 
                                             :db_table as t
                                         WHERE
-                                            json_extract(t.machineTags, '$.InstanceId') IN (
-                                                SELECT DISTINCT TAG_INSTANCEID from machines
+                                            image_id IN (
+                                                SELECT DISTINCT IMAGE_ID from containers
                                             )
                                     ) AS t2
                                 ) AS t3
