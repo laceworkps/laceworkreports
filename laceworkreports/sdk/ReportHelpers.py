@@ -1319,8 +1319,8 @@ class ReportHelper:
             # need to have a list of active container ids to filter vulnerabilities list
             logging.info("Retrieving active containers from local cache...")
             query_string = "SELECT DISTINCT(IMAGE_ID) FROM containers WHERE lwAccount = ':lwAccount' AND accountId = ':cloud_account'"
-            query_string.replace(":lwAccount", lwAccount)
-            query_string.replace(":cloud_account", cloud_account)
+            query_string = query_string.replace(":lwAccount", lwAccount)
+            query_string = query_string.replace(":cloud_account", cloud_account)
             query = self.sqlite_queries(
                 {"image_ids": query_string},
                 db_table=db_table,
@@ -1328,140 +1328,145 @@ class ReportHelper:
             )
             image_ids = [x["IMAGE_ID"] for x in query["image_ids"]]
 
-            logging.info("Retrieving active container vulnerabilities...")
+            if len(image_ids) > 0:
+                logging.info("Retrieving active container vulnerabilities...")
 
-            fixable_val = 0
-            if fixable:
-                fixable_val = 1
+                fixable_val = 0
+                if fixable:
+                    fixable_val = 1
 
-            if severity.value == ReportSeverityTypes.CRITICAL.value:
-                severity_types = ["Critical"]
-            elif severity.value == ReportSeverityTypes.HIGH.value:
-                severity_types = ["Critical", "High"]
-            elif severity.value == ReportSeverityTypes.MEDIUM.value:
-                severity_types = ["Critical", "High", "Medium"]
-            elif severity.value == ReportSeverityTypes.LOW.value:
-                severity_types = ["Critical", "High", "Medium", "Low"]
-            elif severity.value == ReportSeverityTypes.INFO.value:
-                severity_types = ["Critical", "High", "Medium", "Low", "Info"]
+                if severity.value == ReportSeverityTypes.CRITICAL.value:
+                    severity_types = ["Critical"]
+                elif severity.value == ReportSeverityTypes.HIGH.value:
+                    severity_types = ["Critical", "High"]
+                elif severity.value == ReportSeverityTypes.MEDIUM.value:
+                    severity_types = ["Critical", "High", "Medium"]
+                elif severity.value == ReportSeverityTypes.LOW.value:
+                    severity_types = ["Critical", "High", "Medium", "Low"]
+                elif severity.value == ReportSeverityTypes.INFO.value:
+                    severity_types = ["Critical", "High", "Medium", "Low", "Info"]
 
-            filters = [
-                {
-                    "field": "severity",
-                    "expression": "in",
-                    "values": severity_types,
-                },
-                {"field": "imageId", "expression": "in", "values": image_ids},
-                {"field": "status", "expression": "in", "values": ["VULNERABLE"]},
-                {
-                    "field": "fixInfo.fix_available",
-                    "expression": "eq",
-                    "value": fixable_val,
-                },
-            ]
-
-            if namespace is not None:
-                filters.append(
+                filters = [
                     {
-                        "field": "featureKey.namespace",
-                        "expression": "rlike",
-                        "value": namespace,
-                    }
-                )
+                        "field": "severity",
+                        "expression": "in",
+                        "values": severity_types,
+                    },
+                    {"field": "imageId", "expression": "in", "values": image_ids},
+                    {"field": "status", "expression": "in", "values": ["VULNERABLE"]},
+                    {
+                        "field": "fixInfo.fix_available",
+                        "expression": "eq",
+                        "value": fixable_val,
+                    },
+                ]
 
-            if cve is not None:
-                filters.append({"field": "vulnId", "expression": "rlike", "value": cve})
+                if namespace is not None:
+                    filters.append(
+                        {
+                            "field": "featureKey.namespace",
+                            "expression": "rlike",
+                            "value": namespace,
+                        }
+                    )
 
-            if use_sqlite:
-                format_type = DataHandlerTypes.SQLITE
-            else:
-                format_type = DataHandlerTypes.DICT
+                if cve is not None:
+                    filters.append(
+                        {"field": "vulnId", "expression": "rlike", "value": cve}
+                    )
 
-            # export results
-            report = ExportHandler(
-                format=format_type,
-                results=QueryHandler(
-                    client=client,
-                    type=common.ObjectTypes.Vulnerabilities.value,
-                    object=common.VulnerabilitiesTypes.Containers.value,
-                    start_time=start_time,
-                    end_time=end_time,
-                    filters=filters,
-                    returns=[
-                        "startTime",
-                        "imageId",
-                        "severity",
-                        "status",
-                        "vulnId",
-                        "evalCtx",
-                        "fixInfo",
-                        "featureKey",
-                    ],
-                ).execute(),
-                db_connection=db_connection,
-                db_table=db_table,
-                field_map={
-                    "start_time": "startTime",
-                    "image_id": "imageId",
-                    "vulnId": "vulnId",
-                    "image_registry": "evalCtx.image_info.registry",
-                    "image_repo": "evalCtx.image_info.repo",
-                    "image_status": "evalCtx.image_info.status",
-                    "package_name": "featureKey.name",
-                    "package_namespace": "featureKey.namespace",
-                    "version": "featureKey.version",
-                    "fix_available": "fixInfo.fix_available",
-                    "fixed_version": "fixInfo.fixed_version",
-                    "severity": "severity",
-                    "status": "status",
-                },
-            ).export()
+                if use_sqlite:
+                    format_type = DataHandlerTypes.SQLITE
+                else:
+                    format_type = DataHandlerTypes.DICT
 
-            # add the cloud account and lwaccount context
-            if use_sqlite:
-                db_engine = create_engine(db_connection)
-                if db_engine.has_table(db_table):
-                    conn = db_engine.connect()
-                    ddl = "SELECT * FROM {table_name} LIMIT 1"
-                    sql_command = ddl.format(table_name=db_table)
-                    result = conn.execute(text(sql_command)).fetchall()[0].keys()
-                    columns = [x for x in result]
+                # export results
+                report = ExportHandler(
+                    format=format_type,
+                    results=QueryHandler(
+                        client=client,
+                        type=common.ObjectTypes.Vulnerabilities.value,
+                        object=common.VulnerabilitiesTypes.Containers.value,
+                        start_time=start_time,
+                        end_time=end_time,
+                        filters=filters,
+                        returns=[
+                            "startTime",
+                            "imageId",
+                            "severity",
+                            "status",
+                            "vulnId",
+                            "evalCtx",
+                            "fixInfo",
+                            "featureKey",
+                        ],
+                    ).execute(),
+                    db_connection=db_connection,
+                    db_table=db_table,
+                    field_map={
+                        "start_time": "startTime",
+                        "image_id": "imageId",
+                        "vulnId": "vulnId",
+                        "image_registry": "evalCtx.image_info.registry",
+                        "image_repo": "evalCtx.image_info.repo",
+                        "image_status": "evalCtx.image_info.status",
+                        "package_name": "featureKey.name",
+                        "package_namespace": "featureKey.namespace",
+                        "version": "featureKey.version",
+                        "fix_available": "fixInfo.fix_available",
+                        "fixed_version": "fixInfo.fixed_version",
+                        "severity": "severity",
+                        "status": "status",
+                    },
+                ).export()
 
-                    if "accountId" not in columns or "lwAccount" not in columns:
+                # add the cloud account and lwaccount context
+                if use_sqlite:
+                    db_engine = create_engine(db_connection)
+                    if db_engine.has_table(db_table):
+                        conn = db_engine.connect()
+                        ddl = "SELECT * FROM {table_name} LIMIT 1"
+                        sql_command = ddl.format(table_name=db_table)
+                        result = conn.execute(text(sql_command)).fetchall()[0].keys()
+                        columns = [x for x in result]
+
+                        if "accountId" not in columns or "lwAccount" not in columns:
+                            for column in ["accountId", "lwAccount"]:
+                                ddl = "ALTER TABLE {table_name} ADD column {column_name} {column_type}"
+                                sql_command = text(
+                                    ddl.format(
+                                        table_name=db_table,
+                                        column_name=column,
+                                        column_type="TEXT",
+                                    )
+                                )
+                                conn.execute(sql_command)
+
                         for column in ["accountId", "lwAccount"]:
-                            ddl = "ALTER TABLE {table_name} ADD column {column_name} {column_type}"
+                            if column == "accountId":
+                                column_value = cloud_account
+                            elif column == "lwAccount":
+                                column_value = lwAccount
+
+                            ddl = "UPDATE {table_name} SET {column_name} = '{column_value}' WHERE {column_name} IS NULL"
                             sql_command = text(
                                 ddl.format(
                                     table_name=db_table,
                                     column_name=column,
-                                    column_type="TEXT",
+                                    column_value=column_value,
                                 )
                             )
                             conn.execute(sql_command)
+                    else:
+                        logging.warn("Skipping update table")
 
-                    for column in ["accountId", "lwAccount"]:
-                        if column == "accountId":
-                            column_value = cloud_account
-                        elif column == "lwAccount":
-                            column_value = lwAccount
-
-                        ddl = "UPDATE {table_name} SET {column_name} = '{column_value}' WHERE {column_name} IS NULL"
-                        sql_command = text(
-                            ddl.format(
-                                table_name=db_table,
-                                column_name=column,
-                                column_value=column_value,
-                            )
-                        )
-                        conn.execute(sql_command)
                 else:
-                    logging.warn("Skipping update table")
-
+                    for r in report:
+                        r["accountId"] = cloud_account
+                        r["lwAccount"] = lwAccount
+                        result.append(r)
             else:
-                for r in report:
-                    r["accountId"] = cloud_account
-                    r["lwAccount"] = lwAccount
-                    result.append(r)
+                logging.info(f"No active images found in: {lwAccount}:{cloud_account}")
 
         except laceworksdk.exceptions.ApiError as e:
             logging.error(f"Lacework api returned: {e}")
@@ -2567,7 +2572,7 @@ ContainerVulnerabilityQueries = {
                     t2.accountId,
                     t2.image_id,
                     t2.image_registry,
-                    t2.import_repo,
+                    t2.image_repo,
                     t2.vulnId,
                     t2.status,
                     t2.severity,
@@ -2603,8 +2608,7 @@ ContainerVulnerabilityQueries = {
                     SELECT
                         t.accountId,
                         t.lwAccount,
-                        t.startTime,
-                        t.endTime,
+                        t.start_time,
                         t.image_id,
                         t.image_registry,
                         t.image_repo,
@@ -2667,12 +2671,12 @@ ContainerVulnerabilityQueries = {
                         SELECT
                             lwAccount,
                             accountId,
-                            COUNT(DISTINCT instanceId) AS total_assets_in_violation,
+                            COUNT(DISTINCT image_id) AS total_assets_in_violation,
                             (
                                 SELECT 
-                                    COUNT(DISTINCT TAG_INSTANCEID) 
+                                    COUNT(DISTINCT IMAGE_ID) 
                                 FROM 
-                                    machines
+                                    containers
                                 WHERE t3.lwAccount = lwAccount AND t3.accountId = accountId
                             ) AS total_assets,
                             SUM(_instcount*total_critical) AS critical,
@@ -2684,17 +2688,17 @@ ContainerVulnerabilityQueries = {
                             (
                             (((
                                     SELECT 
-                                        COUNT(DISTINCT TAG_INSTANCEID) 
+                                        COUNT(DISTINCT IMAGE_ID) 
                                     FROM 
-                                        machines
+                                        containers
                                     WHERE t3.lwAccount = lwAccount AND t3.accountId = accountId
-                                ) - COUNT(DISTINCT instanceId))*100
+                                ) - COUNT(DISTINCT image_id))*100
                                 + SUM(_instcount*total_coverage))
                                 /(
                                     SELECT 
-                                        COUNT(DISTINCT TAG_INSTANCEID) 
+                                        COUNT(DISTINCT IMAGE_ID) 
                                     FROM 
-                                        machines
+                                        containers
                                     WHERE t3.lwAccount = lwAccount AND t3.accountId = accountId
                                 )
                             ) AS total_coverage
@@ -2704,10 +2708,11 @@ ContainerVulnerabilityQueries = {
                                 t2.accountId,
                                 t2.image_id,
                                 t2.image_registry,
-                                t2.import_repo,
+                                t2.image_repo,
                                 t2.vulnId,
                                 t2.status,
                                 t2.severity,
+                                t2._instcount,
                                 SUM(t2._vulncount) OVER (PARTITION BY t2.image_id) AS total_violation_count,
                                 SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_critical,
                                 SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_high,
@@ -2740,8 +2745,7 @@ ContainerVulnerabilityQueries = {
                                 SELECT
                                     t.accountId,
                                     t.lwAccount,
-                                    t.startTime,
-                                    t.endTime,
+                                    t.start_time,
                                     t.image_id,
                                     t.image_registry,
                                     t.image_repo,
@@ -2821,12 +2825,12 @@ ContainerVulnerabilityQueries = {
                             SELECT
                                 lwAccount,
                                 accountId,
-                                COUNT(DISTINCT instanceId) AS total_assets_in_violation,
+                                COUNT(DISTINCT image_id) AS total_assets_in_violation,
                                 (
                                     SELECT 
-                                        COUNT(DISTINCT TAG_INSTANCEID) 
+                                        COUNT(DISTINCT IMAGE_ID) 
                                     FROM 
-                                        machines
+                                        containers
                                     WHERE t3.lwAccount = lwAccount AND t3.accountId = accountId
                                 ) AS total_assets,
                                 SUM(_instcount*total_critical) AS critical,
@@ -2838,17 +2842,17 @@ ContainerVulnerabilityQueries = {
                                 (
                                 (((
                                         SELECT 
-                                            COUNT(DISTINCT TAG_INSTANCEID) 
+                                            COUNT(DISTINCT IMAGE_ID) 
                                         FROM 
-                                            machines
+                                            containers
                                         WHERE t3.lwAccount = lwAccount AND t3.accountId = accountId
-                                    ) - COUNT(DISTINCT instanceId))*100
+                                    ) - COUNT(DISTINCT image_id))*100
                                     + SUM(_instcount*total_coverage))
                                     /(
                                         SELECT 
-                                            COUNT(DISTINCT TAG_INSTANCEID) 
+                                            COUNT(DISTINCT IMAGE_ID) 
                                         FROM 
-                                            machines
+                                            containers
                                         WHERE t3.lwAccount = lwAccount AND t3.accountId = accountId
                                     )
                                 ) AS total_coverage
@@ -2858,10 +2862,11 @@ ContainerVulnerabilityQueries = {
                                     t2.accountId,
                                     t2.image_id,
                                     t2.image_registry,
-                                    t2.import_repo,
+                                    t2.image_repo,
                                     t2.vulnId,
                                     t2.status,
                                     t2.severity,
+                                    t2._instcount,
                                     SUM(t2._vulncount) OVER (PARTITION BY t2.image_id) AS total_violation_count,
                                     SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_critical,
                                     SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_high,
@@ -2894,8 +2899,7 @@ ContainerVulnerabilityQueries = {
                                     SELECT
                                         t.accountId,
                                         t.lwAccount,
-                                        t.startTime,
-                                        t.endTime,
+                                        t.start_time,
                                         t.image_id,
                                         t.image_registry,
                                         t.image_repo,
@@ -3013,10 +3017,11 @@ ContainerVulnerabilityQueries = {
                                         t2.accountId,
                                         t2.image_id,
                                         t2.image_registry,
-                                        t2.import_repo,
+                                        t2.image_repo,
                                         t2.vulnId,
                                         t2.status,
                                         t2.severity,
+                                        t2._instcount,
                                         SUM(t2._vulncount) OVER (PARTITION BY t2.image_id) AS total_violation_count,
                                         SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_critical,
                                         SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_high,
@@ -3049,8 +3054,7 @@ ContainerVulnerabilityQueries = {
                                         SELECT
                                             t.accountId,
                                             t.lwAccount,
-                                            t.startTime,
-                                            t.endTime,
+                                            t.start_time,
                                             t.image_id,
                                             t.image_registry,
                                             t.image_repo,

@@ -166,17 +166,24 @@ db_connection = f"sqlite:///{db_path.absolute()}?check_same_thread=False"
 # ).export()
 
 lql_query = """
-                RDS {
-                    source {
-                        LW_HE_CONTAINERS
-                    }
-                    return distinct {
-                        LW_HE_CONTAINERS.*
-                    }
+                {
+                        source {
+                            LW_CFG_AWS_LAMBDA L
+                        }
+                        filter {
+                            not key_exists(RESOURCE_CONFIG:VpcConfig.VpcId)
+                        } 
+                        return distinct {
+                            ACCOUNT_ALIAS || ' (' || ACCOUNT_ID || ')' AS ACCOUNT_ID,
+                            RESOURCE_CONFIG:FunctionArn as RESOURCE_ID,
+                            RESOURCE_REGION,
+                            RESOURCE_TYPE,
+                            'LambdaForbiddenVPCREgion' as COMPLIANCE_FAILURE_REASON
+                        }  
                 }
                 """
 
-reportHelper.sqlite_drop_table(db_table="containers", db_connection=db_connection)
+reportHelper.sqlite_drop_table(db_table="lambda", db_connection=db_connection)
 eh = ExportHandler(
     format=DataHandlerTypes.SQLITE,
     results=QueryHandler(
@@ -187,7 +194,7 @@ eh = ExportHandler(
         object=common.QueriesTypes.Execute.value,
         lql_query=lql_query,
     ).execute(),
-    db_table="containers",
+    db_table="lambda",
     db_connection=db_connection,
 ).export()
 
