@@ -660,6 +660,100 @@ class ReportHelper:
 
         return result
 
+    def get_active_containers(
+        self,
+        client: LaceworkClient,
+        lwAccount: typing.Any,
+        cloud_account: typing.Any,
+        start_time: datetime = (datetime.utcnow() - timedelta(hours=25)),
+        end_time: datetime = (datetime.utcnow()),
+        ignore_errors: bool = True,
+        use_sqlite: bool = False,
+        db_table: typing.Any = None,
+        db_connection: typing.Any = None,
+    ) -> typing_list[typing.Any]:
+        result = []
+        if use_sqlite:
+            format_type = DataHandlerTypes.SQLITE
+        else:
+            format_type = DataHandlerTypes.DICT
+
+        cloud_account_details = cloud_account.split(":")
+        csp = cloud_account_details[0]
+
+        if csp == "aws":
+            csp, accountId = cloud_account_details
+            if accountId != "*":
+                filter = f"m.TAGS:Account::String = '{accountId}' AND m.TAGS:VmProvider::String IN ('AWS')"
+            else:
+                filter = None
+            accountId = f"'aws:' || '{accountId}' AS accountId,"
+        elif csp == "gcp":
+            csp, organizationId, projectId = cloud_account_details
+            if projectId != "*":
+                filter = f"m.TAGS:ProjectId::String = '{projectId}' AND m.TAGS:VmProvider::String IN ('GCE')"
+            else:
+                filter = None
+            accountId = (
+                f"'gcp:' || '{organizationId}' || ':' ||  '{projectId}' AS accountId,"
+            )
+        elif csp == "az":
+            csp, tenantId, subscriptionId = cloud_account_details
+            if subscriptionId != "*":
+                filter = f"m.TAGS:ProjectId::String = '{subscriptionId}' AND m.TAGS:VmProvider::String IN ('Azure')"
+            else:
+                filter = None
+            accountId = f"'az:' || '{tenantId}' || ':' ||  '{projectId}' AS accountId,"
+
+        lql_query = f"""
+                    Custom_HE_CONTAINERS_1 {{
+                        source {{
+                            LW_HE_CONTAINERS c
+                        }}
+                        filter {{
+                            c.MID in {{
+                                source {{
+                                    LW_HE_MACHINES m
+                                }}
+                                filter {{
+                                    {filter}
+                                }}
+                                return distinct {{
+                                    m.MID
+                                }}
+                            }}
+                        }}
+                        return distinct {{
+                            '{lwAccount}' AS lwAccount,
+                            {accountId}
+                            c.IMAGE_ID
+                        }}
+                    }}
+                """
+        try:
+            result = ExportHandler(
+                format=format_type,
+                results=QueryHandler(
+                    client=client,
+                    start_time=start_time,
+                    end_time=end_time,
+                    type=common.ObjectTypes.Queries.value,
+                    object=common.QueriesTypes.Execute.value,
+                    lql_query=lql_query,
+                ).execute(),
+                db_table=db_table,
+                db_connection=db_connection,
+            ).export()
+            result = result + result
+
+        except laceworksdk.exceptions.ApiError as e:
+            logging.error(f"Lacework api returned: {e}")
+
+            if not ignore_errors:
+                raise e
+
+        return result
+
     # cloud accounts with ec2 or gce instances
     def get_discovered_cloud_accounts(
         self,
@@ -1194,6 +1288,185 @@ class ReportHelper:
                     r["accountId"] = cloud_account
                     r["lwAccount"] = lwAccount
                     result.append(r)
+
+        except laceworksdk.exceptions.ApiError as e:
+            logging.error(f"Lacework api returned: {e}")
+
+            if not ignore_errors:
+                raise e
+
+        return result
+
+    def get_container_vulnerability_report(
+        self,
+        client: LaceworkClient,
+        lwAccount: typing.Any,
+        cloud_account: typing.Any,
+        ignore_errors: bool = True,
+        fixable: bool = True,
+        severity: ReportSeverityTypes = ReportSeverityTypes.HIGH,
+        namespace: typing.Any = None,
+        start_time: typing.Any = None,
+        end_time: typing.Any = None,
+        cve: typing.Any = None,
+        use_sqlite: bool = False,
+        db_table: typing.Any = None,
+        db_connection: typing.Any = None,
+    ) -> typing.Any:
+        result = []
+
+        try:
+            # need to have a list of active container ids to filter vulnerabilities list
+            logging.info("Retrieving active containers from local cache...")
+            query_string = "SELECT DISTINCT(IMAGE_ID) FROM containers WHERE lwAccount = ':lwAccount' AND accountId = ':cloud_account'"
+            query_string = query_string.replace(":lwAccount", lwAccount)
+            query_string = query_string.replace(":cloud_account", cloud_account)
+            query = self.sqlite_queries(
+                {"image_ids": query_string},
+                db_table=db_table,
+                db_connection=db_connection,
+            )
+            image_ids = [x["IMAGE_ID"] for x in query["image_ids"]]
+
+            if len(image_ids) > 0:
+                logging.info("Retrieving active container vulnerabilities...")
+
+                fixable_val = 0
+                if fixable:
+                    fixable_val = 1
+
+                if severity.value == ReportSeverityTypes.CRITICAL.value:
+                    severity_types = ["Critical"]
+                elif severity.value == ReportSeverityTypes.HIGH.value:
+                    severity_types = ["Critical", "High"]
+                elif severity.value == ReportSeverityTypes.MEDIUM.value:
+                    severity_types = ["Critical", "High", "Medium"]
+                elif severity.value == ReportSeverityTypes.LOW.value:
+                    severity_types = ["Critical", "High", "Medium", "Low"]
+                elif severity.value == ReportSeverityTypes.INFO.value:
+                    severity_types = ["Critical", "High", "Medium", "Low", "Info"]
+
+                filters = [
+                    {
+                        "field": "severity",
+                        "expression": "in",
+                        "values": severity_types,
+                    },
+                    {"field": "imageId", "expression": "in", "values": image_ids},
+                    {"field": "status", "expression": "in", "values": ["VULNERABLE"]},
+                    {
+                        "field": "fixInfo.fix_available",
+                        "expression": "eq",
+                        "value": fixable_val,
+                    },
+                ]
+
+                if namespace is not None:
+                    filters.append(
+                        {
+                            "field": "featureKey.namespace",
+                            "expression": "rlike",
+                            "value": namespace,
+                        }
+                    )
+
+                if cve is not None:
+                    filters.append(
+                        {"field": "vulnId", "expression": "rlike", "value": cve}
+                    )
+
+                if use_sqlite:
+                    format_type = DataHandlerTypes.SQLITE
+                else:
+                    format_type = DataHandlerTypes.DICT
+
+                # export results
+                report = ExportHandler(
+                    format=format_type,
+                    results=QueryHandler(
+                        client=client,
+                        type=common.ObjectTypes.Vulnerabilities.value,
+                        object=common.VulnerabilitiesTypes.Containers.value,
+                        start_time=start_time,
+                        end_time=end_time,
+                        filters=filters,
+                        returns=[
+                            "startTime",
+                            "imageId",
+                            "severity",
+                            "status",
+                            "vulnId",
+                            "evalCtx",
+                            "fixInfo",
+                            "featureKey",
+                        ],
+                    ).execute(),
+                    db_connection=db_connection,
+                    db_table=db_table,
+                    field_map={
+                        "start_time": "startTime",
+                        "image_id": "imageId",
+                        "vulnId": "vulnId",
+                        "image_registry": "evalCtx.image_info.registry",
+                        "image_repo": "evalCtx.image_info.repo",
+                        "image_status": "evalCtx.image_info.status",
+                        "package_name": "featureKey.name",
+                        "package_namespace": "featureKey.namespace",
+                        "version": "featureKey.version",
+                        "fix_available": "fixInfo.fix_available",
+                        "fixed_version": "fixInfo.fixed_version",
+                        "severity": "severity",
+                        "status": "status",
+                    },
+                ).export()
+
+                # add the cloud account and lwaccount context
+                if use_sqlite:
+                    db_engine = create_engine(db_connection)
+                    if db_engine.has_table(db_table):
+                        conn = db_engine.connect()
+                        ddl = "SELECT * FROM {table_name} LIMIT 1"
+                        sql_command = ddl.format(table_name=db_table)
+                        result = conn.execute(text(sql_command)).fetchall()[0].keys()
+                        columns = [x for x in result]
+
+                        if "accountId" not in columns or "lwAccount" not in columns:
+                            for column in ["accountId", "lwAccount"]:
+                                ddl = "ALTER TABLE {table_name} ADD column {column_name} {column_type}"
+                                sql_command = text(
+                                    ddl.format(
+                                        table_name=db_table,
+                                        column_name=column,
+                                        column_type="TEXT",
+                                    )
+                                )
+                                conn.execute(sql_command)
+
+                        for column in ["accountId", "lwAccount"]:
+                            if column == "accountId":
+                                column_value = cloud_account
+                            elif column == "lwAccount":
+                                column_value = lwAccount
+
+                            ddl = "UPDATE {table_name} SET {column_name} = '{column_value}' WHERE {column_name} IS NULL"
+                            sql_command = text(
+                                ddl.format(
+                                    table_name=db_table,
+                                    column_name=column,
+                                    column_value=column_value,
+                                )
+                            )
+                            conn.execute(sql_command)
+                    else:
+                        logging.warn("Skipping update table")
+
+                else:
+                    for r in report:
+                        r["accountId"] = cloud_account
+                        r["lwAccount"] = lwAccount
+                        result.append(r)
+            else:
+                logging.info(f"No active images found in: {lwAccount}:{cloud_account}")
 
         except laceworksdk.exceptions.ApiError as e:
             logging.error(f"Lacework api returned: {e}")
@@ -2274,6 +2547,569 @@ VulnerabilityQueries = {
                                         WHERE
                                             json_extract(t.machineTags, '$.InstanceId') IN (
                                                 SELECT DISTINCT TAG_INSTANCEID from machines
+                                            )
+                                    ) AS t2
+                                ) AS t3
+                                GROUP BY
+                                    lwAccount,
+                                    accountId
+                            ) as t4
+                            GROUP BY 
+                                lwAccount
+                            """,
+    "lwaccount": """
+                    SELECT 
+                        DISTINCT lwaccount
+                    FROM
+                        :db_table
+                    """,
+}
+
+ContainerVulnerabilityQueries = {
+    "report": """
+                SELECT
+                    t2.lwAccount,
+                    t2.accountId,
+                    t2.image_id,
+                    t2.image_registry,
+                    t2.image_repo,
+                    t2.vulnId,
+                    t2.status,
+                    t2.severity,
+                    SUM(t2._vulncount) OVER (PARTITION BY t2.image_id) AS total_violation_count,
+                    SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_critical,
+                    SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_high,
+                    SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_medium,
+                    SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_low,
+                    SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_info,
+                    CASE
+                        WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 0 -- F
+                        WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 5 -- F
+                        WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 9 -- F
+                        WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 40 -- D
+                        WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 45 -- D
+                        WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 49 -- D
+                        WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 60 -- C
+                        WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 65 -- C
+                        WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 69 -- C
+                        WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 70 -- B
+                        WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 75 -- B
+                        WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 79 -- B
+                        WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 95
+                        WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 90
+                        WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) = 0 THEN 100
+                    END AS total_coverage,
+                    t2.package_name,
+                    t2.package_namespace,
+                    t2.version,
+                    t2.fix_available,
+                    t2.fixed_version
+                FROM (
+                    SELECT
+                        t.accountId,
+                        t.lwAccount,
+                        t.start_time,
+                        t.image_id,
+                        t.image_registry,
+                        t.image_repo,
+                        t.vulnId,
+                        t.status,
+                        t.severity,
+                        (CASE WHEN ROW_NUMBER() OVER (
+                            PARTITION BY image_id, t.vulnId)=1
+                        THEN 1
+                        ELSE 0
+                        END) AS _vulncount,
+                        (CASE WHEN ROW_NUMBER() OVER (
+                            PARTITION BY image_id)=1
+                        THEN 1
+                        ELSE 0
+                        END) AS _instcount,
+                        (CASE
+                            WHEN t.severity = 'Critical' THEN 1
+                            ELSE 0
+                        END
+                        ) AS critical,
+                        (
+                            CASE
+                                WHEN t.severity = 'High' THEN 1
+                                ELSE 0
+                            END
+                        ) AS high,
+                        (
+                            CASE
+                                WHEN t.severity = 'Medium' THEN 1
+                                ELSE 0
+                            END
+                        ) AS medium,
+                        (
+                            CASE
+                                WHEN t.severity = 'Low' THEN 1
+                                ELSE 0
+                            END
+                        ) AS low,
+                        (
+                            CASE
+                                WHEN t.severity = 'Info' THEN 1
+                                ELSE 0
+                            END
+                        ) AS info,
+                        t.package_name,
+                        t.package_namespace,
+                        t.version,
+                        t.fix_available,
+                        t.fixed_version
+                    FROM 
+                        :db_table as t
+                    WHERE
+                        image_id IN (
+                            SELECT DISTINCT IMAGE_ID from containers
+                        )
+                ) AS t2
+                """,
+    "account_coverage": """
+                        SELECT
+                            lwAccount,
+                            accountId,
+                            COUNT(DISTINCT image_id) AS total_assets_in_violation,
+                            (
+                                SELECT 
+                                    COUNT(DISTINCT IMAGE_ID) 
+                                FROM 
+                                    containers
+                                WHERE t3.lwAccount = lwAccount AND t3.accountId = accountId
+                            ) AS total_assets,
+                            SUM(_instcount*total_critical) AS critical,
+                            SUM(_instcount*total_high) AS high,
+                            SUM(_instcount*total_medium) AS medium,
+                            SUM(_instcount*total_low) AS low,
+                            SUM(_instcount*total_info) as info,
+                            SUM(_instcount*total_violation_count) AS total_violation_count,
+                            (
+                            (((
+                                    SELECT 
+                                        COUNT(DISTINCT IMAGE_ID) 
+                                    FROM 
+                                        containers
+                                    WHERE t3.lwAccount = lwAccount AND t3.accountId = accountId
+                                ) - COUNT(DISTINCT image_id))*100
+                                + SUM(_instcount*total_coverage))
+                                /(
+                                    SELECT 
+                                        COUNT(DISTINCT IMAGE_ID) 
+                                    FROM 
+                                        containers
+                                    WHERE t3.lwAccount = lwAccount AND t3.accountId = accountId
+                                )
+                            ) AS total_coverage
+                        FROM (
+                            SELECT
+                                t2.lwAccount,
+                                t2.accountId,
+                                t2.image_id,
+                                t2.image_registry,
+                                t2.image_repo,
+                                t2.vulnId,
+                                t2.status,
+                                t2.severity,
+                                t2._instcount,
+                                SUM(t2._vulncount) OVER (PARTITION BY t2.image_id) AS total_violation_count,
+                                SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_critical,
+                                SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_high,
+                                SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_medium,
+                                SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_low,
+                                SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_info,
+                                CASE
+                                    WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 0 -- F
+                                    WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 5 -- F
+                                    WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 9 -- F
+                                    WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 40 -- D
+                                    WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 45 -- D
+                                    WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 49 -- D
+                                    WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 60 -- C
+                                    WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 65 -- C
+                                    WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 69 -- C
+                                    WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 70 -- B
+                                    WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 75 -- B
+                                    WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 79 -- B
+                                    WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 95
+                                    WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 90
+                                    WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) = 0 THEN 100
+                                END AS total_coverage,
+                                t2.package_name,
+                                t2.package_namespace,
+                                t2.version,
+                                t2.fix_available,
+                                t2.fixed_version
+                            FROM (
+                                SELECT
+                                    t.accountId,
+                                    t.lwAccount,
+                                    t.start_time,
+                                    t.image_id,
+                                    t.image_registry,
+                                    t.image_repo,
+                                    t.vulnId,
+                                    t.status,
+                                    t.severity,
+                                    (CASE WHEN ROW_NUMBER() OVER (
+                                        PARTITION BY image_id, t.vulnId)=1
+                                    THEN 1
+                                    ELSE 0
+                                    END) AS _vulncount,
+                                    (CASE WHEN ROW_NUMBER() OVER (
+                                        PARTITION BY image_id)=1
+                                    THEN 1
+                                    ELSE 0
+                                    END) AS _instcount,
+                                    (CASE
+                                        WHEN t.severity = 'Critical' THEN 1
+                                        ELSE 0
+                                    END
+                                    ) AS critical,
+                                    (
+                                        CASE
+                                            WHEN t.severity = 'High' THEN 1
+                                            ELSE 0
+                                        END
+                                    ) AS high,
+                                    (
+                                        CASE
+                                            WHEN t.severity = 'Medium' THEN 1
+                                            ELSE 0
+                                        END
+                                    ) AS medium,
+                                    (
+                                        CASE
+                                            WHEN t.severity = 'Low' THEN 1
+                                            ELSE 0
+                                        END
+                                    ) AS low,
+                                    (
+                                        CASE
+                                            WHEN t.severity = 'Info' THEN 1
+                                            ELSE 0
+                                        END
+                                    ) AS info,
+                                    t.package_name,
+                                    t.package_namespace,
+                                    t.version,
+                                    t.fix_available,
+                                    t.fixed_version
+                                FROM 
+                                    :db_table as t
+                                WHERE
+                                    image_id IN (
+                                        SELECT DISTINCT IMAGE_ID from containers
+                                    )
+                            ) AS t2
+                        ) AS t3
+                        GROUP BY
+                            lwAccount,
+                            accountId
+                        """,
+    "total_summary": """
+                        SELECT
+                            'Any' AS lwAccount,
+                            COUNT(DISTINCT accountId) AS total_accounts,
+                            SUM(total_assets_in_violation) AS total_assets_in_violation,
+                            SUM(total_assets) AS total_assets,
+                            SUM(critical) AS critical,
+                            SUM(high) AS high,
+                            SUM(medium) AS medium,
+                            SUM(low) AS low,
+                            SUM(info) AS info,
+                            SUM(total_violation_count) AS total_violation_count,
+                            CAST(AVG(total_coverage) AS INTEGER) AS total_coverage
+                        FROM(
+                            SELECT
+                                lwAccount,
+                                accountId,
+                                COUNT(DISTINCT image_id) AS total_assets_in_violation,
+                                (
+                                    SELECT 
+                                        COUNT(DISTINCT IMAGE_ID) 
+                                    FROM 
+                                        containers
+                                    WHERE t3.lwAccount = lwAccount AND t3.accountId = accountId
+                                ) AS total_assets,
+                                SUM(_instcount*total_critical) AS critical,
+                                SUM(_instcount*total_high) AS high,
+                                SUM(_instcount*total_medium) AS medium,
+                                SUM(_instcount*total_low) AS low,
+                                SUM(_instcount*total_info) as info,
+                                SUM(_instcount*total_violation_count) AS total_violation_count,
+                                (
+                                (((
+                                        SELECT 
+                                            COUNT(DISTINCT IMAGE_ID) 
+                                        FROM 
+                                            containers
+                                        WHERE t3.lwAccount = lwAccount AND t3.accountId = accountId
+                                    ) - COUNT(DISTINCT image_id))*100
+                                    + SUM(_instcount*total_coverage))
+                                    /(
+                                        SELECT 
+                                            COUNT(DISTINCT IMAGE_ID) 
+                                        FROM 
+                                            containers
+                                        WHERE t3.lwAccount = lwAccount AND t3.accountId = accountId
+                                    )
+                                ) AS total_coverage
+                            FROM (
+                                SELECT
+                                    t2.lwAccount,
+                                    t2.accountId,
+                                    t2.image_id,
+                                    t2.image_registry,
+                                    t2.image_repo,
+                                    t2.vulnId,
+                                    t2.status,
+                                    t2.severity,
+                                    t2._instcount,
+                                    SUM(t2._vulncount) OVER (PARTITION BY t2.image_id) AS total_violation_count,
+                                    SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_critical,
+                                    SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_high,
+                                    SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_medium,
+                                    SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_low,
+                                    SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_info,
+                                    CASE
+                                        WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 0 -- F
+                                        WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 5 -- F
+                                        WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 9 -- F
+                                        WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 40 -- D
+                                        WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 45 -- D
+                                        WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 49 -- D
+                                        WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 60 -- C
+                                        WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 65 -- C
+                                        WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 69 -- C
+                                        WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 70 -- B
+                                        WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 75 -- B
+                                        WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 79 -- B
+                                        WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 95
+                                        WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 90
+                                        WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) = 0 THEN 100
+                                    END AS total_coverage,
+                                    t2.package_name,
+                                    t2.package_namespace,
+                                    t2.version,
+                                    t2.fix_available,
+                                    t2.fixed_version
+                                FROM (
+                                    SELECT
+                                        t.accountId,
+                                        t.lwAccount,
+                                        t.start_time,
+                                        t.image_id,
+                                        t.image_registry,
+                                        t.image_repo,
+                                        t.vulnId,
+                                        t.status,
+                                        t.severity,
+                                        (CASE WHEN ROW_NUMBER() OVER (
+                                            PARTITION BY image_id, t.vulnId)=1
+                                        THEN 1
+                                        ELSE 0
+                                        END) AS _vulncount,
+                                        (CASE WHEN ROW_NUMBER() OVER (
+                                            PARTITION BY image_id)=1
+                                        THEN 1
+                                        ELSE 0
+                                        END) AS _instcount,
+                                        (CASE
+                                            WHEN t.severity = 'Critical' THEN 1
+                                            ELSE 0
+                                        END
+                                        ) AS critical,
+                                        (
+                                            CASE
+                                                WHEN t.severity = 'High' THEN 1
+                                                ELSE 0
+                                            END
+                                        ) AS high,
+                                        (
+                                            CASE
+                                                WHEN t.severity = 'Medium' THEN 1
+                                                ELSE 0
+                                            END
+                                        ) AS medium,
+                                        (
+                                            CASE
+                                                WHEN t.severity = 'Low' THEN 1
+                                                ELSE 0
+                                            END
+                                        ) AS low,
+                                        (
+                                            CASE
+                                                WHEN t.severity = 'Info' THEN 1
+                                                ELSE 0
+                                            END
+                                        ) AS info,
+                                        t.package_name,
+                                        t.package_namespace,
+                                        t.version,
+                                        t.fix_available,
+                                        t.fixed_version
+                                    FROM 
+                                        :db_table as t
+                                    WHERE
+                                        image_id IN (
+                                            SELECT DISTINCT IMAGE_ID from containers
+                                        )
+                                ) AS t2
+                            ) AS t3
+                            GROUP BY
+                                lwAccount,
+                                accountId
+                        ) as t4
+                        """,
+    "lwaccount_summary": """
+                            SELECT
+                                lwAccount,
+                                COUNT(DISTINCT accountId) AS total_accounts,
+                                SUM(total_assets_in_violation) AS total_assets_in_violation,
+                                SUM(total_assets) AS total_assets,
+                                SUM(critical) AS critical,
+                                SUM(high) AS high,
+                                SUM(medium) AS medium,
+                                SUM(low) AS low,
+                                SUM(info) AS info,
+                                SUM(total_violation_count) AS total_violation_count,
+                                CAST(AVG(total_coverage) AS INTEGER) AS total_coverage
+                            FROM(
+                                SELECT
+                                    lwAccount,
+                                    accountId,
+                                    COUNT(DISTINCT image_id) AS total_assets_in_violation,
+                                    (
+                                        SELECT 
+                                            COUNT(DISTINCT image_id) 
+                                        FROM 
+                                            containers
+                                        WHERE t3.lwAccount = lwAccount AND t3.accountId = accountId
+                                    ) AS total_assets,
+                                    SUM(_instcount*total_critical) AS critical,
+                                    SUM(_instcount*total_high) AS high,
+                                    SUM(_instcount*total_medium) AS medium,
+                                    SUM(_instcount*total_low) AS low,
+                                    SUM(_instcount*total_info) as info,
+                                    SUM(_instcount*total_violation_count) AS total_violation_count,
+                                    (
+                                    (((
+                                            SELECT 
+                                                COUNT(DISTINCT IMAGE_ID) 
+                                            FROM 
+                                                containers
+                                            WHERE t3.lwAccount = lwAccount AND t3.accountId = accountId
+                                        ) - COUNT(DISTINCT image_id))*100
+                                        + SUM(_instcount*total_coverage))
+                                        /(
+                                            SELECT 
+                                                COUNT(DISTINCT IMAGE_ID) 
+                                            FROM 
+                                                containers
+                                            WHERE t3.lwAccount = lwAccount AND t3.accountId = accountId
+                                        )
+                                    ) AS total_coverage
+                                FROM (
+                                    SELECT
+                                        t2.lwAccount,
+                                        t2.accountId,
+                                        t2.image_id,
+                                        t2.image_registry,
+                                        t2.image_repo,
+                                        t2.vulnId,
+                                        t2.status,
+                                        t2.severity,
+                                        t2._instcount,
+                                        SUM(t2._vulncount) OVER (PARTITION BY t2.image_id) AS total_violation_count,
+                                        SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_critical,
+                                        SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_high,
+                                        SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_medium,
+                                        SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_low,
+                                        SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) AS total_info,
+                                        CASE
+                                            WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 0 -- F
+                                            WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 5 -- F
+                                            WHEN SUM((t2.critical*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 9 -- F
+                                            WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 40 -- D
+                                            WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 45 -- D
+                                            WHEN SUM((t2.high*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 49 -- D
+                                            WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 60 -- C
+                                            WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 65 -- C
+                                            WHEN SUM((t2.medium*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 69 -- C
+                                            WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 70 -- B
+                                            WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 75 -- B
+                                            WHEN SUM((t2.low*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 0 THEN 79 -- B
+                                            WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 10 THEN 95
+                                            WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) > 5 THEN 90
+                                            WHEN SUM((t2.info*t2._vulncount)) OVER (PARTITION BY t2.image_id) = 0 THEN 100
+                                        END AS total_coverage,
+                                        t2.package_name,
+                                        t2.package_namespace,
+                                        t2.version,
+                                        t2.fix_available,
+                                        t2.fixed_version
+                                    FROM (
+                                        SELECT
+                                            t.accountId,
+                                            t.lwAccount,
+                                            t.start_time,
+                                            t.image_id,
+                                            t.image_registry,
+                                            t.image_repo,
+                                            t.vulnId,
+                                            t.status,
+                                            t.severity,
+                                            (CASE WHEN ROW_NUMBER() OVER (
+                                                PARTITION BY image_id, t.vulnId)=1
+                                            THEN 1
+                                            ELSE 0
+                                            END) AS _vulncount,
+                                            (CASE WHEN ROW_NUMBER() OVER (
+                                                PARTITION BY image_id)=1
+                                            THEN 1
+                                            ELSE 0
+                                            END) AS _instcount,
+                                            (CASE
+                                                WHEN t.severity = 'Critical' THEN 1
+                                                ELSE 0
+                                            END
+                                            ) AS critical,
+                                            (
+                                                CASE
+                                                    WHEN t.severity = 'High' THEN 1
+                                                    ELSE 0
+                                                END
+                                            ) AS high,
+                                            (
+                                                CASE
+                                                    WHEN t.severity = 'Medium' THEN 1
+                                                    ELSE 0
+                                                END
+                                            ) AS medium,
+                                            (
+                                                CASE
+                                                    WHEN t.severity = 'Low' THEN 1
+                                                    ELSE 0
+                                                END
+                                            ) AS low,
+                                            (
+                                                CASE
+                                                    WHEN t.severity = 'Info' THEN 1
+                                                    ELSE 0
+                                                END
+                                            ) AS info,
+                                            t.package_name,
+                                            t.package_namespace,
+                                            t.version,
+                                            t.fix_available,
+                                            t.fixed_version
+                                        FROM 
+                                            :db_table as t
+                                        WHERE
+                                            image_id IN (
+                                                SELECT DISTINCT IMAGE_ID from containers
                                             )
                                     ) AS t2
                                 ) AS t3

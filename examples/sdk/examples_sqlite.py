@@ -165,13 +165,43 @@ db_connection = f"sqlite:///{db_path.absolute()}?check_same_thread=False"
 #     db_connection=db_connection,
 # ).export()
 
+lql_query = """
+                {
+                        source {
+                            LW_CFG_AWS_LAMBDA L
+                        }
+                        filter {
+                            not key_exists(RESOURCE_CONFIG:VpcConfig.VpcId)
+                        } 
+                        return distinct {
+                            ACCOUNT_ALIAS || ' (' || ACCOUNT_ID || ')' AS ACCOUNT_ID,
+                            RESOURCE_CONFIG:FunctionArn as RESOURCE_ID,
+                            RESOURCE_REGION,
+                            RESOURCE_TYPE,
+                            'LambdaForbiddenVPCREgion' as COMPLIANCE_FAILURE_REASON
+                        }  
+                }
+                """
+
+reportHelper.sqlite_drop_table(db_table="lambda", db_connection=db_connection)
+eh = ExportHandler(
+    format=DataHandlerTypes.SQLITE,
+    results=QueryHandler(
+        start_time=datetime.utcnow() - timedelta(days=2),
+        end_time=datetime.utcnow(),
+        client=LaceworkClient(),
+        type=common.ObjectTypes.Queries.value,
+        object=common.QueriesTypes.Execute.value,
+        lql_query=lql_query,
+    ).execute(),
+    db_table="lambda",
+    db_connection=db_connection,
+).export()
+
 # lql_query =     """
 #                 RDS {
 #                     source {
 #                         LW_HE_MACHINES
-#                     }
-#                     filter {
-#                         TAGS:InstanceId::string = 'i-03297b326ed9e7094'
 #                     }
 #                     return {
 #                         LW_HE_MACHINES.*
@@ -179,7 +209,7 @@ db_connection = f"sqlite:///{db_path.absolute()}?check_same_thread=False"
 #                 }
 #                 """
 
-# reportHelper.sqlite_drop_table(db_table=db_table, db_connection=db_connection)
+# reportHelper.sqlite_drop_table(db_table="machines", db_connection=db_connection)
 # eh = ExportHandler(
 #     format=DataHandlerTypes.SQLITE,
 #     results=QueryHandler(
@@ -190,16 +220,16 @@ db_connection = f"sqlite:///{db_path.absolute()}?check_same_thread=False"
 #         object=common.QueriesTypes.Execute.value,
 #         lql_query=lql_query,
 #     ).execute(),
-#     db_table=db_table,
+#     db_table="machines",
 #     db_connection=db_connection,
 # ).export()
 
-reportHelper.sqlite_drop_table("test2", db_connection=db_connection)
-reportHelper.sqlite_execute(
-    "create table test2 as select 'three' as test;", db_connection=db_connection
-)
+# reportHelper.sqlite_drop_table("test2", db_connection=db_connection)
+# reportHelper.sqlite_execute(
+#     "create table test2 as select 'three' as test;", db_connection=db_connection
+# )
 
-test = reportHelper.sqlite_queries(
-    {"test": "select * from test2"}, db_table="test", db_connection=db_connection
-)
-print(test)
+# test = reportHelper.sqlite_queries(
+#     {"test": "select * from test2"}, db_table="test", db_connection=db_connection
+# )
+# print(test)
