@@ -14,7 +14,7 @@ import laceworksdk
 import pandas as pd
 import sqlalchemy
 from laceworksdk import LaceworkClient
-from sqlalchemy import MetaData, Table, create_engine, text
+from sqlalchemy import MetaData, Table, create_engine, false, text
 from sqlalchemy_utils.functions import create_database, database_exists
 
 from laceworkreports import common
@@ -417,7 +417,7 @@ class ReportHelper:
             logging.info("Generating query results")
             results = {}
             for query in queries.keys():
-                logging.info(f"Executing query: {query}")
+                logging.debug(f"Executing query: {query}")
                 df = pd.read_sql_query(
                     sql=queries[query].replace(":db_table", table_name),
                     con=con,
@@ -426,6 +426,66 @@ class ReportHelper:
 
             logging.info("Queries complete")
             return results
+
+    def sqlite_table_exists(
+        self,
+        db_table: typing.Any,
+        db_connection: typing.Any,
+    ) -> typing.Any:
+
+        logging.info(f"Checking if table exists: {db_table}")
+        db_engine = create_engine(db_connection)
+        return db_engine.has_table(db_table)
+
+    def sqlite_table_append_context_column(
+        self,
+        lwAccount: typing.Any,
+        cloud_account: typing.Any,
+        db_table: typing.Any,
+        db_connection: typing.Any,
+    ) -> bool:
+
+        logging.info(f"Checking if table exists: {db_table}")
+        db_engine = create_engine(db_connection)
+        if db_engine.has_table(db_table):
+            conn = db_engine.connect()
+            ddl = "SELECT * FROM {table_name} LIMIT 1"
+            sql_command = ddl.format(table_name=db_table)
+            result = conn.execute(text(sql_command)).fetchall()
+            if len(result) > 0:
+                columns = [x for x in result[0].keys()]
+                if "accountId" not in columns or "lwAccount" not in columns:
+                    for column in ["accountId", "lwAccount"]:
+                        ddl = "ALTER TABLE {table_name} ADD column {column_name} {column_type}"
+                        sql_command = text(
+                            ddl.format(
+                                table_name=db_table,
+                                column_name=column,
+                                column_type="TEXT",
+                            )
+                        )
+                        conn.execute(sql_command)
+
+                for column in ["accountId", "lwAccount"]:
+                    if column == "accountId":
+                        column_value = cloud_account
+                    elif column == "lwAccount":
+                        column_value = lwAccount
+
+                    ddl = "UPDATE {table_name} SET {column_name} = '{column_value}' WHERE {column_name} IS NULL"
+                    sql_command = text(
+                        ddl.format(
+                            table_name=db_table,
+                            column_name=column,
+                            column_value=column_value,
+                        )
+                    )
+                    conn.execute(sql_command)
+        else:
+            logging.warn("Skipping update table")
+            return False
+
+        return True
 
     def sqlite_queries(
         self,
@@ -456,7 +516,7 @@ class ReportHelper:
         db_connection: typing.Any,
     ) -> typing.Any:
 
-        logging.info("Generating query results")
+        logging.info(f"Executing query: {query}")
         engine = create_engine(db_connection)
         conn = engine.connect()
 
@@ -1245,44 +1305,12 @@ class ReportHelper:
 
             # add the cloud account and lwaccount context
             if use_sqlite:
-                db_engine = create_engine(db_connection)
-                if db_engine.has_table(db_table):
-                    conn = db_engine.connect()
-                    ddl = "SELECT * FROM {table_name} LIMIT 1"
-                    sql_command = ddl.format(table_name=db_table)
-                    result = conn.execute(text(sql_command)).fetchall()[0].keys()
-                    columns = [x for x in result]
-
-                    if "accountId" not in columns or "lwAccount" not in columns:
-                        for column in ["accountId", "lwAccount"]:
-                            ddl = "ALTER TABLE {table_name} ADD column {column_name} {column_type}"
-                            sql_command = text(
-                                ddl.format(
-                                    table_name=db_table,
-                                    column_name=column,
-                                    column_type="TEXT",
-                                )
-                            )
-                            conn.execute(sql_command)
-
-                    for column in ["accountId", "lwAccount"]:
-                        if column == "accountId":
-                            column_value = cloud_account
-                        elif column == "lwAccount":
-                            column_value = lwAccount
-
-                        ddl = "UPDATE {table_name} SET {column_name} = '{column_value}' WHERE {column_name} IS NULL"
-                        sql_command = text(
-                            ddl.format(
-                                table_name=db_table,
-                                column_name=column,
-                                column_value=column_value,
-                            )
-                        )
-                        conn.execute(sql_command)
-                else:
-                    logging.warn("Skipping update table")
-
+                self.sqlite_table_append_context_column(
+                    lwAccount=lwAccount,
+                    cloud_account=cloud_account,
+                    db_table=db_table,
+                    db_connection=db_connection,
+                )
             else:
                 for r in report:
                     r["accountId"] = cloud_account
@@ -1316,157 +1344,139 @@ class ReportHelper:
         result = []
 
         try:
+
             # need to have a list of active container ids to filter vulnerabilities list
-            logging.info("Retrieving active containers from local cache...")
-            query_string = "SELECT DISTINCT(IMAGE_ID) FROM containers WHERE lwAccount = ':lwAccount' AND accountId = ':cloud_account'"
-            query_string = query_string.replace(":lwAccount", lwAccount)
-            query_string = query_string.replace(":cloud_account", cloud_account)
-            query = self.sqlite_queries(
-                {"image_ids": query_string},
-                db_table=db_table,
-                db_connection=db_connection,
-            )
-            image_ids = [x["IMAGE_ID"] for x in query["image_ids"]]
-
-            if len(image_ids) > 0:
-                logging.info("Retrieving active container vulnerabilities...")
-
-                fixable_val = 0
-                if fixable:
-                    fixable_val = 1
-
-                if severity.value == ReportSeverityTypes.CRITICAL.value:
-                    severity_types = ["Critical"]
-                elif severity.value == ReportSeverityTypes.HIGH.value:
-                    severity_types = ["Critical", "High"]
-                elif severity.value == ReportSeverityTypes.MEDIUM.value:
-                    severity_types = ["Critical", "High", "Medium"]
-                elif severity.value == ReportSeverityTypes.LOW.value:
-                    severity_types = ["Critical", "High", "Medium", "Low"]
-                elif severity.value == ReportSeverityTypes.INFO.value:
-                    severity_types = ["Critical", "High", "Medium", "Low", "Info"]
-
-                filters = [
-                    {
-                        "field": "severity",
-                        "expression": "in",
-                        "values": severity_types,
-                    },
-                    {"field": "imageId", "expression": "in", "values": image_ids},
-                    {"field": "status", "expression": "in", "values": ["VULNERABLE"]},
-                    {
-                        "field": "fixInfo.fix_available",
-                        "expression": "eq",
-                        "value": fixable_val,
-                    },
-                ]
-
-                if namespace is not None:
-                    filters.append(
-                        {
-                            "field": "featureKey.namespace",
-                            "expression": "rlike",
-                            "value": namespace,
-                        }
-                    )
-
-                if cve is not None:
-                    filters.append(
-                        {"field": "vulnId", "expression": "rlike", "value": cve}
-                    )
-
-                if use_sqlite:
-                    format_type = DataHandlerTypes.SQLITE
-                else:
-                    format_type = DataHandlerTypes.DICT
-
-                # export results
-                report = ExportHandler(
-                    format=format_type,
-                    results=QueryHandler(
-                        client=client,
-                        type=common.ObjectTypes.Vulnerabilities.value,
-                        object=common.VulnerabilitiesTypes.Containers.value,
-                        start_time=start_time,
-                        end_time=end_time,
-                        filters=filters,
-                        returns=[
-                            "startTime",
-                            "imageId",
-                            "severity",
-                            "status",
-                            "vulnId",
-                            "evalCtx",
-                            "fixInfo",
-                            "featureKey",
-                        ],
-                    ).execute(),
-                    db_connection=db_connection,
+            if self.sqlite_table_exists(
+                db_table="containers", db_connection=db_connection
+            ):
+                logging.info("Retrieving active containers from local cache...")
+                query_string = "SELECT DISTINCT(IMAGE_ID) FROM containers WHERE lwAccount = ':lwAccount' AND accountId = ':cloud_account'"
+                query_string = query_string.replace(":lwAccount", lwAccount)
+                query_string = query_string.replace(":cloud_account", cloud_account)
+                query = self.sqlite_queries(
+                    {"image_ids": query_string},
                     db_table=db_table,
-                    field_map={
-                        "start_time": "startTime",
-                        "image_id": "imageId",
-                        "vulnId": "vulnId",
-                        "image_registry": "evalCtx.image_info.registry",
-                        "image_repo": "evalCtx.image_info.repo",
-                        "image_status": "evalCtx.image_info.status",
-                        "package_name": "featureKey.name",
-                        "package_namespace": "featureKey.namespace",
-                        "version": "featureKey.version",
-                        "fix_available": "fixInfo.fix_available",
-                        "fixed_version": "fixInfo.fixed_version",
-                        "severity": "severity",
-                        "status": "status",
-                    },
-                ).export()
+                    db_connection=db_connection,
+                )
+                image_ids = [x["IMAGE_ID"] for x in query["image_ids"]]
 
-                # add the cloud account and lwaccount context
-                if use_sqlite:
-                    db_engine = create_engine(db_connection)
-                    if db_engine.has_table(db_table):
-                        conn = db_engine.connect()
-                        ddl = "SELECT * FROM {table_name} LIMIT 1"
-                        sql_command = ddl.format(table_name=db_table)
-                        result = conn.execute(text(sql_command)).fetchall()[0].keys()
-                        columns = [x for x in result]
+                if len(image_ids) > 0:
+                    logging.info("Retrieving active container vulnerabilities...")
 
-                        if "accountId" not in columns or "lwAccount" not in columns:
-                            for column in ["accountId", "lwAccount"]:
-                                ddl = "ALTER TABLE {table_name} ADD column {column_name} {column_type}"
-                                sql_command = text(
-                                    ddl.format(
-                                        table_name=db_table,
-                                        column_name=column,
-                                        column_type="TEXT",
-                                    )
-                                )
-                                conn.execute(sql_command)
+                    fixable_val = 0
+                    if fixable:
+                        fixable_val = 1
 
-                        for column in ["accountId", "lwAccount"]:
-                            if column == "accountId":
-                                column_value = cloud_account
-                            elif column == "lwAccount":
-                                column_value = lwAccount
+                    if severity.value == ReportSeverityTypes.CRITICAL.value:
+                        severity_types = ["Critical"]
+                    elif severity.value == ReportSeverityTypes.HIGH.value:
+                        severity_types = ["Critical", "High"]
+                    elif severity.value == ReportSeverityTypes.MEDIUM.value:
+                        severity_types = ["Critical", "High", "Medium"]
+                    elif severity.value == ReportSeverityTypes.LOW.value:
+                        severity_types = ["Critical", "High", "Medium", "Low"]
+                    elif severity.value == ReportSeverityTypes.INFO.value:
+                        severity_types = ["Critical", "High", "Medium", "Low", "Info"]
 
-                            ddl = "UPDATE {table_name} SET {column_name} = '{column_value}' WHERE {column_name} IS NULL"
-                            sql_command = text(
-                                ddl.format(
-                                    table_name=db_table,
-                                    column_name=column,
-                                    column_value=column_value,
-                                )
-                            )
-                            conn.execute(sql_command)
+                    filters = [
+                        {
+                            "field": "severity",
+                            "expression": "in",
+                            "values": severity_types,
+                        },
+                        {"field": "imageId", "expression": "in", "values": image_ids},
+                        {
+                            "field": "status",
+                            "expression": "in",
+                            "values": ["VULNERABLE"],
+                        },
+                        {
+                            "field": "fixInfo.fix_available",
+                            "expression": "eq",
+                            "value": fixable_val,
+                        },
+                    ]
+
+                    if namespace is not None:
+                        filters.append(
+                            {
+                                "field": "featureKey.namespace",
+                                "expression": "rlike",
+                                "value": namespace,
+                            }
+                        )
+
+                    if cve is not None:
+                        filters.append(
+                            {"field": "vulnId", "expression": "rlike", "value": cve}
+                        )
+
+                    if use_sqlite:
+                        format_type = DataHandlerTypes.SQLITE
                     else:
-                        logging.warn("Skipping update table")
+                        format_type = DataHandlerTypes.DICT
 
+                    # export results
+                    report = ExportHandler(
+                        format=format_type,
+                        results=QueryHandler(
+                            client=client,
+                            type=common.ObjectTypes.Vulnerabilities.value,
+                            object=common.VulnerabilitiesTypes.Containers.value,
+                            start_time=start_time,
+                            end_time=end_time,
+                            filters=filters,
+                            returns=[
+                                "startTime",
+                                "imageId",
+                                "severity",
+                                "status",
+                                "vulnId",
+                                "evalCtx",
+                                "fixInfo",
+                                "featureKey",
+                            ],
+                        ).execute(),
+                        db_connection=db_connection,
+                        db_table=db_table,
+                        field_map={
+                            "start_time": "startTime",
+                            "image_id": "imageId",
+                            "vulnId": "vulnId",
+                            "image_registry": "evalCtx.image_info.registry",
+                            "image_repo": "evalCtx.image_info.repo",
+                            "image_status": "evalCtx.image_info.status",
+                            "package_name": "featureKey.name",
+                            "package_namespace": "featureKey.namespace",
+                            "version": "featureKey.version",
+                            "fix_available": "fixInfo.fix_available",
+                            "fixed_version": "fixInfo.fixed_version",
+                            "severity": "severity",
+                            "status": "status",
+                        },
+                    ).export()
+
+                    # add the cloud account and lwaccount context
+                    if use_sqlite:
+                        # append the lwaccount and cloud_count to the current results table
+                        self.sqlite_table_append_context_column(
+                            lwAccount=lwAccount,
+                            cloud_account=cloud_account,
+                            db_table=db_table,
+                            db_connection=db_connection,
+                        )
+
+                    else:
+                        for r in report:
+                            r["accountId"] = cloud_account
+                            r["lwAccount"] = lwAccount
+                            result.append(r)
                 else:
-                    for r in report:
-                        r["accountId"] = cloud_account
-                        r["lwAccount"] = lwAccount
-                        result.append(r)
+                    logging.info(
+                        f"No active images found in: {lwAccount}:{cloud_account}"
+                    )
             else:
-                logging.info(f"No active images found in: {lwAccount}:{cloud_account}")
+                logging.info("No active containers found.")
 
         except laceworksdk.exceptions.ApiError as e:
             logging.error(f"Lacework api returned: {e}")
