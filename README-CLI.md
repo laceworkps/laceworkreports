@@ -122,8 +122,8 @@ $ laceworkreports export activities changed_files csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -144,8 +144,8 @@ $ laceworkreports export activities changed_files jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -166,8 +166,8 @@ $ laceworkreports export activities changed_files json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -187,8 +187,8 @@ $ laceworkreports export activities changed_files postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -234,8 +234,8 @@ $ laceworkreports export activities connections csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -256,8 +256,8 @@ $ laceworkreports export activities connections jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -278,8 +278,8 @@ $ laceworkreports export activities connections json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -299,8 +299,8 @@ $ laceworkreports export activities connections postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -346,8 +346,8 @@ $ laceworkreports export activities dns csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -368,8 +368,8 @@ $ laceworkreports export activities dns jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -390,8 +390,8 @@ $ laceworkreports export activities dns json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -411,8 +411,8 @@ $ laceworkreports export activities dns postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -458,8 +458,8 @@ $ laceworkreports export activities user_logins csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -480,8 +480,8 @@ $ laceworkreports export activities user_logins jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -502,8 +502,8 @@ $ laceworkreports export activities user_logins json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -523,8 +523,8 @@ $ laceworkreports export activities user_logins postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -570,8 +570,8 @@ $ laceworkreports export agent_access_tokens csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -592,8 +592,8 @@ $ laceworkreports export agent_access_tokens jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -614,8 +614,8 @@ $ laceworkreports export agent_access_tokens json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -635,8 +635,8 @@ $ laceworkreports export agent_access_tokens postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -682,8 +682,8 @@ $ laceworkreports export alert_channels csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -704,8 +704,8 @@ $ laceworkreports export alert_channels jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -726,8 +726,8 @@ $ laceworkreports export alert_channels json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -747,8 +747,8 @@ $ laceworkreports export alert_channels postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -794,8 +794,8 @@ $ laceworkreports export alert_rules csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -816,8 +816,8 @@ $ laceworkreports export alert_rules jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -838,8 +838,8 @@ $ laceworkreports export alert_rules json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -859,8 +859,8 @@ $ laceworkreports export alert_rules postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -906,8 +906,8 @@ $ laceworkreports export alerts csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -928,8 +928,8 @@ $ laceworkreports export alerts jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -950,8 +950,8 @@ $ laceworkreports export alerts json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -971,8 +971,8 @@ $ laceworkreports export alerts postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1018,8 +1018,8 @@ $ laceworkreports export audit_logs csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1040,8 +1040,8 @@ $ laceworkreports export audit_logs jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1062,8 +1062,8 @@ $ laceworkreports export audit_logs json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1083,8 +1083,8 @@ $ laceworkreports export audit_logs postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1130,8 +1130,8 @@ $ laceworkreports export cloud_accounts csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1152,8 +1152,8 @@ $ laceworkreports export cloud_accounts jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1174,8 +1174,8 @@ $ laceworkreports export cloud_accounts json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1195,8 +1195,8 @@ $ laceworkreports export cloud_accounts postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1242,8 +1242,8 @@ $ laceworkreports export cloud_activities csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1264,8 +1264,8 @@ $ laceworkreports export cloud_activities jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1286,8 +1286,8 @@ $ laceworkreports export cloud_activities json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1307,8 +1307,8 @@ $ laceworkreports export cloud_activities postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1374,8 +1374,8 @@ $ laceworkreports export configs compliance_evaluations csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1397,8 +1397,8 @@ $ laceworkreports export configs compliance_evaluations jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--dataset [AwsCompliance|AzureCompliance|GcpCompliance]`: [default: AwsCompliance]
@@ -1420,8 +1420,8 @@ $ laceworkreports export configs compliance_evaluations json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1442,8 +1442,8 @@ $ laceworkreports export configs compliance_evaluations postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--dataset [AwsCompliance|AzureCompliance|GcpCompliance]`: [default: AwsCompliance]
@@ -1490,8 +1490,8 @@ $ laceworkreports export container_registries csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1512,8 +1512,8 @@ $ laceworkreports export container_registries jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1534,8 +1534,8 @@ $ laceworkreports export container_registries json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1555,8 +1555,8 @@ $ laceworkreports export container_registries postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1634,8 +1634,8 @@ $ laceworkreports export entities applications csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1656,8 +1656,8 @@ $ laceworkreports export entities applications jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1678,8 +1678,8 @@ $ laceworkreports export entities applications json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1699,8 +1699,8 @@ $ laceworkreports export entities applications postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1746,8 +1746,8 @@ $ laceworkreports export entities command_lines csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1768,8 +1768,8 @@ $ laceworkreports export entities command_lines jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1790,8 +1790,8 @@ $ laceworkreports export entities command_lines json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1811,8 +1811,8 @@ $ laceworkreports export entities command_lines postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1858,8 +1858,8 @@ $ laceworkreports export entities containers csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1880,8 +1880,8 @@ $ laceworkreports export entities containers jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1902,8 +1902,8 @@ $ laceworkreports export entities containers json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1923,8 +1923,8 @@ $ laceworkreports export entities containers postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1970,8 +1970,8 @@ $ laceworkreports export entities files csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -1992,8 +1992,8 @@ $ laceworkreports export entities files jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2014,8 +2014,8 @@ $ laceworkreports export entities files json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2035,8 +2035,8 @@ $ laceworkreports export entities files postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2082,8 +2082,8 @@ $ laceworkreports export entities internal_ip_addresses csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2104,8 +2104,8 @@ $ laceworkreports export entities internal_ip_addresses jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2126,8 +2126,8 @@ $ laceworkreports export entities internal_ip_addresses json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2147,8 +2147,8 @@ $ laceworkreports export entities internal_ip_addresses postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2194,8 +2194,8 @@ $ laceworkreports export entities k8s_pods csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2216,8 +2216,8 @@ $ laceworkreports export entities k8s_pods jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2238,8 +2238,8 @@ $ laceworkreports export entities k8s_pods json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2259,8 +2259,8 @@ $ laceworkreports export entities k8s_pods postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2306,8 +2306,8 @@ $ laceworkreports export entities machine_details csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2328,8 +2328,8 @@ $ laceworkreports export entities machine_details jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2350,8 +2350,8 @@ $ laceworkreports export entities machine_details json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2371,8 +2371,8 @@ $ laceworkreports export entities machine_details postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2418,8 +2418,8 @@ $ laceworkreports export entities machines csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2440,8 +2440,8 @@ $ laceworkreports export entities machines jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2462,8 +2462,8 @@ $ laceworkreports export entities machines json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2483,8 +2483,8 @@ $ laceworkreports export entities machines postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2530,8 +2530,8 @@ $ laceworkreports export entities network_interfaces csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2552,8 +2552,8 @@ $ laceworkreports export entities network_interfaces jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2574,8 +2574,8 @@ $ laceworkreports export entities network_interfaces json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2595,8 +2595,8 @@ $ laceworkreports export entities network_interfaces postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2642,8 +2642,8 @@ $ laceworkreports export entities new_file_hashes csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2664,8 +2664,8 @@ $ laceworkreports export entities new_file_hashes jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2686,8 +2686,8 @@ $ laceworkreports export entities new_file_hashes json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2707,8 +2707,8 @@ $ laceworkreports export entities new_file_hashes postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2754,8 +2754,8 @@ $ laceworkreports export entities packages csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2776,8 +2776,8 @@ $ laceworkreports export entities packages jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2798,8 +2798,8 @@ $ laceworkreports export entities packages json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2819,8 +2819,8 @@ $ laceworkreports export entities packages postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2866,8 +2866,8 @@ $ laceworkreports export entities processes csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2888,8 +2888,8 @@ $ laceworkreports export entities processes jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2910,8 +2910,8 @@ $ laceworkreports export entities processes json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2931,8 +2931,8 @@ $ laceworkreports export entities processes postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -2978,8 +2978,8 @@ $ laceworkreports export entities users csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3000,8 +3000,8 @@ $ laceworkreports export entities users jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3022,8 +3022,8 @@ $ laceworkreports export entities users json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3043,8 +3043,8 @@ $ laceworkreports export entities users postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3110,8 +3110,8 @@ $ laceworkreports export queries execute csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--lql-query TEXT`: LQL query string for file path (use @ to specify file path)  [required]
 * `--field-map TEXT`: LQL query string for file path (use @ to specify file path)
 * `--file-path TEXT`: Path to exported CSV result  [required]
@@ -3131,8 +3131,8 @@ $ laceworkreports export queries execute jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--lql-query TEXT`: LQL query string for file path (use @ to specify file path)  [required]
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
 * `--file-path TEXT`: Path to exported CSV result  [required]
@@ -3152,8 +3152,8 @@ $ laceworkreports export queries execute json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--lql-query TEXT`: LQL query string for file path (use @ to specify file path)  [required]
 * `--field-map TEXT`: LQL query string for file path (use @ to specify file path)
 * `--file-path TEXT`: Path to exported CSV result  [required]
@@ -3172,8 +3172,8 @@ $ laceworkreports export queries execute postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--lql-query TEXT`: LQL query string for file path (use @ to specify file path)  [required]
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
 * `--flatten-json / --no-flatten-json`: Boolean value to flatten json result or not  [default: False]
@@ -3218,8 +3218,8 @@ $ laceworkreports export report_rules csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3240,8 +3240,8 @@ $ laceworkreports export report_rules jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3262,8 +3262,8 @@ $ laceworkreports export report_rules json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3283,8 +3283,8 @@ $ laceworkreports export report_rules postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3330,8 +3330,8 @@ $ laceworkreports export resource_groups csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3352,8 +3352,8 @@ $ laceworkreports export resource_groups jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3374,8 +3374,8 @@ $ laceworkreports export resource_groups json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3395,8 +3395,8 @@ $ laceworkreports export resource_groups postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3442,8 +3442,8 @@ $ laceworkreports export team_members csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3464,8 +3464,8 @@ $ laceworkreports export team_members jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3486,8 +3486,8 @@ $ laceworkreports export team_members json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3507,8 +3507,8 @@ $ laceworkreports export team_members postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3575,8 +3575,8 @@ $ laceworkreports export vulnerabilities containers csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3597,8 +3597,8 @@ $ laceworkreports export vulnerabilities containers jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3619,8 +3619,8 @@ $ laceworkreports export vulnerabilities containers json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3640,8 +3640,8 @@ $ laceworkreports export vulnerabilities containers postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3687,8 +3687,8 @@ $ laceworkreports export vulnerabilities hosts csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3709,8 +3709,8 @@ $ laceworkreports export vulnerabilities hosts jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3731,8 +3731,8 @@ $ laceworkreports export vulnerabilities hosts json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3752,8 +3752,8 @@ $ laceworkreports export vulnerabilities hosts postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3799,8 +3799,8 @@ $ laceworkreports export vulnerability_exceptions csv [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3821,8 +3821,8 @@ $ laceworkreports export vulnerability_exceptions jinja2 [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3843,8 +3843,8 @@ $ laceworkreports export vulnerability_exceptions json [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
@@ -3864,8 +3864,8 @@ $ laceworkreports export vulnerability_exceptions postgres [OPTIONS]
 
 **Options**:
 
-* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-04T18:38:59Z]
-* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-05T18:38:59Z]
+* `--start-time [%Y-%m-%dT%H:%M:%SZ]`: Start time for query period  [default: 2022-04-14T16:25:40Z]
+* `--end-time [%Y-%m-%dT%H:%M:%SZ]`: End time for query period  [default: 2022-04-15T16:25:40Z]
 * `--returns TEXT`: JSON array of fields to result. For file path (use @ to specify file path)
 * `--filters TEXT`: JSON array of filters to apply to query. For file path (use @ to specify file path)
 * `--field-map TEXT`: JSON fieldmap to alias results columns. For file path (use @ to specify file path)
