@@ -1526,7 +1526,7 @@ AgentQueries = {
                                     :db_table AS dm
                             ) AS t
                         WHERE
-                            STATE = 'running'
+                            STATE = 'running' OR STATE='stopped'
                         GROUP BY
                             LWACCOUNT,
                             ACCOUNTID
@@ -1557,7 +1557,7 @@ AgentQueries = {
                                     :db_table AS dm
                             ) AS t 
                         WHERE
-                            STATE = 'running'
+                            STATE = 'running' OR STATE='stopped'
                         """,
     "lwaccount_summary": """
                         SELECT  
@@ -1581,8 +1581,8 @@ AgentQueries = {
                                 FROM 
                                     :db_table AS dm
                             ) AS t  
-                        WHERE
-                            STATE = 'running'
+                         WHERE
+                            STATE = 'running' OR STATE='stopped'
                         GROUP BY
                             LWACCOUNT
                         """,
