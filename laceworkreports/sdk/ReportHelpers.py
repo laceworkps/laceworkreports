@@ -417,7 +417,7 @@ class ReportHelper:
             logging.info("Generating query results")
             results = {}
             for query in queries.keys():
-                logging.debug(f"Executing query: {query}")
+                logging.debug(f"Executing query")
                 df = pd.read_sql_query(
                     sql=queries[query].replace(":db_table", table_name),
                     con=con,
@@ -434,7 +434,7 @@ class ReportHelper:
     ) -> typing.Any:
 
         logging.info(f"Checking if table exists: {db_table}")
-        db_engine = create_engine(db_connection)
+        db_engine = create_engine(db_connection, echo=False)
         return db_engine.has_table(db_table)
 
     def sqlite_table_append_context_column(
@@ -446,7 +446,7 @@ class ReportHelper:
     ) -> bool:
 
         logging.info(f"Checking if table exists: {db_table}")
-        db_engine = create_engine(db_connection)
+        db_engine = create_engine(db_connection, echo=False)
         if db_engine.has_table(db_table):
             conn = db_engine.connect()
             ddl = "SELECT * FROM {table_name} LIMIT 1"
@@ -495,12 +495,12 @@ class ReportHelper:
     ) -> typing_dict[typing.Any, typing.Any]:
 
         logging.info("Generating query results")
-        engine = create_engine(db_connection)
+        engine = create_engine(db_connection, echo=False)
         conn = engine.connect()
 
         results = {}
         for query in queries.keys():
-            logging.info(f"Executing query: {query}")
+            logging.debug(f"Executing query: {query}")
             df = pd.read_sql_query(
                 sql=queries[query].replace(":db_table", db_table),
                 con=conn,
@@ -516,8 +516,8 @@ class ReportHelper:
         db_connection: typing.Any,
     ) -> typing.Any:
 
-        logging.info(f"Executing query: {query}")
-        engine = create_engine(db_connection)
+        logging.debug(f"Executing query: {query}")
+        engine = create_engine(db_connection, echo=False)
         conn = engine.connect()
 
         return conn.execute(query)
@@ -526,7 +526,7 @@ class ReportHelper:
         self, db_table: typing.Any, db_connection: typing.Any
     ) -> bool:
         logging.info(f"Attempting to drop table {db_table}...")
-        engine = create_engine(db_connection)
+        engine = create_engine(db_connection, echo=False)
         conn = engine.connect()
 
         if engine.has_table(db_table):

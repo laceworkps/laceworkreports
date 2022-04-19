@@ -165,51 +165,25 @@ db_connection = f"sqlite:///{db_path.absolute()}?check_same_thread=False"
 #     db_connection=db_connection,
 # ).export()
 
-lql_query = """
-                {
-                        source {
-                            LW_CFG_AWS_LAMBDA L
-                        }
-                        filter {
-                            not key_exists(RESOURCE_CONFIG:VpcConfig.VpcId)
-                        } 
-                        return distinct {
-                            ACCOUNT_ALIAS || ' (' || ACCOUNT_ID || ')' AS ACCOUNT_ID,
-                            RESOURCE_CONFIG:FunctionArn as RESOURCE_ID,
-                            RESOURCE_REGION,
-                            RESOURCE_TYPE,
-                            'LambdaForbiddenVPCREgion' as COMPLIANCE_FAILURE_REASON
-                        }  
-                }
-                """
-
-reportHelper.sqlite_drop_table(db_table="lambda", db_connection=db_connection)
-eh = ExportHandler(
-    format=DataHandlerTypes.SQLITE,
-    results=QueryHandler(
-        start_time=datetime.utcnow() - timedelta(days=2),
-        end_time=datetime.utcnow(),
-        client=LaceworkClient(),
-        type=common.ObjectTypes.Queries.value,
-        object=common.QueriesTypes.Execute.value,
-        lql_query=lql_query,
-    ).execute(),
-    db_table="lambda",
-    db_connection=db_connection,
-).export()
-
-# lql_query =     """
-#                 RDS {
-#                     source {
-#                         LW_HE_MACHINES
-#                     }
-#                     return {
-#                         LW_HE_MACHINES.*
-#                     }
+# lql_query = """
+#                 {
+#                         source {
+#                             LW_CFG_AWS_LAMBDA L
+#                         }
+#                         filter {
+#                             not key_exists(RESOURCE_CONFIG:VpcConfig.VpcId)
+#                         }
+#                         return distinct {
+#                             ACCOUNT_ALIAS || ' (' || ACCOUNT_ID || ')' AS ACCOUNT_ID,
+#                             RESOURCE_CONFIG:FunctionArn as RESOURCE_ID,
+#                             RESOURCE_REGION,
+#                             RESOURCE_TYPE,
+#                             'LambdaForbiddenVPCREgion' as COMPLIANCE_FAILURE_REASON
+#                         }
 #                 }
 #                 """
 
-# reportHelper.sqlite_drop_table(db_table="machines", db_connection=db_connection)
+# reportHelper.sqlite_drop_table(db_table="lambda", db_connection=db_connection)
 # eh = ExportHandler(
 #     format=DataHandlerTypes.SQLITE,
 #     results=QueryHandler(
@@ -220,9 +194,59 @@ eh = ExportHandler(
 #         object=common.QueriesTypes.Execute.value,
 #         lql_query=lql_query,
 #     ).execute(),
-#     db_table="machines",
+#     db_table="lambda",
 #     db_connection=db_connection,
 # ).export()
+
+lql_query = """
+                RDS {
+                    source {
+                        LW_HA_CONNECTION_SUMMARY SUMMARY,
+                        array_to_rows(SUMMARY.ENDPOINT_DETAILS) AS (NETWORK)
+                    }
+                    return DISTINCT {
+                        SUMMARY.SRC_ENTITY_ID:mid AS src_mid,
+                        SUMMARY.DST_ENTITY_TYPE,
+                        SUMMARY.DST_ENTITY_ID:mid AS dst_mid,
+                        SUMMARY.SRC_IN_BYTES,
+                        SUMMARY.SRC_OUT_BYTES,
+                        SUMMARY.DST_IN_BYTES,
+                        SUMMARY.DST_OUT_BYTES,
+                        NETWORK:src_ip_addr::string AS src_ip_addr,
+                        NETWORK:dst_ip_addr::string AS dst_ip_addr,
+                        NETWORK:dst_port AS dst_port,
+                        NETWORK:protocol::string AS protocol
+                    }
+                }
+                """
+lwAccount = "test"
+lql_query = f"""
+                Custom_HE_Machine_1 {{
+                    source {{
+                            LW_CFG_AWS_ALL c
+                    }}
+                    return distinct {{
+                        '{lwAccount}' AS lwAccount,
+                        c.ACCOUNT_ID, 
+                        c.ACCOUNT_ALIAS
+                    }}
+                }}
+                """
+
+reportHelper.sqlite_drop_table(db_table="machines", db_connection=db_connection)
+eh = ExportHandler(
+    format=DataHandlerTypes.SQLITE,
+    results=QueryHandler(
+        start_time=datetime.utcnow() - timedelta(days=2),
+        end_time=datetime.utcnow(),
+        client=LaceworkClient(),
+        type=common.ObjectTypes.Queries.value,
+        object=common.QueriesTypes.Execute.value,
+        lql_query=lql_query,
+    ).execute(),
+    db_table="machines",
+    db_connection=db_connection,
+).export()
 
 # reportHelper.sqlite_drop_table("test2", db_connection=db_connection)
 # reportHelper.sqlite_execute(
