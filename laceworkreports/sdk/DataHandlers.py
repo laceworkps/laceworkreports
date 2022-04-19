@@ -210,7 +210,7 @@ class DataHandler:
 
         elif self.format in [DataHandlerTypes.POSTGRES, DataHandlerCliTypes.POSTGRES]:
             try:
-                self.db_engine = create_engine(self.db_connection)
+                self.db_engine = create_engine(self.db_connection, echo=False)
                 logging.info(
                     f'Connecting to "{self.db_engine.url.database}" on port {self.db_engine.url.port} as user "{self.db_engine.url.username}"'
                 )
@@ -597,22 +597,28 @@ class QueryHandler:
         if common.ObjectTypes.has_value(self.type) and common.QueriesTypes.has_value(
             self.object
         ):
-            response = obj(
-                evaluator_id="<<IMPLICIT>>",
-                query_text=self.lql_query,
-                arguments={
-                    "StartTimeRange": self.start_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                    "EndTimeRange": self.end_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                },
-            )
-
-            result = response.get("data", [])
-            logging.debug(f"Query result: {json.dumps(result, indent=4)}")
-            num_returned = len(result)
-            if num_returned == LQL_PAGINATION_MAX:
-                logging.warning(
-                    f"Warning! The maximum number of active containers ({LQL_PAGINATION_MAX}) was returned."
+            try:
+                response = obj(
+                    evaluator_id="<<IMPLICIT>>",
+                    query_text=self.lql_query,
+                    arguments={
+                        "StartTimeRange": self.start_time.strftime(
+                            "%Y-%m-%dT%H:%M:%SZ"
+                        ),
+                        "EndTimeRange": self.end_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    },
                 )
+
+                result = response.get("data", [])
+                logging.debug(f"Query result: {json.dumps(result, indent=4)}")
+                num_returned = len(result)
+                if num_returned == LQL_PAGINATION_MAX:
+                    logging.warning(
+                        f"Warning! The maximum number of active containers ({LQL_PAGINATION_MAX}) was returned."
+                    )
+            except Exception as e:
+                logging.error(f"Failed to execute lql query: {e}")
+                response = {"data": []}
 
             return [response]
         elif common.ObjectTypes.has_value(self.type):
