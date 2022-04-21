@@ -583,8 +583,8 @@ testutil = ["gitpython (>3)"]
 
 [[package]]
 name = "pyparsing"
-version = "3.0.8"
-description = "pyparsing module - Classes and methods to define and execute parsing grammars"
+version = "3.0.7"
+description = "Python parsing module"
 category = "dev"
 optional = false
 python-versions = ">=3.6.8"
