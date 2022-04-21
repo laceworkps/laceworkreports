@@ -150,34 +150,25 @@ def html(
         logging.warn(f"missing report for : {miss}")
 
     # ensure we have a compliance_coverage table
-    compliance_coverage_table = """
-                                    CREATE TABLE IF NOT EXISTS compliance_coverage (
-                                        reportType TEXT,
-                                        reportTime TEXT,
-                                        reportTitle TEXT,
-                                        accountId TEXT,
-                                        lwAccount TEXT,
-                                        title TEXT,
-                                        info_link TEXT,
-                                        rec_id TEXT,
-                                        status TEXT,
-                                        category TEXT,
-                                        service TEXT,
-                                        violations TEXT,
-                                        suppressions TEXT,
-                                        resource_count TEXT,
-                                        assessed_resource_count TEXT,
-                                        violation_count TEXT,
-                                        suppression_count TEXT,
-                                        severity TEXT,
-                                        severity_number TEXT,
-                                        percent TEXT,
-                                        recommendations JSON
-                                    )
+    if not reportHelper.sqlite_table_exists(
+        db_table="compliance_coverage", db_connection=db_connection
+    ):
+        compliance_coverage_table = """
+                                    CREATE TABLE compliance_coverage (
+                                        "reportType" TEXT, 
+                                        "reportTitle" TEXT, 
+                                        recommendations JSON, 
+                                        summary JSON, 
+                                        "projectName" TEXT, 
+                                        "organizationName" TEXT, 
+                                        "reportTime" TEXT, 
+                                        "accountId" TEXT, 
+                                        "lwAccount" TEXT
+                                    , accountAlias TEXT)
                                     """
-    reportHelper.sqlite_execute(
-        query=compliance_coverage_table, db_connection=db_connection
-    )
+        reportHelper.sqlite_execute(
+            query=compliance_coverage_table, db_connection=db_connection
+        )
 
     # use sqlite query to generate final result
     results = reportHelper.sqlite_queries(
@@ -344,34 +335,25 @@ def csv_handler(
         logging.warn(f"missing report for : {miss}")
 
     # ensure we have a compliance_coverage table
-    compliance_coverage_table = """
-                                    CREATE TABLE IF NOT EXISTS compliance_coverage (
-                                        reportType TEXT,
-                                        reportTime TEXT,
-                                        reportTitle TEXT,
-                                        accountId TEXT,
-                                        lwAccount TEXT,
-                                        title TEXT,
-                                        info_link TEXT,
-                                        rec_id TEXT,
-                                        status TEXT,
-                                        category TEXT,
-                                        service TEXT,
-                                        violations TEXT,
-                                        suppressions TEXT,
-                                        resource_count TEXT,
-                                        assessed_resource_count TEXT,
-                                        violation_count TEXT,
-                                        suppression_count TEXT,
-                                        severity TEXT,
-                                        severity_number TEXT,
-                                        percent TEXT,
-                                        recommendations JSON
-                                    )
+    if not reportHelper.sqlite_table_exists(
+        db_table="compliance_coverage", db_connection=db_connection
+    ):
+        compliance_coverage_table = """
+                                    CREATE TABLE compliance_coverage (
+                                        "reportType" TEXT, 
+                                        "reportTitle" TEXT, 
+                                        recommendations JSON, 
+                                        summary JSON, 
+                                        "projectName" TEXT, 
+                                        "organizationName" TEXT, 
+                                        "reportTime" TEXT, 
+                                        "accountId" TEXT, 
+                                        "lwAccount" TEXT
+                                    , accountAlias TEXT)
                                     """
-    reportHelper.sqlite_execute(
-        query=compliance_coverage_table, db_connection=db_connection
-    )
+        reportHelper.sqlite_execute(
+            query=compliance_coverage_table, db_connection=db_connection
+        )
 
     # use sqlite query to generate final result
     results = reportHelper.sqlite_queries(

@@ -619,4 +619,4 @@ MigrationBackup/
 /*.json
 /*.html
 /*.db*
-laceworkreports/sdk/ReportHelpers.py
+/reports/*

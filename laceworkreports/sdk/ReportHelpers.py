@@ -14,7 +14,7 @@ import laceworksdk
 import pandas as pd
 import sqlalchemy
 from laceworksdk import LaceworkClient
-from sqlalchemy import MetaData, Table, create_engine, false, text
+from sqlalchemy import MetaData, Table, create_engine, text
 from sqlalchemy_utils.functions import create_database, database_exists
 
 from laceworkreports import common
@@ -417,7 +417,7 @@ class ReportHelper:
             logging.info("Generating query results")
             results = {}
             for query in queries.keys():
-                logging.debug(f"Executing query")
+                logging.debug("Executing query")
                 df = pd.read_sql_query(
                     sql=queries[query].replace(":db_table", table_name),
                     con=con,
@@ -946,14 +946,14 @@ class ReportHelper:
 
         for csp in ["aws", "gcp", "az"]:
             if csp == "aws":
-                filter = f"m.TAGS:VmProvider::String IN ('AWS')"
+                filter = "m.TAGS:VmProvider::String IN ('AWS')"
                 accountId = "'aws:' || m.TAGS:Account::String AS accountId"
             elif csp == "gcp":
                 filter = "m.TAGS:VmProvider::String IN ('GCE')"
-                accountId = f"'gcp:' ||  m.TAGS:ProjectId::String AS accountId"
+                accountId = "'gcp:' ||  m.TAGS:ProjectId::String AS accountId"
             elif csp == "az":
                 filter = "m.TAGS:VmProvider::String IN ('Azure')"
-                accountId = f"'az:' ||  m.TAGS:ProjectId::String AS accountId"
+                accountId = "'az:' ||  m.TAGS:ProjectId::String AS accountId"
 
             lql_query = f"""
                         Custom_HE_Machine_1 {{
