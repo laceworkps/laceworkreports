@@ -173,37 +173,43 @@ def html(
                     db_connection=db_connection,
                 )
 
-                # ensure we have machines table if no machines were found
-                machines_table = """
-                                    CREATE TABLE IF NOT EXISTS machines (
-                                        lwAccount TEXT,
-                                        accountId TEXT,
-                                        tag_hostname TEXT,
-                                        tag_instanceId TEXT,
-                                        tag_accountId TEXT,
-                                        tag_projectId TEXT,
-                                        tag_VmProvider TEXT,
-                                        lwTokenShort TEXT
+                # ensure we have a machines table
+                if not reportHelper.sqlite_table_exists(
+                    db_table="machines", db_connection=db_connection
+                ):
+                    machines_table = """
+                                    CREATE TABLE machines (
+                                        "LWACCOUNT" TEXT, 
+                                        "ACCOUNTID" TEXT, 
+                                        "TAG_HOSTNAME" TEXT, 
+                                        "TAG_INSTANCEID" TEXT, 
+                                        "TAG_ACCOUNTID" TEXT, 
+                                        "TAG_PROJECTID" TEXT, 
+                                        "TAG_VMPROVIDER" TEXT, 
+                                        "LWTOKENSHORT" TEXT
                                     )
                                     """
-                reportHelper.sqlite_execute(
-                    query=machines_table, db_connection=db_connection
-                )
+                    reportHelper.sqlite_execute(
+                        query=machines_table, db_connection=db_connection
+                    )
 
                 # ensure we have a discovered_machines table
-                discovered_machines_table = """
-                                                CREATE TABLE IF NOT EXISTS discovered_machines (
-                                                    lwAccount TEXT,
-                                                    accountId TEXT,
-                                                    instanceId TEXT,
-                                                    name TEXT,
-                                                    state TEXT,
-                                                    tags JSON
+                if not reportHelper.sqlite_table_exists(
+                    db_table="discovered_machines", db_connection=db_connection
+                ):
+                    discovered_machines_table = """
+                                                CREATE TABLE discovered_machines (
+                                                    "LWACCOUNT" TEXT, 
+                                                    "ACCOUNTID" TEXT, 
+                                                    "INSTANCEID" TEXT, 
+                                                    "NAME" TEXT, 
+                                                    "STATE" TEXT, 
+                                                    "TAGS" TEXT
                                                 )
                                                 """
-                reportHelper.sqlite_execute(
-                    query=discovered_machines_table, db_connection=db_connection
-                )
+                    reportHelper.sqlite_execute(
+                        query=discovered_machines_table, db_connection=db_connection
+                    )
 
             else:
                 logging.info(
@@ -405,37 +411,43 @@ def csv_handler(
                     db_connection=db_connection,
                 )
 
-                # ensure we have machines table if no machines were found
-                machines_table = """
-                                    CREATE TABLE IF NOT EXISTS machines (
-                                        lwAccount TEXT,
-                                        accountId TEXT,
-                                        tag_hostname TEXT,
-                                        tag_instanceId TEXT,
-                                        tag_accountId TEXT,
-                                        tag_projectId TEXT,
-                                        tag_VmProvider TEXT,
-                                        lwTokenShort TEXT
+                # ensure we have a machines table
+                if not reportHelper.sqlite_table_exists(
+                    db_table="machines", db_connection=db_connection
+                ):
+                    machines_table = """
+                                    CREATE TABLE machines (
+                                        "LWACCOUNT" TEXT, 
+                                        "ACCOUNTID" TEXT, 
+                                        "TAG_HOSTNAME" TEXT, 
+                                        "TAG_INSTANCEID" TEXT, 
+                                        "TAG_ACCOUNTID" TEXT, 
+                                        "TAG_PROJECTID" TEXT, 
+                                        "TAG_VMPROVIDER" TEXT, 
+                                        "LWTOKENSHORT" TEXT
                                     )
                                     """
-                reportHelper.sqlite_execute(
-                    query=machines_table, db_connection=db_connection
-                )
+                    reportHelper.sqlite_execute(
+                        query=machines_table, db_connection=db_connection
+                    )
 
                 # ensure we have a discovered_machines table
-                discovered_machines_table = """
-                                                CREATE TABLE IF NOT EXISTS discovered_machines (
-                                                    lwAccount TEXT,
-                                                    accountId TEXT,
-                                                    instanceId TEXT,
-                                                    name TEXT,
-                                                    state TEXT,
-                                                    tags JSON
+                if not reportHelper.sqlite_table_exists(
+                    db_table="discovered_machines", db_connection=db_connection
+                ):
+                    discovered_machines_table = """
+                                                CREATE TABLE discovered_machines (
+                                                    "LWACCOUNT" TEXT, 
+                                                    "ACCOUNTID" TEXT, 
+                                                    "INSTANCEID" TEXT, 
+                                                    "NAME" TEXT, 
+                                                    "STATE" TEXT, 
+                                                    "TAGS" TEXT
                                                 )
                                                 """
-                reportHelper.sqlite_execute(
-                    query=discovered_machines_table, db_connection=db_connection
-                )
+                    reportHelper.sqlite_execute(
+                        query=discovered_machines_table, db_connection=db_connection
+                    )
 
             else:
                 logging.info(

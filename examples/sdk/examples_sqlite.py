@@ -233,6 +233,21 @@ lql_query = f"""
                 }}
                 """
 
+# lql_query = f"""
+#                 Custom_HE_Machine_1 {{
+#                     source {{
+#                             CloudTrailRawEvents c
+#                     }}
+#                     filter {{
+#                         c.EVENT:recipientAccountId::string = '909244398454'
+#                         AND CONTAINS(c.EVENT:requestParameters::string,'SecurityAudit-XAccount')
+#                     }}
+#                     return {{
+#                         c.*
+#                     }}
+#                 }}
+#                 """
+
 reportHelper.sqlite_drop_table(db_table="machines", db_connection=db_connection)
 eh = ExportHandler(
     format=DataHandlerTypes.SQLITE,
