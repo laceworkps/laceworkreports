@@ -1,11 +1,10 @@
 """
 Report Handler
 """
-from typing import Optional
+import typing
 
-import csv
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import typer
@@ -39,7 +38,7 @@ def png(
         Path("./out").resolve(),
         help="Path to exported resutls. Default current directory",
     ),
-    vpcs_list: Optional[str] = typer.Option(
+    vpcs_list: typing.Any = typer.Option(
         ...,
         help="Comma separated list of VPCs to processt or file with newline seperated values . Use @ prefex to specify file path",
     ),
