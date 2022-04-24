@@ -5,7 +5,7 @@ from laceworkreports import common
 from .AgentCoverageHandler import AgentCoverageHandler
 from .ComplianceCoverageHandler import ComplianceCoverageHandler
 from .ContainerVulnerabilityCoverageHandler import ContainerVulnerabilityCoverageHandler
-from .VpcChartingHandler import VpcChartingHandler
+from .VpcChartHandler import VpcChartHandler
 from .VulnerabilityCoverageHandler import VulnerabilityCoverageHandler
 
 app = typer.Typer(no_args_is_help=True)
@@ -18,7 +18,7 @@ commands = [
     },
     {
         "command_name": "vpc-chart",
-        "command_type": VpcChartingHandler.app,
+        "command_type": VpcChartHandler.app,
     },
     {
         "command_name": "vulnerability-coverage",
