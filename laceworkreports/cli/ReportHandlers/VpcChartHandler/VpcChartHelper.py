@@ -57,9 +57,6 @@ def build_target_vpc_output(vpc, nodes, edges, output_directory):
             and edge["RESOURCE_CONFIG"]["RequesterVpcInfo"]["VpcId"] == vpc
         )
     ]
-    # for edge in edges:
-    #     print(edge['RESOURCE_CONFIG']["AccepterVpcInfo"]["VpcId"])
-    # exit()
 
     for edge in edges:
         pruned_node_set.add(edge["RESOURCE_CONFIG"]["AccepterVpcInfo"]["VpcId"])
