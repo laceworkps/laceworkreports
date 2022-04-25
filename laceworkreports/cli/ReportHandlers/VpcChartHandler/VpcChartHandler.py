@@ -38,7 +38,7 @@ def png(
         Path("./out").resolve(),
         help="Path to exported resutls. Default current directory",
     ),
-    vpcs_list: typing.Any = typer.Option(
+    vpcs_list: str = typer.Option(
         ...,
         help="Comma separated list of VPCs to processt or file with newline seperated values . Use @ prefex to specify file path",
     ),
@@ -53,18 +53,17 @@ def png(
         )
         Path(output_directory).mkdir(parents=True, exist_ok=True)
 
+    vpcs = []
     if vpcs_list[0] == "@":
         if not Path(vpcs_list[1:]).exists():
             raise Exception("vpcs_list path does not exist")
         try:
-            vpcs_list = [
-                x.strip() for x in Path(vpcs_list[1:]).read_text().splitlines()
-            ]
+            vpcs = [x.strip() for x in Path(vpcs_list[1:]).read_text().splitlines()]
         except Exception as e:
             raise typer.BadParameter(f"Failed to parse vpcs_list: {e}")
     else:
         try:
-            vpcs_list = [x.strip() for x in vpcs_list.split(",")]
+            vpcs = [x.strip() for x in vpcs_list.split(",")]
         except Exception as e:
             raise typer.BadParameter(f"Failed to parse vpcs_list json: {e}")
 
@@ -140,7 +139,7 @@ def png(
         },
     ).export()
 
-    for vpc in vpcs_list:
+    for vpc in vpcs:
         build_target_vpc_output(vpc, nodes, edges, output_directory)
 
     logging.info("Operation Completed Successfully!")
