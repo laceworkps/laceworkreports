@@ -74,10 +74,12 @@ jobs:
           curl -LJO https://github.com/lacework/lacework-vulnerability-scanner/releases/latest/download/lw-scanner-linux-amd64
           sudo mv lw-scanner-linux-amd64 lw-scanner
           sudo chmod +x lw-scanner
+        continue-on-error: true
 
       - name: Lacework Image Assurance Scan
         run: |
           ./lw-scanner image evaluate ${DOCKER_TEST_NAME} latest --build-id ${{ github.run_id }}
+        continue-on-error: true
       
       - name: Build and Publish to Docker
         if: github.event_name != 'pull_request'
