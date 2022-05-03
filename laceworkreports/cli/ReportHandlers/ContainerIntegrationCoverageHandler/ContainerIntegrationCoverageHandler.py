@@ -301,7 +301,6 @@ def csv_handler(
     lw = common.config.connect()
 
     # report details
-    report_title = "Container Integration Coverage"
     db_table = "container_repos"
 
     reportHelper = ReportHelper()
