@@ -763,7 +763,9 @@ class ReportHelper:
                 filter = f"m.TAGS:ProjectId::String = '{subscriptionId}' AND m.TAGS:VmProvider::String IN ('Azure')"
             else:
                 filter = None
-            accountId = f"'az:' || '{tenantId}' || ':' ||  '{projectId}' AS accountId,"
+            accountId = (
+                f"'az:' || '{tenantId}' || ':' ||  '{subscriptionId}' AS accountId,"
+            )
 
         lql_query = f"""
                     Custom_HE_CONTAINERS_1 {{
@@ -787,6 +789,158 @@ class ReportHelper:
                             '{lwAccount}' AS lwAccount,
                             {accountId}
                             c.IMAGE_ID
+                        }}
+                    }}
+                """
+        try:
+            result = ExportHandler(
+                format=format_type,
+                results=QueryHandler(
+                    client=client,
+                    start_time=start_time,
+                    end_time=end_time,
+                    type=common.ObjectTypes.Queries.value,
+                    object=common.QueriesTypes.Execute.value,
+                    lql_query=lql_query,
+                ).execute(),
+                db_table=db_table,
+                db_connection=db_connection,
+            ).export()
+            result = result + result
+
+        except laceworksdk.exceptions.ApiError as e:
+            logging.error(f"Lacework api returned: {e}")
+
+            if not ignore_errors:
+                raise e
+
+        return result
+
+    def get_container_repos(
+        self,
+        client: LaceworkClient,
+        lwAccount: typing.Any,
+        start_time: datetime = (datetime.utcnow() - timedelta(hours=25)),
+        end_time: datetime = (datetime.utcnow()),
+        ignore_errors: bool = True,
+        use_sqlite: bool = False,
+        db_table: typing.Any = None,
+        db_connection: typing.Any = None,
+    ) -> typing_list[typing.Any]:
+        result = []
+        if use_sqlite:
+            format_type = DataHandlerTypes.SQLITE
+        else:
+            format_type = DataHandlerTypes.DICT
+
+        try:
+            report = ExportHandler(
+                format=format_type,
+                results=QueryHandler(
+                    client=client,
+                    start_time=start_time,
+                    end_time=end_time,
+                    object=common.ObjectTypes.ContainerRegistries.value,
+                    type=None,
+                ).execute(),
+                db_table=db_table,
+                db_connection=db_connection,
+            ).export()
+            report = report + report
+
+            # add the cloud account and lwaccount context
+            if use_sqlite:
+                self.sqlite_table_append_context_column(
+                    lwAccount=lwAccount,
+                    cloud_account=None,
+                    db_table=db_table,
+                    db_connection=db_connection,
+                )
+            else:
+                for r in report:
+                    r["accountId"] = (None,)
+                    r["lwAccount"] = lwAccount
+                    result.append(r)
+
+        except laceworksdk.exceptions.ApiError as e:
+            logging.error(f"Lacework api returned: {e}")
+
+            if not ignore_errors:
+                raise e
+
+        return result
+
+    def get_discovered_container_repos(
+        self,
+        client: LaceworkClient,
+        lwAccount: typing.Any,
+        cloud_account: typing.Any,
+        start_time: datetime = (datetime.utcnow() - timedelta(hours=25)),
+        end_time: datetime = (datetime.utcnow()),
+        ignore_errors: bool = True,
+        use_sqlite: bool = False,
+        db_table: typing.Any = None,
+        db_connection: typing.Any = None,
+    ) -> typing_list[typing.Any]:
+        result = []
+        if use_sqlite:
+            format_type = DataHandlerTypes.SQLITE
+        else:
+            format_type = DataHandlerTypes.DICT
+
+        cloud_account_details = cloud_account.split(":")
+        csp = cloud_account_details[0]
+
+        if csp == "aws":
+            csp, accountId = cloud_account_details
+            if accountId != "*":
+                filter = f"m.TAGS:Account::String = '{accountId}' AND m.TAGS:VmProvider::String IN ('AWS')"
+            else:
+                filter = None
+            accountId = f"'aws:' || '{accountId}' AS accountId,"
+        elif csp == "gcp":
+            csp, organizationId, projectId = cloud_account_details
+            if projectId != "*":
+                filter = f"m.TAGS:ProjectId::String = '{projectId}' AND m.TAGS:VmProvider::String IN ('GCE')"
+            else:
+                filter = None
+            accountId = (
+                f"'gcp:' || '{organizationId}' || ':' ||  '{projectId}' AS accountId,"
+            )
+        elif csp == "az":
+            csp, tenantId, subscriptionId = cloud_account_details
+            if subscriptionId != "*":
+                filter = f"m.TAGS:ProjectId::String = '{subscriptionId}' AND m.TAGS:VmProvider::String IN ('Azure')"
+            else:
+                filter = None
+            accountId = (
+                f"'az:' || '{tenantId}' || ':' ||  '{subscriptionId}' AS accountId,"
+            )
+
+        lql_query = f"""
+                    Custom_HE_CONTAINERS_1 {{
+                        source {{
+                            LW_HE_CONTAINERS c
+                        }}
+                        filter {{
+                            c.MID in {{
+                                source {{
+                                    LW_HE_MACHINES m
+                                }}
+                                filter {{
+                                    {filter}
+                                }}
+                                return distinct {{
+                                    m.MID
+                                }}
+                            }}
+                        }}
+                        return distinct {{
+                            '{lwAccount}' AS lwAccount,
+                            {accountId}
+                            c.IMAGE_ID,
+                            c.REPO,
+                            c.TAG
                         }}
                     }}
                 """
@@ -3135,5 +3289,292 @@ ContainerVulnerabilityQueries = {
                         DISTINCT lwaccount
                     FROM
                         :db_table
+                    """,
+}
+
+ContainerIntegrationQueries = {
+    "report": """
+                SELECT
+                    *
+                FROM
+                    (SELECT 
+                        *,
+                        '1' AS REPO_SCANNING_FOUND
+                    from 
+                        discovered_container_repos 
+                    WHERE 
+                        repo IN (
+                            SELECT 
+                                json_extract(data,'$.registryDomain') || '/' || details.key AS repo
+                            FROM 
+                                container_repos,
+                                json_each(json_extract(state, '$.details.errorMap')) as details
+                            WHERE 
+                                json_extract(props, '$.warningMessage') IS NULL
+                        )
+                    UNION 
+                    SELECT 
+                        *,
+                        '0' AS REPO_SCANNING_FOUND
+                    from 
+                        discovered_container_repos 
+                    WHERE 
+                        repo NOT IN (
+                            SELECT 
+                                json_extract(data,'$.registryDomain') || '/' || details.key AS repo
+                            FROM 
+                                container_repos,
+                                json_each(json_extract(state, '$.details.errorMap')) as details
+                            WHERE 
+                                json_extract(props, '$.warningMessage') IS NULL
+                        )) as t1;
+    
+                """,
+    "report_integration": """
+                            SELECT
+                                * 
+                            FROM 
+                                (select 
+                                    lwAccount,
+                                    'Any' AS accountId,
+                                    enabled,
+                                    isOrg,
+                                    name,
+                                    json_extract(data,'$.registryType') as registryType,
+                                    json_extract(data,'$.registryDomain') as registryDomain,
+                                    json_extract(data,'$.limitNumImg') as limitNumImg,
+                                    json_extract(data,'$.nonOsPackageEval') as nonOsPackageEval,
+                                    json_extract(data,'$.limitByTag') as limitByTag,
+                                    json_extract(data,'$.limitByLabel') as limitByLabel,
+                                    json_extract(data,'$.limitByRep') as limitByRep,
+                                    json_extract(state, '$.ok') as status,
+                                    json_extract(state, '$.lastUpdatedTime') as lastUpdatedTime,
+                                    json_extract(state, '$.lastSuccessfulTime') as lastSuccessfulTime,
+                                    json_extract(data,'$.registryDomain') || '/' || details.key AS registry,
+                                    json_extract(props, '$.warningMessage') as warningMessage,
+                                    details.value AS errorMessage
+                                from 
+                                    container_repos,
+                                    json_each(json_extract(state, '$.details.errorMap')) as details
+                                where 
+                                    json_extract(props, '$.warningMessage') IS NULL
+                                
+                                union all
+
+                                select 
+                                    lwAccount,
+                                    'Any' AS accountId,
+                                    enabled,
+                                    isOrg,
+                                    name,
+                                    json_extract(data,'$.registryType') as registryType,
+                                    json_extract(data,'$.registryDomain') as registryDomain,
+                                    json_extract(data,'$.limitNumImg') as limitNumImg,
+                                    json_extract(data,'$.nonOsPackageEval') as nonOsPackageEval,
+                                    json_extract(data,'$.limitByTag') as limitByTag,
+                                    json_extract(data,'$.limitByLabel') as limitByLabel,
+                                    json_extract(data,'$.limitByRep') as limitByRep,
+                                    json_extract(state, '$.ok') as status,
+                                    json_extract(state, '$.lastUpdatedTime') as lastUpdatedTime,
+                                    json_extract(state, '$.lastSuccessfulTime') as lastSuccessfulTime,
+                                    NULL AS registry,
+                                    json_extract(props, '$.warningMessage') as warningMessage,
+                                    NULL AS errorMessage
+                                from 
+                                    container_repos
+                                where 
+                                    json_extract(props, '$.warningMessage') IS NOT NULL) as t1
+
+                            ORDER BY
+                                lwAccount,
+                                accountId,
+                                name
+                            """,
+    "account_coverage": """
+                        SELECT 
+                            LWACCOUNT AS lwAccount,
+                            ACCOUNTID AS accountId,
+                            SUM(REPO_SCANNING_FOUND) AS total_scanned,
+                            COUNT(*) AS total,
+                            SUM(REPO_SCANNING_FOUND)*100/COUNT(*) AS total_coverage
+                        FROM 
+                            (
+                                SELECT
+                                    *
+                                FROM
+                                    (SELECT 
+                                        *,
+                                        '1' AS REPO_SCANNING_FOUND
+                                    from 
+                                        discovered_container_repos 
+                                    WHERE 
+                                        repo IN (
+                                            SELECT 
+                                                json_extract(data,'$.registryDomain') || '/' || details.key AS repo
+                                            FROM 
+                                                container_repos,
+                                                json_each(json_extract(state, '$.details.errorMap')) as details
+                                            WHERE 
+                                                json_extract(props, '$.warningMessage') IS NULL
+                                        )
+                                    UNION 
+                                    SELECT 
+                                        *,
+                                        '0' AS REPO_SCANNING_FOUND
+                                    from 
+                                        discovered_container_repos 
+                                    WHERE 
+                                        repo NOT IN (
+                                            SELECT 
+                                                json_extract(data,'$.registryDomain') || '/' || details.key AS repo
+                                            FROM 
+                                                container_repos,
+                                                json_each(json_extract(state, '$.details.errorMap')) as details
+                                            WHERE 
+                                                json_extract(props, '$.warningMessage') IS NULL
+                                        )) as t1
+                            ) AS t
+                        GROUP BY
+                            LWACCOUNT,
+                            ACCOUNTID
+                        ORDER BY
+                            LWACCOUNT,
+                            ACCOUNTID
+                        """,
+    "total_summary": """
+                        SELECT  
+                            'Any' AS lwAccount,
+                            COUNT(DISTINCT ACCOUNTID) AS total_accounts,
+                            SUM(REPO_SCANNING_FOUND) AS total_installed,
+                            COUNT(*)-SUM(REPO_SCANNING_FOUND) AS total_not_installed,
+                            COUNT(*) AS total,
+                            SUM(REPO_SCANNING_FOUND)*100/COUNT(*) AS total_coverage
+                        FROM 
+                            (
+                                SELECT
+                                    *
+                                FROM
+                                    (SELECT 
+                                        *,
+                                        '1' AS REPO_SCANNING_FOUND
+                                    from 
+                                        discovered_container_repos 
+                                    WHERE 
+                                        repo IN (
+                                            SELECT 
+                                                json_extract(data,'$.registryDomain') || '/' || details.key AS repo
+                                            FROM 
+                                                container_repos,
+                                                json_each(json_extract(state, '$.details.errorMap')) as details
+                                            WHERE 
+                                                json_extract(props, '$.warningMessage') IS NULL
+                                        )
+                                    UNION 
+                                    SELECT 
+                                        *,
+                                        '0' AS REPO_SCANNING_FOUND
+                                    from 
+                                        discovered_container_repos 
+                                    WHERE 
+                                        repo NOT IN (
+                                            SELECT 
+                                                json_extract(data,'$.registryDomain') || '/' || details.key AS repo
+                                            FROM 
+                                                container_repos,
+                                                json_each(json_extract(state, '$.details.errorMap')) as details
+                                            WHERE 
+                                                json_extract(props, '$.warningMessage') IS NULL
+                                        )) as t1
+                            ) AS t 
+                        """,
+    "lwaccount_summary": """
+                        SELECT  
+                            LWACCOUNT AS lwAccount,
+                            COUNT(DISTINCT ACCOUNTID) AS total_accounts,
+                            SUM(REPO_SCANNING_FOUND) AS total_installed,
+                            COUNT(*)-SUM(REPO_SCANNING_FOUND) AS total_not_installed,
+                            COUNT(*) AS total,
+                            SUM(REPO_SCANNING_FOUND)*100/COUNT(*) AS total_coverage
+                        FROM 
+                            (
+                                SELECT
+                                    *
+                                FROM
+                                    (SELECT 
+                                        *,
+                                        '1' AS REPO_SCANNING_FOUND
+                                    from 
+                                        discovered_container_repos 
+                                    WHERE 
+                                        repo IN (
+                                            SELECT 
+                                                json_extract(data,'$.registryDomain') || '/' || details.key AS repo
+                                            FROM 
+                                                container_repos,
+                                                json_each(json_extract(state, '$.details.errorMap')) as details
+                                            WHERE 
+                                                json_extract(props, '$.warningMessage') IS NULL
+                                        )
+                                    UNION 
+                                    SELECT 
+                                        *,
+                                        '0' AS REPO_SCANNING_FOUND
+                                    from 
+                                        discovered_container_repos 
+                                    WHERE 
+                                        repo NOT IN (
+                                            SELECT 
+                                                json_extract(data,'$.registryDomain') || '/' || details.key AS repo
+                                            FROM 
+                                                container_repos,
+                                                json_each(json_extract(state, '$.details.errorMap')) as details
+                                            WHERE 
+                                                json_extract(props, '$.warningMessage') IS NULL
+                                        )) as t1
+                            ) AS t  
+                        GROUP BY
+                            LWACCOUNT
+                        """,
+    "lwaccount": """
+                    SELECT 
+                        DISTINCT 
+                        LWACCOUNT AS lwAccount
+                    FROM
+                        (
+                            SELECT
+                                    *
+                                FROM
+                                    (SELECT 
+                                        *,
+                                        '1' AS REPO_SCANNING_FOUND
+                                    from 
+                                        discovered_container_repos 
+                                    WHERE 
+                                        repo IN (
+                                            SELECT 
+                                                json_extract(data,'$.registryDomain') || '/' || details.key AS repo
+                                            FROM 
+                                                container_repos,
+                                                json_each(json_extract(state, '$.details.errorMap')) as details
+                                            WHERE 
+                                                json_extract(props, '$.warningMessage') IS NULL
+                                        )
+                                    UNION 
+                                    SELECT 
+                                        *,
+                                        '0' AS REPO_SCANNING_FOUND
+                                    from 
+                                        discovered_container_repos 
+                                    WHERE 
+                                        repo NOT IN (
+                                            SELECT 
+                                                json_extract(data,'$.registryDomain') || '/' || details.key AS repo
+                                            FROM 
+                                                container_repos,
+                                                json_each(json_extract(state, '$.details.errorMap')) as details
+                                            WHERE 
+                                                json_extract(props, '$.warningMessage') IS NULL
+                                        )) as t1
+                        ) AS t 
                     """,
 }

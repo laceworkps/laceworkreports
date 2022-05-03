@@ -248,18 +248,34 @@ lql_query = f"""
 #                 }}
 #                 """
 
-reportHelper.sqlite_drop_table(db_table="machines", db_connection=db_connection)
+# reportHelper.sqlite_drop_table(db_table="machines", db_connection=db_connection)
+# eh = ExportHandler(
+#     format=DataHandlerTypes.SQLITE,
+#     results=QueryHandler(
+#         start_time=datetime.utcnow() - timedelta(days=2),
+#         end_time=datetime.utcnow(),
+#         client=LaceworkClient(),
+#         type=common.ObjectTypes.Queries.value,
+#         object=common.QueriesTypes.Execute.value,
+#         lql_query=lql_query,
+#     ).execute(),
+#     db_table="machines",
+#     db_connection=db_connection,
+# ).export()
+
+reportHelper.sqlite_drop_table(
+    db_table="container_registries", db_connection=db_connection
+)
 eh = ExportHandler(
     format=DataHandlerTypes.SQLITE,
     results=QueryHandler(
         start_time=datetime.utcnow() - timedelta(days=2),
         end_time=datetime.utcnow(),
         client=LaceworkClient(),
-        type=common.ObjectTypes.Queries.value,
-        object=common.QueriesTypes.Execute.value,
-        lql_query=lql_query,
+        object=common.ObjectTypes.ContainerRegistries.value,
+        type=None,
     ).execute(),
-    db_table="machines",
+    db_table="container_registries",
     db_connection=db_connection,
 ).export()
 

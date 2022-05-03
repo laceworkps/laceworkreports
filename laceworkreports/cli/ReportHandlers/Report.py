@@ -4,6 +4,7 @@ from laceworkreports import common
 
 from .AgentCoverageHandler import AgentCoverageHandler
 from .ComplianceCoverageHandler import ComplianceCoverageHandler
+from .ContainerIntegrationCoverageHandler import ContainerIntegrationCoverageHandler
 from .ContainerVulnerabilityCoverageHandler import ContainerVulnerabilityCoverageHandler
 from .VpcChartHandler import VpcChartHandler
 from .VulnerabilityCoverageHandler import VulnerabilityCoverageHandler
@@ -27,6 +28,10 @@ commands = [
     {
         "command_name": "container-vulnerability-coverage",
         "command_type": ContainerVulnerabilityCoverageHandler.app,
+    },
+    {
+        "command_name": "container-integration-coverage",
+        "command_type": ContainerIntegrationCoverageHandler.app,
     },
 ]
 

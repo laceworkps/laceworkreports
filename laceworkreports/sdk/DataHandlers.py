@@ -584,8 +584,8 @@ class QueryHandler:
             q["dataset"] = self.dataset.value
 
         # create reference to search object
-        if common.ObjectTypes.has_value(self.object) and common.ActionTypes.has_value(
-            self.type
+        if common.ObjectTypes.has_value(self.object) and (
+            common.ActionTypes.has_value(self.type) or self.type is None
         ):
             # special case handing where there is only type and no object
             self.type = self.object
