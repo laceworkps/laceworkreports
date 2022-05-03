@@ -2,7 +2,7 @@ name: PyPi Build/Scan/Push
 
 on:
   release:
-      types: [ published ]
+    types: [published]
 
 jobs:
   publish:
@@ -29,7 +29,7 @@ jobs:
         with:
           path: .venv
           key: venv-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('poetry.lock') }}
-          
+
       - name: Publish
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
@@ -80,7 +80,7 @@ jobs:
         run: |
           ./lw-scanner image evaluate ${DOCKER_TEST_NAME} latest --build-id ${{ github.run_id }}
         continue-on-error: true
-      
+
       - name: Build and Publish to Docker
         if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v2
@@ -90,5 +90,3 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-      
