@@ -1031,7 +1031,7 @@ class ReportHelper:
                             }}
                             return distinct {{ 
                                 '{lwAccount}' AS lwAccount,
-                                'gcp:' || ORGANIZATION::String || ':' || SUBSTRING(
+                                'gcp:' || ORGANIZATION_NUMBER::String || ':' || SUBSTRING(
                                     SUBSTRING(
                                         m.URN,
                                         CHAR_INDEX(
@@ -1221,13 +1221,13 @@ class ReportHelper:
             # filter both organization and project
             elif organizationId != "*" and projectId != "*":
                 filter = f"""
-                                AND ORGANIZATION = {organizationId}
+                                AND ORGANIZATION_NUMBER = {organizationId}
                                 AND CONTAINS(m.URN, '://compute.googleapis.com/projects/{projectId}/')
                             """
             # filter only organization
             elif organizationId != "*" and projectId == "*":
                 filter = f"""
-                                AND ORGANIZATION = {organizationId}
+                                AND ORGANIZATION_NUMBER = {organizationId}
                             """
             # filter only project
             elif organizationId == "*" and projectId != "*":
@@ -1249,7 +1249,7 @@ class ReportHelper:
                                 }}
                                 return distinct {{ 
                                     '{lwAccount}' AS lwAccount,
-                                    'gcp:' || ORGANIZATION::String || ':' || SUBSTRING(
+                                    'gcp:' || ORGANIZATION_NUMBER::String || ':' || SUBSTRING(
                                         SUBSTRING(
                                             m.URN,
                                             CHAR_INDEX(
