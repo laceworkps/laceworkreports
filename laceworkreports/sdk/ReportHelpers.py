@@ -870,9 +870,13 @@ class ReportHelper:
                 page = 1
                 result = self.sqlite_queries(
                     queries={
-                        "report": f"""
-                            SELECT COUNT(*) AS COUNT FROM :db_table WHERE LWACCOUNT = '{lwAccount}' AND ACCOUNTID = '{cloud_account}'
-                            """
+                        "report": """
+                            SELECT COUNT(*) AS COUNT FROM :db_table WHERE LWACCOUNT = ':lwAccount' AND ACCOUNTID = ':cloud_account'
+                            """.replace(
+                            ":lwAccount", lwAccount
+                        ).replace(
+                            ":cloud_account", cloud_account
+                        )
                     },
                     db_table=db_table,
                     db_connection=db_connection,
@@ -951,9 +955,13 @@ class ReportHelper:
 
                         result = self.sqlite_queries(
                             queries={
-                                "report": f"""
-                                    SELECT COUNT(*) AS COUNT FROM :db_table WHERE LWACCOUNT = '{lwAccount}' AND ACCOUNTID = '{cloud_account}'
-                                    """
+                                "report": """
+                                            SELECT COUNT(*) AS COUNT FROM :db_table WHERE LWACCOUNT = ':lwAccount' AND ACCOUNTID = ':cloud_account'
+                                            """.replace(
+                                    ":lwAccount", lwAccount
+                                ).replace(
+                                    ":cloud_account", cloud_account
+                                )
                             },
                             db_table=db_table,
                             db_connection=db_connection,
@@ -1623,9 +1631,13 @@ class ReportHelper:
                 page = 1
                 result = self.sqlite_queries(
                     queries={
-                        "report": f"""
-                            SELECT COUNT(*) AS COUNT FROM :db_table WHERE LWACCOUNT = '{lwAccount}' AND ACCOUNTID = '{cloud_account}'
-                            """
+                        "report": """
+                                    SELECT COUNT(*) AS COUNT FROM :db_table WHERE LWACCOUNT = ':lwAccount' AND ACCOUNTID = ':cloud_account'
+                                    """.replace(
+                            ":lwAccount", lwAccount
+                        ).replace(
+                            ":cloud_account", cloud_account
+                        )
                     },
                     db_table=db_table,
                     db_connection=db_connection,
@@ -1813,9 +1825,13 @@ class ReportHelper:
 
                         result = self.sqlite_queries(
                             queries={
-                                "report": f"""
-                                    SELECT COUNT(*) AS COUNT FROM :db_table WHERE LWACCOUNT = '{lwAccount}' AND ACCOUNTID = '{cloud_account}'
-                                    """
+                                "report": """
+                                            SELECT COUNT(*) AS COUNT FROM :db_table WHERE LWACCOUNT = ':lwAccount' AND ACCOUNTID = ':cloud_account'
+                                            """.replace(
+                                    ":lwAccount", lwAccount
+                                ).replace(
+                                    ":cloud_account", cloud_account
+                                )
                             },
                             db_table=db_table,
                             db_connection=db_connection,
