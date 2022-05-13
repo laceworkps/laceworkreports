@@ -30,10 +30,6 @@ def html(
         formats=[common.ISO_FORMAT],
         help="End time for query period",
     ),
-    organization: Optional[str] = typer.Option(
-        None,
-        help="GCP organization id; Required when org level integration is not used",
-    ),
     subaccounts: bool = typer.Option(
         False,
         help="Enumerate subaccounts",
@@ -138,7 +134,7 @@ def html(
 
         # get cloud accounts and sync to sqlite
         cloud_accounts = reportHelper.get_cloud_accounts(
-            client=lw, lwAccount=lwAccount["accountName"], organization=organization
+            client=lw, lwAccount=lwAccount["accountName"]
         )
         ExportHandler(
             format=DataHandlerTypes.SQLITE,
@@ -273,10 +269,6 @@ def csv_handler(
         formats=[common.ISO_FORMAT],
         help="End time for query period",
     ),
-    organization: Optional[str] = typer.Option(
-        None,
-        help="GCP organization id; Required when org level integration is not used",
-    ),
     subaccounts: bool = typer.Option(
         False,
         help="Enumerate subaccounts",
@@ -378,7 +370,7 @@ def csv_handler(
 
         # get cloud accounts and sync to sqlite
         cloud_accounts = reportHelper.get_cloud_accounts(
-            client=lw, lwAccount=lwAccount["accountName"], organization=organization
+            client=lw, lwAccount=lwAccount["accountName"]
         )
         ExportHandler(
             format=DataHandlerTypes.SQLITE,

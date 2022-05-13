@@ -48,10 +48,6 @@ def html(
         AzureComplianceTypes.AZURE_CIS_131.value,
         help="Azure compliance framework",
     ),
-    organization: Optional[str] = typer.Option(
-        None,
-        help="GCP organization id; Required when org level integration is not used",
-    ),
     subaccounts: bool = typer.Option(
         False,
         help="Enumerate subaccounts",
@@ -110,7 +106,7 @@ def html(
 
         # get cloud accounts and sync to sqlite
         cloud_accounts = reportHelper.get_cloud_accounts(
-            client=lw, lwAccount=lwAccount["accountName"], organization=organization
+            client=lw, lwAccount=lwAccount["accountName"]
         )
         ExportHandler(
             format=DataHandlerTypes.SQLITE,
@@ -132,7 +128,6 @@ def html(
                 gcp_compliance=gcp_compliance,
                 azure_compliance=azure_compliance,
                 ignore_errors=ignore_errors,
-                organization=organization,
             )
 
             if len(report) > 0:
@@ -234,10 +229,6 @@ def csv_handler(
         AzureComplianceTypes.AZURE_CIS_131.value,
         help="Azure compliance framework",
     ),
-    organization: Optional[str] = typer.Option(
-        None,
-        help="GCP organization id; Required when org level integration is not used",
-    ),
     subaccounts: bool = typer.Option(
         False,
         help="Enumerate subaccounts",
@@ -295,7 +286,7 @@ def csv_handler(
 
         # get cloud accounts and sync to sqlite
         cloud_accounts = reportHelper.get_cloud_accounts(
-            client=lw, lwAccount=lwAccount["accountName"], organization=organization
+            client=lw, lwAccount=lwAccount["accountName"]
         )
         ExportHandler(
             format=DataHandlerTypes.SQLITE,
@@ -317,7 +308,6 @@ def csv_handler(
                 gcp_compliance=gcp_compliance,
                 azure_compliance=azure_compliance,
                 ignore_errors=ignore_errors,
-                organization=organization,
             )
 
             if len(report) > 0:
