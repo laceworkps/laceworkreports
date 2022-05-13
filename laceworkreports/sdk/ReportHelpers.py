@@ -151,7 +151,7 @@ class ReportHelper:
         lwAccount: Any,
         start_time: datetime = (datetime.utcnow() - timedelta(hours=25)),
         end_time: datetime = (datetime.utcnow()),
-    ):
+    ) -> typing_list[typing.Any]:
 
         lql_query = f"""
             ECS {{
@@ -182,7 +182,7 @@ class ReportHelper:
 
     def get_aws_alias_from_account_id(
         self, client: LaceworkClient, lwAccount: Any, awsAccountId: Any
-    ):
+    ) -> typing.Any:
 
         # check if we have synced the account aliases for this subaccount and sync as required
         lwAccounts = [
@@ -210,7 +210,7 @@ class ReportHelper:
         lwAccount: Any,
         start_time: datetime = (datetime.utcnow() - timedelta(hours=25)),
         end_time: datetime = (datetime.utcnow()),
-    ):
+    ) -> typing_list[typing.Any]:
 
         lql_query = f"""
                     GCE {{
@@ -271,7 +271,7 @@ class ReportHelper:
 
     def get_gcp_org_from_project(
         self, client: LaceworkClient, lwAccount: Any, gcpProject: Any
-    ):
+    ) -> typing.Any:
 
         # check if we have synced the account aliases for this subaccount and sync as required
         lwAccounts = [
@@ -298,7 +298,7 @@ class ReportHelper:
         lwAccount: Any,
         start_time: datetime = (datetime.utcnow() - timedelta(hours=25)),
         end_time: datetime = (datetime.utcnow()),
-    ) -> typing_list[Any]:
+    ) -> typing_list[typing.Any]:
 
         cloud_accounts = client.cloud_accounts.search(json={})
 
@@ -789,8 +789,8 @@ class ReportHelper:
         use_sqlite: bool = False,
         db_table: typing.Any = None,
         db_connection: typing.Any = None,
-    ) -> typing_list[typing.Any]:
-        result = []
+    ) -> typing.Any:
+        result: typing.Any = []
         if use_sqlite:
             format_type = DataHandlerTypes.SQLITE
         else:
@@ -1417,7 +1417,7 @@ class ReportHelper:
                             lwAccount=lwAccount,
                             awsAccountId=awsAccountId,
                         )
-                        accountId = {
+                        accountId_dict = {
                             "ACCOUNTID": f"aws:{awsAccountId}:{aws_account_alias}"
                         }
                     # for gcp lookup org id
@@ -1428,13 +1428,15 @@ class ReportHelper:
                         gcp_org_id = self.get_gcp_org_from_project(
                             client=client, lwAccount=lwAccount, gcpProject=gcpProject
                         )
-                        accountId = {"ACCOUNTID": f"gcp:{gcp_org_id}:{gcpProject}"}
+                        accountId_dict = {"ACCOUNTID": f"gcp:{gcp_org_id}:{gcpProject}"}
                     # for az we don't have the ability to get subscription/tenant or at least I haven't seen/looked for it :)
                     else:
                         # this will definitely fail on az right now
-                        accountId = {"ACCOUNTID": active_cloud_acccount["ACCOUNTID"]}
+                        accountId_dict = {
+                            "ACCOUNTID": active_cloud_acccount["ACCOUNTID"]
+                        }
 
-                    result.append(accountId)
+                    result.append(accountId_dict)
 
                 # sync to sqlite
                 if format_type == format_type:
@@ -1467,8 +1469,8 @@ class ReportHelper:
         use_sqlite: bool = False,
         db_table: typing.Any = None,
         db_connection: typing.Any = None,
-    ) -> typing_list[typing.Any]:
-        result: typing_list[typing.Any] = []
+    ) -> typing.Any:
+        result: typing.Any = []
         if use_sqlite:
             format_type = DataHandlerTypes.SQLITE
         else:
@@ -1856,7 +1858,7 @@ class ReportHelper:
         db_table: typing.Any = None,
         db_connection: typing.Any = None,
     ) -> typing.Any:
-        result = []
+        result: typing.Any = []
 
         try:
             fixable_val = 0
