@@ -100,7 +100,7 @@ def html(
         try:
             result = reportHelper.sqlite_queries(
                 queries={
-                    "cloud_account_query": f"""
+                    "cloud_account_query": """
                                     SELECT 
                                         DISTINCT ACCOUNTID
                                     FROM 
