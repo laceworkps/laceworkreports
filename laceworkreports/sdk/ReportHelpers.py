@@ -103,6 +103,8 @@ class ReportHelper:
     def __init__(self) -> None:
         self.reports: typing_list[Any] = []
         self.subaccounts: typing_list[Any] = []
+        self.aws_account_aliases: typing_list[Any] = []
+        self.gcp_project_orgs: typing_list[Any] = []
 
     def report_callback(self, future):
         report = future.result()
@@ -143,6 +145,152 @@ class ReportHelper:
         self.subaccounts = subaccounts
         return self.subaccounts
 
+    def get_aws_account_aliases(
+        self,
+        client: LaceworkClient,
+        lwAccount: Any,
+        start_time: datetime = (datetime.utcnow() - timedelta(hours=25)),
+        end_time: datetime = (datetime.utcnow()),
+    ):
+
+        lql_query = f"""
+            ECS {{
+                source {{LW_CFG_AWS_ACCOUNTS a}}
+                return distinct {{
+                        '{lwAccount}' AS lwAccount,
+                        a.ACCOUNT_ID,
+                        a.ACCOUNT_ALIAS
+                    }}
+                }}
+            """
+        aliases = ExportHandler(
+            format=DataHandlerTypes.DICT,
+            results=QueryHandler(
+                client=client,
+                start_time=start_time,
+                end_time=end_time,
+                type=common.ObjectTypes.Queries.value,
+                object=common.QueriesTypes.Execute.value,
+                lql_query=lql_query,
+            ).execute(),
+        ).export()
+
+        for alias in aliases:
+            self.aws_account_aliases.append(alias)
+
+        return self.aws_account_aliases
+
+    def get_aws_alias_from_account_id(
+        self, client: LaceworkClient, lwAccount: Any, awsAccountId: Any
+    ):
+
+        # check if we have synced the account aliases for this subaccount and sync as required
+        lwAccounts = [
+            x["LWACCOUNT"]
+            for x in self.aws_account_aliases
+            if x["LWACCOUNT"] == lwAccount
+        ]
+        if len(lwAccounts) == 0:
+            self.get_aws_account_aliases(client=client, lwAccount=lwAccount)
+
+        # lookup alias
+        aliases = [
+            x
+            for x in self.aws_account_aliases
+            if x["LWACCOUNT"] == lwAccount and x["ACCOUNT_ID"] == awsAccountId
+        ]
+        if len(aliases) > 0 and aliases[0]["ACCOUNT_ALIAS"] != "":
+            return aliases[0]["ACCOUNT_ALIAS"]
+        else:
+            return ""
+
+    def get_gcp_project_orgs(
+        self,
+        client: LaceworkClient,
+        lwAccount: Any,
+        start_time: datetime = (datetime.utcnow() - timedelta(hours=25)),
+        end_time: datetime = (datetime.utcnow()),
+    ):
+
+        lql_query = f"""
+                    GCE {{
+                        source {{
+                            LW_CFG_GCP_ALL m
+                        }}
+                        filter {{
+                            m.SERVICE = 'compute'
+                            AND m.API_KEY = 'resource'
+                            AND KEY_EXISTS(m.RESOURCE_CONFIG:status)
+                            AND KEY_EXISTS(m.RESOURCE_CONFIG:machineType)
+                        }}
+                        return distinct {{ 
+                            '{lwAccount}' AS lwAccount,
+                            ORGANIZATION_NUMBER::String AS ORGANIZATION_NUMBER,
+
+                            SUBSTRING(
+                                SUBSTRING(
+                                    m.URN,
+                                    CHAR_INDEX(
+                                        '/', 
+                                        m.URN
+                                    )+34,
+                                    LENGTH(m.URN)
+                                ),
+                                0,
+                                CHAR_INDEX(
+                                    '/zones/',
+                                    SUBSTRING(
+                                        m.URN,
+                                        CHAR_INDEX(
+                                            '/', 
+                                            m.URN
+                                        )+35,
+                                        LENGTH(m.URN)
+                                    )
+                                )
+                            ) AS PROJECT
+                        }}
+                    }}
+                    """
+        orgs = ExportHandler(
+            format=DataHandlerTypes.DICT,
+            results=QueryHandler(
+                client=client,
+                start_time=start_time,
+                end_time=end_time,
+                type=common.ObjectTypes.Queries.value,
+                object=common.QueriesTypes.Execute.value,
+                lql_query=lql_query,
+            ).execute(),
+        ).export()
+
+        for org in orgs:
+            self.gcp_project_orgs.append(org)
+
+        return self.gcp_project_orgs
+
+    def get_gcp_org_from_project(
+        self, client: LaceworkClient, lwAccount: Any, gcpProject: Any
+    ):
+
+        # check if we have synced the account aliases for this subaccount and sync as required
+        lwAccounts = [
+            x["LWACCOUNT"] for x in self.gcp_project_orgs if x["LWACCOUNT"] == lwAccount
+        ]
+        if len(lwAccounts) == 0:
+            self.get_gcp_project_orgs(client=client, lwAccount=lwAccount)
+
+        # lookup alias
+        aliases = [
+            x
+            for x in self.gcp_project_orgs
+            if x["LWACCOUNT"] == lwAccount and x["PROJECT"] == gcpProject
+        ]
+        if len(aliases) > 0 and aliases[0]["ORGANIZATION_NUMBER"] != "":
+            return aliases[0]["ORGANIZATION_NUMBER"]
+        else:
+            return ""
+
     # get cloud accounts from integrations list
     def get_cloud_accounts(
         self,
@@ -150,7 +298,6 @@ class ReportHelper:
         lwAccount: Any,
         start_time: datetime = (datetime.utcnow() - timedelta(hours=25)),
         end_time: datetime = (datetime.utcnow()),
-        organization: typing.Any = None,
     ) -> typing_list[Any]:
 
         cloud_accounts = client.cloud_accounts.search(json={})
@@ -171,15 +318,17 @@ class ReportHelper:
                     else None
                 )
 
-                # allow override of organization - hack for non org integrated accounts
-                if (
-                    organization is not None and orgId is not None
-                ) or orgId is not None:
-                    orgId = orgId
-                elif organization is not None:
-                    orgId = organization
+                if orgId is None:
+                    logging.warning(
+                        "Unable to find organization in gcp config - secondary lookup required"
+                    )
 
                 for projectId in projectIds:
+                    if orgId is None:
+                        orgId = self.get_gcp_org_from_project(
+                            client=client, lwAccount=lwAccount, gcpProject=projectId
+                        )
+
                     accountId = f"gcp:{orgId}:{projectId}"
                     data = {
                         "lwAccount": lwAccount,
@@ -197,7 +346,13 @@ class ReportHelper:
                 account = row["data"]["crossAccountCredentials"]["roleArn"].split(":")[
                     4
                 ]
-                accountId = f"aws:{account}"
+
+                # provide the account alias if it exists
+                aws_account_alias = self.get_aws_alias_from_account_id(
+                    client=client, lwAccount=lwAccount, awsAccountId=account
+                )
+                accountId = f"aws:{account}:{aws_account_alias}"
+
                 data = {
                     "lwAccount": lwAccount,
                     "accountId": accountId,
@@ -264,7 +419,12 @@ class ReportHelper:
                 and m["VMPROVIDER"] == "AWS"
                 and m["ACCOUNTID"] not in aws_accounts
             ):
-                accountId = f"aws:{m['ACCOUNTID']}"
+                # provide the account alias if it exists
+                aws_account_alias = self.get_aws_alias_from_account_id(
+                    client=client, lwAccount=lwAccount, awsAccountId=m["ACCOUNTID"]
+                )
+                accountId = f"aws:{m['ACCOUNTID']}:{aws_account_alias}"
+
                 data = {
                     "lwAccount": lwAccount,
                     "accountId": accountId,
@@ -274,7 +434,9 @@ class ReportHelper:
                     "state": None,
                     "type": "AwsLql",
                 }
-                if accountId.split(":")[-1] not in aws_accounts:
+
+                # ensure we use the aws accountid not alias (i.e. [-2])
+                if accountId.split(":")[-2] not in aws_accounts:
                     accounts.append(data)
                     aws_accounts.append(m["ACCOUNTID"])
 
@@ -550,7 +712,6 @@ class ReportHelper:
         gcp_compliance: GCPComplianceTypes = GCPComplianceTypes.GCP_CIS12,
         azure_compliance: AzureComplianceTypes = AzureComplianceTypes.AZURE_CIS_131,
         ignore_errors: bool = True,
-        organization: typing.Any = None,
     ) -> typing.Any:
         result = []
         cloud_account_details = cloud_account.split(":")
@@ -574,42 +735,25 @@ class ReportHelper:
                     raise e
         elif csp == "gcp":
             csp, orgId, projectId = cloud_account_details
-            # requires special case handling as there are cases where orgId is not available via API
-            if organization is None and orgId is None:
-                logging.warn(
-                    f"Skipping GCP projectId:{cloud_account['projectIds']}, organization available and not specified (use --organization)"
+
+            try:
+                report = client.compliance.get_latest_gcp_report(
+                    gcp_organization_id=orgId,
+                    gcp_project_id=projectId,
+                    file_format="json",
+                    report_type=gcp_compliance.value,
                 )
+                r = report["data"].pop()
+                r["accountId"] = cloud_account
+                r["lwAccount"] = lwAccount
+                r.pop("organizationId")
+                r.pop("projectId")
+                result.append(r)
+            except laceworksdk.exceptions.ApiError as e:
+                logging.error(f"Lacework api returned: {e}")
+
                 if not ignore_errors:
-                    raise Exception(
-                        f"GCP projectId:{cloud_account['projectIds']} missing organization (use --organization)"
-                    )
-            else:
-                # when org is available use it
-                if (
-                    organization is not None and orgId is not None
-                ) or orgId is not None:
-                    orgId = orgId
-                elif organization is not None:
-                    orgId = organization
-
-                try:
-                    report = client.compliance.get_latest_gcp_report(
-                        gcp_organization_id=orgId,
-                        gcp_project_id=projectId,
-                        file_format="json",
-                        report_type=gcp_compliance.value,
-                    )
-                    r = report["data"].pop()
-                    r["accountId"] = cloud_account
-                    r["lwAccount"] = lwAccount
-                    r.pop("organizationId")
-                    r.pop("projectId")
-                    result.append(r)
-                except laceworksdk.exceptions.ApiError as e:
-                    logging.error(f"Lacework api returned: {e}")
-
-                    if not ignore_errors:
-                        raise e
+                    raise e
         elif csp == "az":
             csp, tenantId, subscriptionId = cloud_account_details
             try:
@@ -654,17 +798,23 @@ class ReportHelper:
 
         cloud_account_details = cloud_account.split(":")
         csp = cloud_account_details[0]
+        account_number = ""
+        project_number = ""
 
         if csp == "aws":
-            csp, accountId = cloud_account_details
+            csp, accountId, accountAlias = cloud_account_details
             if accountId != "*":
-                filter = f"m.TAGS:Account::String = '{accountId}' AND m.TAGS:VmProvider::String IN ('AWS')"
+                account_number = accountId
+                filter = f"( m.TAGS:Account::String = '{accountId}' OR m.TAGS:\"net.lacework.aws.fargate.cluster\" rlike 'arn:aws:ecs:.*:{accountId}:cluster/.*') AND m.TAGS:VmProvider::String IN ('AWS')"
             else:
                 filter = None
-            accountId = "'aws:' || m.TAGS:Account::String AS accountId,"
+            accountId = (
+                f"'aws:' || '{accountId}' || ':' || '{accountAlias}' AS accountId,"
+            )
         elif csp == "gcp":
             csp, organizationId, projectId = cloud_account_details
             if projectId != "*":
+                project_number = projectId
                 filter = f"m.TAGS:ProjectId::String = '{projectId}' AND m.TAGS:VmProvider::String IN ('GCE')"
             else:
                 filter = None
@@ -672,6 +822,7 @@ class ReportHelper:
         elif csp == "az":
             csp, tenantId, subscriptionId = cloud_account_details
             if subscriptionId != "*":
+                project_number = subscriptionId
                 filter = f"m.TAGS:ProjectId::String = '{subscriptionId}' AND m.TAGS:VmProvider::String IN ('Azure')"
             else:
                 filter = None
@@ -688,15 +839,16 @@ class ReportHelper:
                         return distinct {{
                             '{lwAccount}' AS lwAccount,
                             {accountId}
-                            m.TAGS:hostname::String AS tag_hostname,
+                            m.TAGS:Hostname::String AS tag_hostname,
                             m.TAGS:InstanceId::String AS tag_instanceId,
-                            m.TAGS:Account::String AS tag_accountId,
-                            m.TAGS:ProjectId::String AS tag_projectId,
+                            '{account_number}' AS tag_accountId,
+                            '{project_number}' AS tag_projectId,
                             m.TAGS:VmProvider::String AS tag_VmProvider,
                             m.TAGS:LwTokenShort::String AS lwTokenShort
                         }}
                     }}
                     """
+
         try:
             result = ExportHandler(
                 format=format_type,
@@ -711,6 +863,113 @@ class ReportHelper:
                 db_connection=db_connection,
                 db_table=db_table,
             ).export()
+
+            # ugly hack to determin if we need to workaround 5k limit
+            if self.sqlite_table_exists(db_table=db_table, db_connection=db_connection):
+                found_all = False
+                page = 1
+                result = self.sqlite_queries(
+                    queries={
+                        "report": f"""
+                            SELECT COUNT(*) AS COUNT FROM :db_table WHERE LWACCOUNT = '{lwAccount}' AND ACCOUNTID = '{cloud_account}'
+                            """
+                    },
+                    db_table=db_table,
+                    db_connection=db_connection,
+                )
+                machine_count = result["report"][0]["COUNT"]
+
+                # if we have exactly 5000 rows we need to make one more attempt to grab any additional hosts up to 10k
+                if machine_count == 5000 * page:
+                    logging.warning(f"Machine count exceeded 5k limit: {machine_count}")
+                    while not found_all:
+                        page += 1
+                        result = self.sqlite_queries(
+                            queries={
+                                "report": f"""
+                                    SELECT DISTINCT TAG_INSTANCEID FROM :db_table WHERE LWACCOUNT = '{lwAccount}' AND ACCOUNTID = '{cloud_account}'
+                                    """
+                            },
+                            db_table=db_table,
+                            db_connection=db_connection,
+                        )
+
+                        instance_ids = []
+                        for machine_id in result["report"]:
+                            instance_ids.append(machine_id["TAG_INSTANCEID"])
+
+                        # split out NOT IN query
+                        chunk_list = [
+                            instance_ids[i : i + 5000]
+                            for i in range(0, len(instance_ids), 5000)
+                        ]
+                        machine_filter_chunk = []
+                        for chunk in chunk_list:
+                            machine_filter_chunk.append(
+                                "m.TAGS:InstanceId::String NOT IN ('{}')".format(
+                                    "','".join(chunk)
+                                )
+                            )
+                        machine_filter = "({})".format(
+                            " AND ".join(machine_filter_chunk)
+                        )
+
+                        lql_query = f"""
+                            Custom_HE_Machine_1 {{
+                                source {{
+                                    LW_HE_MACHINES m
+                                }}
+                                filter {{
+                                    {filter} AND {machine_filter}
+                                }}
+                                return distinct {{
+                                    '{lwAccount}' AS lwAccount,
+                                    {accountId}
+                                    m.TAGS:Hostname::String AS tag_hostname,
+                                    m.TAGS:InstanceId::String AS tag_instanceId,
+                                    '{account_number}' AS tag_accountId,
+                                    '{project_number}' AS tag_projectId,
+                                    m.TAGS:VmProvider::String AS tag_VmProvider,
+                                    m.TAGS:LwTokenShort::String AS lwTokenShort
+                                }}
+                            }}
+                            """
+
+                        result = ExportHandler(
+                            format=format_type,
+                            results=QueryHandler(
+                                client=client,
+                                start_time=start_time,
+                                end_time=end_time,
+                                type=common.ObjectTypes.Queries.value,
+                                object=common.QueriesTypes.Execute.value,
+                                lql_query=lql_query,
+                            ).execute(),
+                            db_connection=db_connection,
+                            db_table=db_table,
+                        ).export()
+
+                        result = self.sqlite_queries(
+                            queries={
+                                "report": f"""
+                                    SELECT COUNT(*) AS COUNT FROM :db_table WHERE LWACCOUNT = '{lwAccount}' AND ACCOUNTID = '{cloud_account}'
+                                    """
+                            },
+                            db_table=db_table,
+                            db_connection=db_connection,
+                        )
+                        machine_count = result["report"][0]["COUNT"]
+
+                        logging.info(
+                            f"Check if machine_count ({machine_count}) is limit count ({5000*page})"
+                        )
+                        if machine_count == 5000 * page:
+                            logging.info(
+                                "Checking for additional machines is required..."
+                            )
+                        else:
+                            logging.info(f"Found all {machine_count} machines")
+                            found_all = True
 
         except laceworksdk.exceptions.ApiError as e:
             logging.error(f"Lacework api returned: {e}")
@@ -742,12 +1001,14 @@ class ReportHelper:
         csp = cloud_account_details[0]
 
         if csp == "aws":
-            csp, accountId = cloud_account_details
+            csp, accountId, accountAlias = cloud_account_details
             if accountId != "*":
-                filter = f"m.TAGS:Account::String = '{accountId}' AND m.TAGS:VmProvider::String IN ('AWS')"
+                filter = f"( m.TAGS:Account::String = '{accountId}' OR m.TAGS:\"net.lacework.aws.fargate.cluster\" rlike 'arn:aws:ecs:.*:{accountId}:cluster/.*') AND m.TAGS:VmProvider::String IN ('AWS')"
             else:
                 filter = None
-            accountId = f"'aws:' || '{accountId}' AS accountId,"
+            accountId = (
+                f"'aws:' || '{accountId}' || ':' || '{accountAlias}' AS accountId,"
+            )
         elif csp == "gcp":
             csp, organizationId, projectId = cloud_account_details
             if projectId != "*":
@@ -892,12 +1153,14 @@ class ReportHelper:
         csp = cloud_account_details[0]
 
         if csp == "aws":
-            csp, accountId = cloud_account_details
+            csp, accountId, accountAlias = cloud_account_details
             if accountId != "*":
-                filter = f"m.TAGS:Account::String = '{accountId}' AND m.TAGS:VmProvider::String IN ('AWS')"
+                filter = f"( m.TAGS:Account::String = '{accountId}' OR m.TAGS:\"net.lacework.aws.fargate.cluster\" rlike 'arn:aws:ecs:.*:{accountId}:cluster/.*') AND m.TAGS:VmProvider::String IN ('AWS')"
             else:
                 filter = None
-            accountId = f"'aws:' || '{accountId}' AS accountId,"
+            accountId = (
+                f"'aws:' || '{accountId}' || ':' || '{accountAlias}' AS accountId,"
+            )
         elif csp == "gcp":
             csp, organizationId, projectId = cloud_account_details
             if projectId != "*":
@@ -991,7 +1254,7 @@ class ReportHelper:
                         source {{LW_CFG_AWS_EC2_INSTANCES m}}
                         return distinct {{ 
                                 '{lwAccount}' AS lwAccount,
-                                'aws:' || m.ACCOUNT_ID AS accountId
+                                'aws:' || m.ACCOUNT_ID || ':' || m.ACCOUNT_ALIAS AS accountId
                             }}
                         }}
                         """
@@ -1101,7 +1364,7 @@ class ReportHelper:
         for csp in ["aws", "gcp", "az"]:
             if csp == "aws":
                 filter = "m.TAGS:VmProvider::String IN ('AWS')"
-                accountId = "'aws:' || m.TAGS:Account::String AS accountId"
+                accountId = "'aws:' || m.TAGS:Account::String  AS accountId"
             elif csp == "gcp":
                 filter = "m.TAGS:VmProvider::String IN ('GCE')"
                 accountId = "'gcp:' ||  m.TAGS:ProjectId::String AS accountId"
@@ -1124,8 +1387,8 @@ class ReportHelper:
                         }}
                         """
             try:
-                result = ExportHandler(
-                    format=format_type,
+                cloud_accounts = ExportHandler(
+                    format=DataHandlerTypes.DICT,
                     results=QueryHandler(
                         client=client,
                         start_time=start_time,
@@ -1137,6 +1400,52 @@ class ReportHelper:
                     db_connection=db_connection,
                     db_table=db_table,
                 ).export()
+
+                result = []
+
+                # update aws accounts with their associated aliases
+                while cloud_accounts:
+                    active_cloud_acccount = cloud_accounts.pop()
+
+                    # for aws we need to look up the alias as it's not returned in the machine data
+                    if str(active_cloud_acccount["ACCOUNTID"]).startswith("aws:"):
+                        awsAccountId = str(active_cloud_acccount["ACCOUNTID"]).split(
+                            ":"
+                        )[1]
+                        aws_account_alias = self.get_aws_alias_from_account_id(
+                            client=client,
+                            lwAccount=lwAccount,
+                            awsAccountId=awsAccountId,
+                        )
+                        accountId = {
+                            "ACCOUNTID": f"aws:{awsAccountId}:{aws_account_alias}"
+                        }
+                    # for gcp lookup org id
+                    elif str(active_cloud_acccount["ACCOUNTID"]).startswith("gcp:"):
+                        gcpProject = str(active_cloud_acccount["ACCOUNTID"]).split(":")[
+                            1
+                        ]
+                        gcp_org_id = self.get_gcp_org_from_project(
+                            client=client, lwAccount=lwAccount, gcpProject=gcpProject
+                        )
+                        accountId = {"ACCOUNTID": f"gcp:{gcp_org_id}:{gcpProject}"}
+                    # for az we don't have the ability to get subscription/tenant or at least I haven't seen/looked for it :)
+                    else:
+                        # this will definitely fail on az right now
+                        accountId = {"ACCOUNTID": active_cloud_acccount["ACCOUNTID"]}
+
+                    result.append(accountId)
+
+                # sync to sqlite
+                if format_type == format_type:
+                    results = ExportHandler(
+                        format=format_type,
+                        results=[{"data": result}],
+                        db_connection=db_connection,
+                        db_table=db_table,
+                    ).export()
+
+                # append the results for each cloud account
                 results = results + result
 
             except laceworksdk.exceptions.ApiError as e:
@@ -1170,7 +1479,7 @@ class ReportHelper:
         lql_query = ""
 
         if csp == "aws":
-            csp, accountId = cloud_account_details
+            csp, accountId, accountAlias = cloud_account_details
 
             # skip account filter with wildcard
             if accountId == "*":
@@ -1183,30 +1492,34 @@ class ReportHelper:
                             filter {{ {filter} }}
                             return distinct {{ 
                                     '{lwAccount}' AS lwAccount,
-                                    'aws:' || m.ACCOUNT_ID AS accountId, 
+                                    'aws:' || m.ACCOUNT_ID || ':' || m.ACCOUNT_ALIAS AS accountId, 
                                     m.RESOURCE_ID AS instanceId,
-                                    SUBSTRING(
-                                        SUBSTRING(
-                                            m.RESOURCE_CONFIG:Tags::string,
-                                            CHAR_INDEX(
-                                                '"Name",', 
-                                                m.RESOURCE_CONFIG:Tags::string
-                                            )+16,
-                                            LENGTH(m.RESOURCE_CONFIG:Tags::string)
-                                        ),
-                                        0,
-                                        CHAR_INDEX(
-                                            '"', 
-                                            SUBSTRING(
-                                                m.RESOURCE_CONFIG:Tags::string,
+                                    case when m.RESOURCE_CONFIG:KeyName::String <> '' then m.RESOURCE_CONFIG:KeyName::String
+                                        when m.RESOURCE_CONFIG:Tags::String rlike '.*"Key":"Name",.*' then (SUBSTRING(
+                                                SUBSTRING(
+                                                    m.RESOURCE_CONFIG:Tags::string,
+                                                    CHAR_INDEX(
+                                                        '"Name",', 
+                                                        m.RESOURCE_CONFIG:Tags::string
+                                                    )+16,
+                                                    LENGTH(m.RESOURCE_CONFIG:Tags::string)
+                                                ),
+                                                0,
                                                 CHAR_INDEX(
-                                                    '"Name",', 
-                                                    m.RESOURCE_CONFIG:Tags::string
-                                                )+17,
-                                                LENGTH(m.RESOURCE_CONFIG:Tags::string)
-                                            )
-                                        )
-                                    ) AS name,
+                                                    '"', 
+                                                    SUBSTRING(
+                                                        m.RESOURCE_CONFIG:Tags::string,
+                                                        CHAR_INDEX(
+                                                            '"Name",', 
+                                                            m.RESOURCE_CONFIG:Tags::string
+                                                        )+17,
+                                                        LENGTH(m.RESOURCE_CONFIG:Tags::string)
+                                                    )
+                                                )
+                                            ))
+                                        when m.RESOURCE_CONFIG:PrivateDnsName::String <> '' then m.RESOURCE_CONFIG:PrivateDnsName::String
+                                        else m.RESOURCE_CONFIG:InstanceId::String
+                                    end AS name,
                                     m.RESOURCE_CONFIG:State.Name::String AS state,
                                     m.RESOURCE_CONFIG:Tags AS tags
                                 }}
@@ -1302,6 +1615,222 @@ class ReportHelper:
                 db_table=db_table,
             ).export()
 
+            # ugly hack to determin if we need to workaround 5k limit
+            if self.sqlite_table_exists(db_table=db_table, db_connection=db_connection):
+                found_all = False
+                page = 1
+                result = self.sqlite_queries(
+                    queries={
+                        "report": f"""
+                            SELECT COUNT(*) AS COUNT FROM :db_table WHERE LWACCOUNT = '{lwAccount}' AND ACCOUNTID = '{cloud_account}'
+                            """
+                    },
+                    db_table=db_table,
+                    db_connection=db_connection,
+                )
+                machine_count = result["report"][0]["COUNT"]
+
+                # if we have exactly 5000 rows we need to make one more attempt to grab any additional hosts up to 10k
+                if machine_count == 5000 * page:
+                    logging.warning(f"Machine count exceeded 5k limit: {machine_count}")
+                    while not found_all:
+                        page += 1
+                        result = self.sqlite_queries(
+                            queries={
+                                "report": f"""
+                                    SELECT DISTINCT INSTANCEID FROM :db_table WHERE LWACCOUNT = '{lwAccount}' AND ACCOUNTID = '{cloud_account}'
+                                    """
+                            },
+                            db_table=db_table,
+                            db_connection=db_connection,
+                        )
+
+                        instance_ids = []
+                        for machine_id in result["report"]:
+                            instance_ids.append(machine_id["INSTANCEID"])
+
+                        if csp == "aws":
+                            # split out NOT IN query
+                            chunk_list = [
+                                instance_ids[i : i + 5000]
+                                for i in range(0, len(instance_ids), 5000)
+                            ]
+                            machine_filter_chunk = []
+                            for chunk in chunk_list:
+                                machine_filter_chunk.append(
+                                    "m.RESOURCE_ID::String NOT IN ('{}')".format(
+                                        "','".join(chunk)
+                                    )
+                                )
+                            machine_filter = "({})".format(
+                                " AND ".join(machine_filter_chunk)
+                            )
+
+                            csp, accountId, accountAlias = cloud_account_details
+
+                            # skip account filter with wildcard
+                            if accountId == "*":
+                                filter = None
+                            else:
+                                filter = f"ACCOUNT_ID = '{accountId}'"
+
+                            lql_query = f"""ECS {{
+                                            source {{LW_CFG_AWS_EC2_INSTANCES m}}
+                                            filter {{ {filter} AND {machine_filter} }}
+                                            return distinct {{ 
+                                                    '{lwAccount}' AS lwAccount,
+                                                    'aws:' || m.ACCOUNT_ID || ':' || m.ACCOUNT_ALIAS AS accountId, 
+                                                    m.RESOURCE_ID AS instanceId,
+                                                    case when m.RESOURCE_CONFIG:KeyName::String <> '' then m.RESOURCE_CONFIG:KeyName::String
+                                                        when m.RESOURCE_CONFIG:Tags::String rlike '.*"Key":"Name",.*' then (SUBSTRING(
+                                                                SUBSTRING(
+                                                                    m.RESOURCE_CONFIG:Tags::string,
+                                                                    CHAR_INDEX(
+                                                                        '"Name",', 
+                                                                        m.RESOURCE_CONFIG:Tags::string
+                                                                    )+16,
+                                                                    LENGTH(m.RESOURCE_CONFIG:Tags::string)
+                                                                ),
+                                                                0,
+                                                                CHAR_INDEX(
+                                                                    '"', 
+                                                                    SUBSTRING(
+                                                                        m.RESOURCE_CONFIG:Tags::string,
+                                                                        CHAR_INDEX(
+                                                                            '"Name",', 
+                                                                            m.RESOURCE_CONFIG:Tags::string
+                                                                        )+17,
+                                                                        LENGTH(m.RESOURCE_CONFIG:Tags::string)
+                                                                    )
+                                                                )
+                                                            ))
+                                                        when m.RESOURCE_CONFIG:PrivateDnsName::String <> '' then m.RESOURCE_CONFIG:PrivateDnsName::String
+                                                        else m.RESOURCE_CONFIG:InstanceId::String
+                                                    end AS name,
+                                                    m.RESOURCE_CONFIG:State.Name::String AS state,
+                                                    m.RESOURCE_CONFIG:Tags AS tags
+                                                }}
+                                            }}
+                                            """
+                        elif csp == "gcp":
+                            # split out NOT IN query
+                            chunk_list = [
+                                instance_ids[i : i + 5000]
+                                for i in range(0, len(instance_ids), 5000)
+                            ]
+                            machine_filter_chunk = []
+                            for chunk in chunk_list:
+                                machine_filter_chunk.append(
+                                    "m.RESOURCE_ID::String NOT IN ('{}')".format(
+                                        "','".join(chunk)
+                                    )
+                                )
+                            machine_filter = "({})".format(
+                                " AND ".join(machine_filter_chunk)
+                            )
+
+                            csp, organizationId, projectId = cloud_account_details
+
+                            # skip organization and project filter with wildcard
+                            if organizationId == "*" and projectId == "*":
+                                filter = None
+                            # filter both organization and project
+                            elif organizationId != "*" and projectId != "*":
+                                filter = f"""
+                                                AND ORGANIZATION_NUMBER = {organizationId}
+                                                AND CONTAINS(m.URN, '://compute.googleapis.com/projects/{projectId}/')
+                                            """
+                            # filter only organization
+                            elif organizationId != "*" and projectId == "*":
+                                filter = f"""
+                                                AND ORGANIZATION_NUMBER = {organizationId}
+                                            """
+                            # filter only project
+                            elif organizationId == "*" and projectId != "*":
+                                filter = f"""
+                                                AND CONTAINS(m.URN, '://compute.googleapis.com/projects/{projectId}/')
+                                            """
+
+                            lql_query = f"""
+                                            GCE {{
+                                                source {{
+                                                    LW_CFG_GCP_ALL m
+                                                }}
+                                                filter {{
+                                                    m.SERVICE = 'compute'
+                                                    AND m.API_KEY = 'resource'
+                                                    AND KEY_EXISTS(m.RESOURCE_CONFIG:status)
+                                                    AND KEY_EXISTS(m.RESOURCE_CONFIG:machineType)
+                                                    {filter} AND {machine_filter}
+                                                }}
+                                                return distinct {{ 
+                                                    '{lwAccount}' AS lwAccount,
+                                                    'gcp:' || ORGANIZATION_NUMBER::String || ':' || SUBSTRING(
+                                                        SUBSTRING(
+                                                            m.URN,
+                                                            CHAR_INDEX(
+                                                                '/', 
+                                                                m.URN
+                                                            )+34,
+                                                            LENGTH(m.URN)
+                                                        ),
+                                                        0,
+                                                        CHAR_INDEX(
+                                                            '/zones/',
+                                                            SUBSTRING(
+                                                                m.URN,
+                                                                CHAR_INDEX(
+                                                                    '/', 
+                                                                    m.URN
+                                                                )+35,
+                                                                LENGTH(m.URN)
+                                                            )
+                                                        )
+                                                    ) AS accountId,
+                                                    m.RESOURCE_CONFIG:id::string AS instanceId,
+                                                    m.RESOURCE_CONFIG:name::string AS name,
+                                                    m.RESOURCE_CONFIG:status::String AS state,
+                                                    m.RESOURCE_CONFIG:tags.items::string AS tags
+                                                }}
+                                            }}
+                                            """
+
+                        result = ExportHandler(
+                            format=format_type,
+                            results=QueryHandler(
+                                client=client,
+                                start_time=start_time,
+                                end_time=end_time,
+                                type=common.ObjectTypes.Queries.value,
+                                object=common.QueriesTypes.Execute.value,
+                                lql_query=lql_query,
+                            ).execute(),
+                            db_connection=db_connection,
+                            db_table=db_table,
+                        ).export()
+
+                        result = self.sqlite_queries(
+                            queries={
+                                "report": f"""
+                                    SELECT COUNT(*) AS COUNT FROM :db_table WHERE LWACCOUNT = '{lwAccount}' AND ACCOUNTID = '{cloud_account}'
+                                    """
+                            },
+                            db_table=db_table,
+                            db_connection=db_connection,
+                        )
+                        machine_count = result["report"][0]["COUNT"]
+
+                        logging.info(
+                            f"Check if machine_count ({machine_count}) is limit count ({5000*page})"
+                        )
+                        if machine_count == 5000 * page:
+                            logging.info(
+                                "Checking for additional machines is required..."
+                            )
+                        else:
+                            logging.info(f"Found all {machine_count} machines")
+                            found_all = True
+
         except laceworksdk.exceptions.ApiError as e:
             logging.error(f"Lacework api returned: {e}")
 
@@ -1316,6 +1845,7 @@ class ReportHelper:
         lwAccount: typing.Any,
         cloud_account: typing.Any,
         ignore_errors: bool = True,
+        package_active: bool = True,
         fixable: bool = True,
         severity: ReportSeverityTypes = ReportSeverityTypes.HIGH,
         namespace: typing.Any = None,
@@ -1362,6 +1892,15 @@ class ReportHelper:
                 },
             ]
 
+            if package_active:
+                filters.append(
+                    {
+                        "field": "featureKey.package_active",
+                        "expression": "eq",
+                        "value": "1",
+                    }
+                )
+
             if namespace is not None:
                 filters.append(
                     {
@@ -1378,7 +1917,7 @@ class ReportHelper:
             csp = cloud_account_details[0]
 
             if csp == "aws":
-                csp, accountId = cloud_account_details
+                csp, accountId, accountAlias = cloud_account_details
                 filters.append(
                     {
                         "field": "machineTags.VmProvider",

@@ -614,7 +614,7 @@ class QueryHandler:
                 num_returned = len(result)
                 if num_returned == LQL_PAGINATION_MAX:
                     logging.warning(
-                        f"Warning! The maximum number of active containers ({LQL_PAGINATION_MAX}) was returned."
+                        f"Warning! The maximum number rows ({LQL_PAGINATION_MAX}) was returned."
                     )
             except Exception as e:
                 logging.error(f"Failed to execute lql query: {e}")
