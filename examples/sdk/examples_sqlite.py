@@ -219,65 +219,69 @@ lql_query = """
                     }
                 }
                 """
-lwAccount = "test"
+# lwAccount = "test"
+lql_query = """
+                Custom_HE_Machine_1 {
+                        source {
+                            LW_CFG_AWS_EC2_INSTANCES I,
+                            ARRAY_TO_ROWS(I.RESOURCE_CONFIG:NetworkInterfaces) as (NIS)
+                        }
+                        filter {
+                            NIS:Association.PublicIp IS NOT NULL
+                        }
+                        return {
+                            NIS:Association.PublicIp::String AS PublicIp,
+                            NIS:Association.PublicDnsName::String AS PublicDnsName,
+                            
+                            I.*
+                        }
+                    }
+                """
+
 lql_query = f"""
                 Custom_HE_Machine_1 {{
                     source {{
                             LW_CFG_AWS_ALL c
                     }}
-                    return distinct {{
-                        '{lwAccount}' AS lwAccount,
-                        c.ACCOUNT_ID, 
-                        c.ACCOUNT_ALIAS
+                    filter {{
+                        c.RESOURCE_CONFIG::String LIKE '%sg-062789c992b97b599%'
+                    }}
+                    return {{
+                        c.*
                     }}
                 }}
                 """
 
-# lql_query = f"""
-#                 Custom_HE_Machine_1 {{
-#                     source {{
-#                             CloudTrailRawEvents c
-#                     }}
-#                     filter {{
-#                         c.EVENT:recipientAccountId::string = '909244398454'
-#                         AND CONTAINS(c.EVENT:requestParameters::string,'SecurityAudit-XAccount')
-#                     }}
-#                     return {{
-#                         c.*
-#                     }}
-#                 }}
-#                 """
+reportHelper.sqlite_drop_table(db_table="machines", db_connection=db_connection)
+eh = ExportHandler(
+    format=DataHandlerTypes.SQLITE,
+    results=QueryHandler(
+        start_time=datetime.utcnow() - timedelta(days=2),
+        end_time=datetime.utcnow(),
+        client=LaceworkClient(profile="bazaarvoice"),
+        type=common.ObjectTypes.Queries.value,
+        object=common.QueriesTypes.Execute.value,
+        lql_query=lql_query,
+    ).execute(),
+    db_table="machines",
+    db_connection=db_connection,
+).export()
 
-# reportHelper.sqlite_drop_table(db_table="machines", db_connection=db_connection)
+# reportHelper.sqlite_drop_table(
+#     db_table="container_registries", db_connection=db_connection
+# )
 # eh = ExportHandler(
 #     format=DataHandlerTypes.SQLITE,
 #     results=QueryHandler(
 #         start_time=datetime.utcnow() - timedelta(days=2),
 #         end_time=datetime.utcnow(),
 #         client=LaceworkClient(),
-#         type=common.ObjectTypes.Queries.value,
-#         object=common.QueriesTypes.Execute.value,
-#         lql_query=lql_query,
+#         object=common.ObjectTypes.ContainerRegistries.value,
+#         type=None,
 #     ).execute(),
-#     db_table="machines",
+#     db_table="container_registries",
 #     db_connection=db_connection,
 # ).export()
-
-reportHelper.sqlite_drop_table(
-    db_table="container_registries", db_connection=db_connection
-)
-eh = ExportHandler(
-    format=DataHandlerTypes.SQLITE,
-    results=QueryHandler(
-        start_time=datetime.utcnow() - timedelta(days=2),
-        end_time=datetime.utcnow(),
-        client=LaceworkClient(),
-        object=common.ObjectTypes.ContainerRegistries.value,
-        type=None,
-    ).execute(),
-    db_table="container_registries",
-    db_connection=db_connection,
-).export()
 
 # reportHelper.sqlite_drop_table("test2", db_connection=db_connection)
 # reportHelper.sqlite_execute(

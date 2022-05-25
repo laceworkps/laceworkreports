@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import re
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from enum import Enum
@@ -27,6 +28,7 @@ from .DataHelpers import DataHelpers
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(filename)s:%(lineno)s - %(message)s",
+    stream=sys.stdout,
 )
 
 load_dotenv()

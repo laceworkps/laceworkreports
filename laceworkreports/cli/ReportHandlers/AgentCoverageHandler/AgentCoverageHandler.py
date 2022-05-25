@@ -107,6 +107,7 @@ def html(
                                         :db_table
                                     WHERE 
                                         ACCOUNTID IS NOT NULL
+                                        
                                     """
                 },
                 db_connection=db_connection,

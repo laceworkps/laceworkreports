@@ -1508,8 +1508,7 @@ class ReportHelper:
                                     '{lwAccount}' AS lwAccount,
                                     'aws:' || m.ACCOUNT_ID || ':' || m.ACCOUNT_ALIAS AS accountId, 
                                     m.RESOURCE_ID AS instanceId,
-                                    case when m.RESOURCE_CONFIG:KeyName::String <> '' then m.RESOURCE_CONFIG:KeyName::String
-                                        when m.RESOURCE_CONFIG:Tags::String rlike '.*"Key":"Name",.*' then (SUBSTRING(
+                                    case when m.RESOURCE_CONFIG:Tags::String rlike '.*"Key":"Name",.*' then (SUBSTRING(
                                                 SUBSTRING(
                                                     m.RESOURCE_CONFIG:Tags::string,
                                                     CHAR_INDEX(
