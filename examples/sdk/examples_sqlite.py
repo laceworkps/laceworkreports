@@ -258,7 +258,7 @@ eh = ExportHandler(
     results=QueryHandler(
         start_time=datetime.utcnow() - timedelta(days=2),
         end_time=datetime.utcnow(),
-        client=LaceworkClient(profile="bazaarvoice"),
+        client=LaceworkClient(),
         type=common.ObjectTypes.Queries.value,
         object=common.QueriesTypes.Execute.value,
         lql_query=lql_query,
