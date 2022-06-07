@@ -25,8 +25,11 @@ from laceworkreports import common
 
 from .DataHelpers import DataHelpers
 
+# attempt to get log level from environment
+LOGLEVEL = os.environ.get("LOGLEVEL", "INFO").upper()
+
 logging.basicConfig(
-    level=logging.INFO,
+    level=LOGLEVEL,
     format="%(asctime)s [%(levelname)s] %(filename)s:%(lineno)s - %(message)s",
     stream=sys.stdout,
 )
