@@ -106,7 +106,7 @@ def html(
                                     FROM 
                                         :db_table
                                     WHERE 
-                                        ACCOUNTID IS NOT NULL                                        
+                                        ACCOUNTID IS NOT NULL
                                     """
                 },
                 db_connection=db_connection,
