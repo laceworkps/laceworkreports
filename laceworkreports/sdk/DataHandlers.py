@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import re
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from enum import Enum
@@ -24,9 +25,13 @@ from laceworkreports import common
 
 from .DataHelpers import DataHelpers
 
+# attempt to get log level from environment
+LOGLEVEL = os.environ.get("LOGLEVEL", "INFO").upper()
+
 logging.basicConfig(
-    level=logging.INFO,
+    level=LOGLEVEL,
     format="%(asctime)s [%(levelname)s] %(filename)s:%(lineno)s - %(message)s",
+    stream=sys.stdout,
 )
 
 load_dotenv()

@@ -1508,8 +1508,7 @@ class ReportHelper:
                                     '{lwAccount}' AS lwAccount,
                                     'aws:' || m.ACCOUNT_ID || ':' || m.ACCOUNT_ALIAS AS accountId, 
                                     m.RESOURCE_ID AS instanceId,
-                                    case when m.RESOURCE_CONFIG:KeyName::String <> '' then m.RESOURCE_CONFIG:KeyName::String
-                                        when m.RESOURCE_CONFIG:Tags::String rlike '.*"Key":"Name",.*' then (SUBSTRING(
+                                    case when m.RESOURCE_CONFIG:Tags::String rlike '.*"Key":"Name",.*' then (SUBSTRING(
                                                 SUBSTRING(
                                                     m.RESOURCE_CONFIG:Tags::string,
                                                     CHAR_INDEX(
@@ -1885,10 +1884,6 @@ class ReportHelper:
         result: typing.Any = []
 
         try:
-            fixable_val = 0
-            if fixable:
-                fixable_val = 1
-
             if severity.value == ReportSeverityTypes.CRITICAL.value:
                 severity_types = ["Critical"]
             elif severity.value == ReportSeverityTypes.HIGH.value:
@@ -1911,12 +1906,16 @@ class ReportHelper:
                     "expression": "in",
                     "values": severity_types,
                 },
-                {
-                    "field": "fixInfo.fix_available",
-                    "expression": "eq",
-                    "value": fixable_val,
-                },
             ]
+
+            if fixable:
+                filters.append(
+                    {
+                        "field": "fixInfo.fix_available",
+                        "expression": "eq",
+                        "value": "1",
+                    }
+                )
 
             if package_active:
                 filters.append(
@@ -2082,10 +2081,6 @@ class ReportHelper:
                 if len(image_ids) > 0:
                     logging.info("Retrieving active container vulnerabilities...")
 
-                    fixable_val = 0
-                    if fixable:
-                        fixable_val = 1
-
                     if severity.value == ReportSeverityTypes.CRITICAL.value:
                         severity_types = ["Critical"]
                     elif severity.value == ReportSeverityTypes.HIGH.value:
@@ -2109,12 +2104,16 @@ class ReportHelper:
                             "expression": "in",
                             "values": ["VULNERABLE"],
                         },
-                        {
-                            "field": "fixInfo.fix_available",
-                            "expression": "eq",
-                            "value": fixable_val,
-                        },
                     ]
+
+                    if fixable:
+                        filters.append(
+                            {
+                                "field": "fixInfo.fix_available",
+                                "expression": "eq",
+                                "value": "1",
+                            }
+                        )
 
                     if namespace is not None:
                         filters.append(
