@@ -53,7 +53,7 @@ scipy = { version = "^1.8.0", python = ">=3.8,<3.11" }
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.4"
-black = { version = "^22.3.0", allow-prereleases = true }
+black = { version = "^22.6.0", allow-prereleases = true }
 darglint = "^1.8.1"
 isort = { extras = ["colors"], version = "^5.10.1" }
 mypy = "^0.942"
